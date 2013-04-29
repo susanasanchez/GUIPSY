@@ -1,0 +1,192 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+import matplotlib
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.figure import Figure
+
+#import Ui_plotTableDlg
+import Ui_plotTableWindow
+import Ui_editPlotDlg
+
+COLOR={'Blue':'b', 'Green':'g', 'Red':'r', 'Cyan':'c', 'Magenta':'m', 'yellow':'y', 'black':'k', 'white':'w'}
+STYLE={'Solid Line':'-', 'Dashed Line':'--', 'Dash-Dot Line':'-.',  'Dotted Line':':'}
+class editPlotDlg(QDialog,Ui_editPlotDlg.Ui_editPlotDlg):
+    def __init__(self, p, parent=None):
+        super(editPlotDlg, self).__init__(parent)
+        self.setupUi(self)
+        if(p.color!=None):
+            i=self.colorList.findText(p.color)
+            if(i!=-1):
+                self.colorList.setCurrentIndex(i)
+        if(p.style!=None):
+            i=self.styleList.findText(p.style)
+            if(i!=-1):
+                self.styleList.setCurrentIndex(i)
+        if(p.label!=None):
+            self.plotLabel.setText(p.label)
+        
+        
+        
+       
+
+class plot:
+    def __init__(self, label, XAxis, YAxis, color=None, style=None):
+        self.label=label
+        self.xAxis=XAxis
+        self.yAxis=YAxis
+        self.color=color
+        self.style=style
+        
+    
+    def update(self, label, color, style):
+        self.color=color
+        self.style=style
+        self.label=label
+        
+     
+class plotTableWindow(QMainWindow,Ui_plotTableWindow.Ui_plotTableWindow):
+    def __init__(self, view_tables, currentTable, parent=None):
+        super(plotTableWindow, self).__init__(parent)
+        self.setupUi(self)
+        self.plots={}
+        self.view_tables=view_tables
+        
+        #Adding a empty plot figure
+        self.dpi = 100
+        self.fig = Figure((6.0, 4.0), dpi=self.dpi)
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.setParent(self.plot_frame)
+        self.axes = self.fig.add_subplot(111)
+        self.mpl_toolbar = NavigationToolbar(self.canvas, self.plot_frame)
+        self.plot_frame_Layout.addWidget(self.canvas)
+        self.plot_frame_Layout.addWidget(self.mpl_toolbar)
+       
+    
+        #Generating  table list comboBox
+
+        for key, val in view_tables.iteritems():
+          self.tableList.addItem(key, QVariant(key))
+	  
+        i=self.tableList.findText(QString(currentTable))
+        if(i!=-1):
+            self.tableList.setCurrentIndex(i)
+        
+        #Generating  X/Y Axis list comboBox
+       
+        columnTitles=self.view_tables[currentTable].getColumnTitles()
+        for index, title in enumerate(columnTitles):
+            self.XAxis.addItem(title, QVariant(index))
+            self.YAxis.addItem(title, QVariant(index))
+        
+        #Connecting add button
+        self.connect(self.addButton,SIGNAL("clicked()"), self.addPlot)
+        self.connect(self.editPlotButton,SIGNAL("clicked()"), self.editPlot)
+        self.connect(self.delPlotButton,SIGNAL("clicked()"), self.delPlot)
+        self.connect(self.plotButton,SIGNAL("clicked()"), self.plot)
+
+	#Connecting tableList
+	self.connect(self.tableList, SIGNAL("currentIndexChanged(QString)"),self.updateColumnsList)
+    
+    def addPlot(self):
+       
+        if(self.plotLabel.text()!=""):
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255,255,255))
+            self.plotLabel.setPalette(p)
+            plabel=str(self.plotLabel.text())
+            self.plotList.addItem(plabel)
+            xcol=self.XAxis.itemData(self.XAxis.currentIndex()).toInt()[0]
+            ycol=self.YAxis.itemData(self.YAxis.currentIndex()).toInt()[0]
+            
+            xcol=int(xcol)
+            ycol=int(ycol)
+            table=str(self.tableList.itemData(self.tableList.currentIndex()).toString())
+          
+            xaxis=self.view_tables[table].getColumn(xcol)
+            yaxis=self.view_tables[table].getColumn(ycol)
+            newplot=plot(plabel, xaxis, yaxis)
+            self.plots[plabel]=newplot
+            
+            
+        else:
+            
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255,0,0))
+            self.plotLabel.setPalette(p)
+            
+
+
+        
+    def editPlot(self):
+        if(len(self.plotList.selectedItems())==1):
+            plot_selected=self.plotList.selectedItems()[0]
+           
+            if(plot_selected!=None):
+                plabel=str(plot_selected.text())
+            
+            Dlg=editPlotDlg(self.plots[plabel], self)
+            if Dlg.exec_(): 
+                self.plots[plabel].label=Dlg.plotLabel.text()
+                self.plots[plabel].color=Dlg.colorList.currentText()
+                self.plots[plabel].style=Dlg.styleList.currentText()
+                return
+            
+    def delPlot(self):
+        if(len(self.plotList.selectedItems())==1):
+            plot_selected=self.plotList.selectedItems()[0]
+            
+            if(plot_selected!=None):
+                plabel=plot_selected.text()
+                del self.plots[str(plabel)]
+                item=self.plotList.findItems(plabel, Qt.MatchExactly)
+               
+                if(len(item)==1):
+                    r=self.plotList.row(item[0])
+                    i=self.plotList.takeItem(r)
+                    del i
+            self.plot()
+        
+        
+
+    def plot(self):
+    
+        title=str(self.title.text())
+        xlabel=str(self.XLabel.text())
+        ylabel=str(self.YLabel.text())
+        
+        
+        self.axes.clear()
+        self.axes.set_title(title)
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+        
+        
+
+      
+        for key, value in self.plots.iteritems():
+            x=value.xAxis
+            y=value.yAxis
+            l=str(value.label)
+            style=value.style
+            color=value.color
+            line=self.axes.plot(x, y, label=l)[0]
+            
+            if(style!=None):
+                line.set_linestyle(STYLE[str(style)])
+            if(color!=None):
+                line.set_color(COLOR[str(color)])
+            
+        self.axes.legend()
+        self.canvas.draw()
+
+    def updateColumnsList(self,item):
+	if item:
+	    currentTable=str(item)
+	    columnTitles=self.view_tables[currentTable].getColumnTitles()
+	    self.XAxis.clear()
+	    self.YAxis.clear()
+	    for index, title in enumerate(columnTitles):
+	      self.XAxis.addItem(title, QVariant(index))
+	      self.YAxis.addItem(title, QVariant(index))
+        

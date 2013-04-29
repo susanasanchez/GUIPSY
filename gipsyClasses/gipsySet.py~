@@ -1,0 +1,449 @@
+import gipsy
+from gipsy import *
+
+import sys
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from xreverse import *
+
+from new_exceptions import *
+
+GIPSYLOG="./GIPSY.LOG"
+HEADER_TMP="./header.tmp"
+
+#Global variable needed to choose a suitable varname for the python command log in workflow
+counter=0
+
+
+class gipsySet(object):
+    """ This class implements the interface between gipsy software and the application.
+    Attributes
+    ---------------
+    fitsname: String
+        The pathname of the fits file, if the set is builded from a fits file
+    setname: String
+        The pathname of the set without the extension .image or .descr
+    filename: String
+        The pathname of the set with the extension .image
+    varname: String
+        The pathname of the set used in the log sentence. It is composed by setname and a counter in order
+        to avoid repetitions of setname in the workflow text.
+    history: String
+        History text of the set
+    properties: String
+        Properties text of the set
+    __S: gipsySet
+        An instance of Set class of gipsy package
+    
+    """
+
+
+    def __init__(self):
+       
+        self.fitsname= ""
+        self.setname= ""
+        self.filename= ""
+        self.varname=""
+        self.properties=""
+        self.history=""
+        self.comments=""
+        self.__S= None
+	self.tables=None
+
+    def loadSet(self,setname,fitsname=None):
+        """Read the set. If the set is in a fits file, build the corresponding set.
+    
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+        
+        Raises
+        ---------
+        gipsyException
+            When it gets a XeqError exception raises a gipsyException with a
+            properly message
+        """
+       
+        output=""   
+        self.setname=str(setname)
+        self.filename=self.setname
+        if(fitsname!=None ):
+            self.fitsname=fitsname
+            if(os.path.exists(setname+".image") | os.path.exists(setname+".descr")):
+                command="DELETE INSET=%s; OK=Y;"%(self.setname)
+                try:
+                    xeq(command)
+                except XeqError:
+                    raise gipsyException("%s set has not been overwritten correctly"%(self.setname))
+                    return
+                else:
+                    output=output+"xeq(\""+command+"\")\n"
+                
+            command="RFITS AUTO FITSFILE=%s; OUTSET=%s"%(self.fitsname,self.setname)
+            try:
+                xeq(command) 
+            except XeqError:
+                raise gipsyException("%s \n Gets an error "%(command))
+                return
+            else:
+                output=output+"xeq(\""+command+"\")\n"
+                
+       
+        command="MNMX INSET=%s;"%(self.setname)
+       
+        try:
+            xeq(command) 
+        except XeqError:
+            raise gipsyException("%s \n Gets an error "%(command))
+            return
+        else:
+            output=output+"xeq(\""+command+"\")\n"
+        try:
+            self.__S=Set(self.setname, create=False, write=True, gethdu=None, getalt=None)
+        except GdsError as g:
+                 raise gipsyException("Couldn't create a set instance:\n %s"%(str(g)))
+                 return
+        #Getting the tables
+	self.tables = self.__S.tablis()
+        #Choosing a good variable name for the workflow log
+        global counter 
+        self.varname=os.path.basename(self.setname)+str(counter)
+        counter +=1
+        
+        output = output+"%s = Set(\"%s\", create=False, write=True, gethdu=None, getalt=None)"%(self.varname,  self.setname)+"\n"
+        
+        return output
+ 
+    def deleteSet(self):
+        """Delete the set.
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+        
+        Raises
+        ---------
+        gipsyException
+            When it gets a XeqError exception raises a gipsyException with a
+            properly message
+        
+        """
+        
+        try:
+            self.__S.delete()
+        except GdsError as g:
+            raise gipsyException("Couldn't delete the set:\n %s"%(str(g)))
+            return
+        else:
+            output="%s.delete()\n"%(self.varname)
+            return output
+            
+            
+    def getProperties(self):
+        """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task
+        
+        Raises
+        ---------
+        gipsyException
+            When it gets a XeqError exception raises a gipsyException with a
+            properly message
+        
+        """
+        if(self.properties!=""):
+            return self.properties
+        elif( self.setname!=None):
+            try:
+                xeq("HEADER INSET=%s FILENAME=%s"%(self.setname,HEADER_TMP))
+            except XeqError:
+                raise gipsyException("%s: HEADER error"%(self.setname))
+                return
+            try:
+	      f=open(HEADER_TMP,"r")
+	    except:
+	      raise gipsyException("Unable to read header temporary file created by HEADER task")
+              return
+	    text=f.read()
+	    print "eeoo", text
+	    self.properties="eeeooo"
+	    f.close()
+	    os.remove(HEADER_TMP)
+            #f = open(GIPSYLOG,"r")
+            #rev = [ line for line in xreverse(f) ]
+            #f.close()
+            #flagA=False
+            #flagB=False
+            #properties="" 
+            #for line in rev:
+                #if flagA:
+                    #if flagB:
+                        #if (line.startswith('<GUIPSY.PYW>') ):
+                            #self.properties=properties
+                            #return properties
+                        #else:
+                            #properties=line+properties
+                    #elif(line.startswith("HISTORY/COMMENT")):
+                        #flagB=True
+
+                #elif(line.startswith('*') ):
+                    #flagA=True
+            
+            
+            
+    def getHistory(self):
+         """Get the history text of the set reading and parsing the gipsy log file, just after run HEADER task
+        
+         Raises
+         ---------
+         gipsyException
+            When it gets a XeqError exception raises a gipsyException with a
+            properly message
+        
+         """
+         if(self.history!=""):
+            return self.history
+         elif(self.setname!=None):
+            try:
+                xeq("HEADER INSET=%s"%(self.setname))
+            except XeqError:
+                raise gipsyException("%s: HEADER error"%(self.setname))
+                return
+            f = open(GIPSYLOG,"r")
+            rev = [ line for line in xreverse(f) ]
+            history="" 
+            for line in rev:
+                if line.startswith('='):
+                    self.history=history
+                    return history
+                elif line.startswith("HISTORY"):
+                    #skip 'history='
+                    begin=line.find('=') +1
+                    history=line[begin:].lstrip()+history
+            f.close()
+
+    def getComments(self):
+         """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task
+        
+         Raises
+         ---------
+         gipsyException
+            When it gets a XeqError exception raises a gipsyException with a
+            properly message
+         
+         """
+        
+         if(self.comments!=""):
+            return self.comments
+         elif(self.setname!=None):
+            try:
+                xeq("HEADER INSET=%s"%(self.setname))
+            except XeqError:
+                raise gipsyException("%s: HEADER error"%(self.setname))
+                return
+            f = open(GIPSYLOG,"r")
+            rev = [ line for line in xreverse(f) ]
+            comments="" 
+            for line in rev:
+                if line.startswith('='):
+                    self.comments=comments
+                    return comments
+                elif line.startswith("COMMENT"):
+                    #skip 'comment='
+                    begin=line.find('=') +1
+                    comments=line[begin:].lstrip()+comments
+
+    def updateComments(self, comments):
+        """Update the comments of the set.
+        
+        Parameters
+        -----------------
+        comments : String
+            All the comments inserted by the user
+        
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+        
+        """
+        
+        output=""
+        #update comments only if new comments are different from old
+        if(self.comments!=comments):
+            self.comments=comments
+            self.__S[0,'COMMENT']=None
+            output="%s[0,\'COMMENT\']=None\n"%(self.varname)
+            
+            listComments=comments.split("\n")
+            for comment in listComments:
+                if(comment!=""):
+                    self.__S.wcomment(str(comment[:72]))
+                    output=output+"%s.wcomment(\"%s\")\n"%(self.varname, comment[:72])
+            
+            self.__S.update()
+            output=output+"%s.update()\n"%(self.varname)
+        return output
+        
+    def getHeaderItems(self):
+        """Returns the list of header items of the set
+        
+        Returns
+        ------------
+        __S.items: list
+        
+        """
+        return self.__S.items(0)
+
+    def getFilename(self):
+        """Returns the pathname of the set with the extension .image
+        
+        Returns
+        -----------
+        filename: String
+        """
+        return self.filename
+    def getSetname(self):
+	"""Returns the pathname of the set without the extension .image
+        
+        Returns
+        -----------
+        setname: String
+        """
+	return self.setname
+
+    def updateHeaderKey(self, key, val):
+        """Update a header item
+        
+        Parameters
+        ----------------
+        key: String
+            Name of the header item
+        val: String
+            New value for the header item
+            
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+  
+        """
+        output=""
+        if(self.__S[0, key]!=val):
+            try:
+                self.__S[ 0, key]=val
+            except GdsError as g:
+                raise gipsyException("Error updating %s header key:\n%s"%(key, str(g)))
+            else:
+                self.__S.update()
+                output="%s[0,\'%s\']=\"%s\""%(self.varname, key, val)+"\n"+"%s.update()"%(self.varname)
+        return output
+        
+    def deleteHeaderKey(self, key):
+        """Delete a header item
+        
+        Parameters
+        ----------------
+        key: String
+            Name of the header item
+            
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+        
+        Raises
+         ---------
+         gipsyException
+            When it gets a GDsError exception raises a gipsyException with a
+            properly message
+  
+        """
+        try:
+            del self.__S[ 0, key]
+        except GdsError:
+            raise gipsyException("Error deleting %s header key"%key)
+            return
+        self.__S.update()
+        output="del %s[0,\'%s\']"%(self.varname, key)+"\n"+"%s.update"%(self.varname)
+        return output
+    
+    def newHeaderKey(self, key, val):
+        """Add a new header item
+        
+        Parameters
+        ----------------
+        key: String
+            Name of the new header item
+        val: String
+            Value for the new header item
+            
+        Returns
+        ------------
+        output: String
+           Python sentences with the executed task
+        """
+        self.__S[ 0, key]=val
+        self.__S.update()
+        output="%s[0,\'%s\']=%s"%(self.varname, key, val)+"\n"+"%s.update"%(self.varname)
+        return output
+
+    def getInfo(self):
+        """Returns information about dimensions and axes of the set.
+        
+        Returns
+        -----------
+        output : String
+     
+        """
+        dim = self.__S.naxis
+        output="Dimension: %s\n"%(dim)
+        # Get coordinate words of first data point in set and of the last one
+        lo, hi = self.__S.range(0)
+
+        # Print the axis name and the range in grids for all the axes in the set
+        for i in range(dim):
+            output=output+"%s: from %d to %d\n" % (self.__S.axname(i), self.__S.grid(i, lo), self.__S.grid(i, hi))
+
+        return output
+    
+    def getInfoAxes(self):
+        output={}
+        dim = self.__S.naxis
+        # Get coordinate words of first data point in set and of the last one
+        lo, hi = self.__S.range(0)
+        # Print the axis name and the range in grids for all the axes in the set
+        for i in range(dim):
+            output[self.__S.axname(i)]="%s %s"%(self.__S.grid(i, lo), self.__S.grid(i, hi))
+           
+        return output
+
+    def getTablesInfo(self):
+	tablesInfo=range(len(self.tables))
+	i=0
+	for tabl in self.tables:
+
+	  tablename = tabl[0]
+	  subset = tabl[1]
+	  cols = self.__S.tabinq(tablename, subset=subset)      # Get the columns for this table at this subset level
+	  n_cols=len(cols)
+	  tablesInfo[i]=(i,tablename,subset,n_cols)
+	  i += 1
+	return tablesInfo
+
+    def getTableData(self,numTable):
+	table = self.tables[numTable]
+	tablename, subset = table
+	
+	cols = self.__S.tabinq(tablename, subset=subset)
+	rows={}
+	for col in cols:
+	  rows[col]=self.__S[subset, tablename, col, :]
+	  
+	return rows
+
+
+	  
+
+
+

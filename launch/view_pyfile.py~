@@ -1,0 +1,86 @@
+from Ui_launch import *
+import os
+from syntax import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+
+
+class view_pyfile(QScrollArea,Ui_launch.Ui_launch):
+    def __init__(self):
+        super(view_pyfile, self).__init__()
+        self.setupUi(self)
+        
+        #INTERESTING INHERITED ATRIBUTES
+        #plainTextEdit: Area to show/edit the cola file
+        
+        highlight = PythonHighlighter(self.plainTextEdit.document())
+    
+        self.filename=None
+        self.dirty = False
+        self.template=None
+	self.pushButton_2.setEnabled(False)
+
+    def loadPyfile(self,  templateName, filename):
+        if(templateName != None):
+            fName=templateName
+            self.template=templateName
+        else:
+            fName=filename
+            self.filename=fName
+        if(fName!= None):
+            try:
+                fh=open(fName, "rb")
+            except IOError as e:
+                raise e
+                return 
+            rows=fh.readlines()
+            fh.close()           
+            self.plainTextEdit.setPlainText(''.join(rows))
+        else:
+            self.template=None
+            self.plainTextEdit.setPlainText("")
+            self.dirty=True
+        self.connect(self.plainTextEdit, SIGNAL("textChanged()"), self.fileChanged)
+    
+    
+    def isTemplate(self):
+        if(self.template != None):
+            return True
+        else:
+            return False
+    
+    def isNew(self):
+        if(self.filename != None):
+            return False
+        else:
+            return True
+
+    def isDirty(self):
+        return self.dirty
+        
+    def save(self, filename=None):
+        if filename!=None:
+            self.filename=filename
+        if self.filename!=None:
+            try:
+                fh=open(self.filename, "wb")
+            except IOError as e:
+                fh.close()
+                raise e
+                return
+            try:
+                fh.write(str(self.plainTextEdit.toPlainText()))
+            except UnicodeEncodeError as e:
+                fh.close()
+                raise e
+                return
+                
+            fh.close()
+            self.dirty=False
+            self.template=None
+           
+    
+    def fileChanged(self):
+        
+        self.dirty=True

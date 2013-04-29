@@ -1,0 +1,151 @@
+import gipsy
+from gipsy import *
+
+import sys
+import time
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+
+from new_exceptions import *
+
+
+counter=0
+class dinamicalForm(QDialog):
+    def __init__(self, taskname,parent=None):
+        super(dinamicalForm,self).__init__(parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        
+        self.keys = []
+        taskname=taskname.upper()
+        cmdlab = QLabel('Running '+taskname)
+        #self.lineedit = QLineEdit()
+        layout = QHBoxLayout() 
+        layout.addWidget(cmdlab)
+        #layout.addWidget(self.lineedit)
+        self.label = QLabel('Ready')
+        self.label2 = QLabel()
+        self.label2.setStyleSheet('QLabel {color: red}')
+        self.layout = QVBoxLayout()
+        self.layout.addLayout(layout)
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.label2)
+        self.setLayout(self.layout)
+        self.setWindowTitle('Task launcher')
+
+    def addkey(self, key):
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()')
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.layout.addLayout(layout)
+        
+        self.keys.append(key)
+
+    def addCloseButton(self):
+        button = QPushButton("Close this form")
+        layout = QHBoxLayout()
+        layout.addWidget(button)
+        self.layout.addLayout(layout)
+        self.connect(button, SIGNAL("clicked()"), self.closeForm)
+    def showError(self, error):
+        self.label2.setText(error)
+    
+    def showStatus(self, status):
+        self.label.setText(status)
+    def closeForm(self):
+        
+        self.done(0)
+
+class gipsyTask(object):
+  
+    
+    def __init__(self):
+       
+        return
+        
+    
+    def sendTask(self, task):
+        task=task.lower()
+        key=str(time.time())
+        try:
+            xeq(task, key)
+        except XeqError as e:
+            raise gipsyException(str(e))
+            return
+        
+
+    def finished(self,cb):
+        if gipsy.usertext(cb.key) =="1":
+            self.form.showStatus("Done")
+            cb.deschedule()                                          # deregister
+#        else: #This is bacause the task was been aborted before
+#            self.form.showStatus("Error", wi="error")
+        
+  
+
+#    def show_status(self,cb):
+#        
+#        h=gipsy.usertext('R_'+cb.notifykey, default=2, defval='')
+#        msg=gipsy.usertext(cb.key)
+#        #mask=gipsy.usertext(cb.mask)
+#        if any (filter(lambda x: x in msg, ["FINISHED", "Working", "RUNNING"])):
+#            self.form.showStatus("Working")
+#        else:
+#            self.form.showStatus(str(msg)+"eo"+str(h), wi="error")
+#            cb.deschedule()
+#            gipsy.aborttask( self.task_upper)
+#    def show_status(self, cb):
+#        #self.form.status.setText("s"+gipsy.usertext(cb.key))
+#        pass
+#        
+               
+                
+    def writekey(self, cb):
+        gipsy.wkey(cb.key+gipsy.usertext(cb.key, default=2, defval=''), cb.task)
+        
+    #    def taskrequest(self,cb):
+    #        
+    #        taskkey = gipsy.usertext(cb.key)
+    #        if taskkey not in self.form.keys:
+    #            self.form.addkey(taskkey)
+    #            self.form.keys.append(taskkey)
+    #            gipsy.KeyCallback(self.writekey, taskkey, task=cb.task)
+    #        else:
+    def taskrequest(self, cb):
+        taskkey = gipsy.usertext(cb.key)
+        if taskkey not in self.form.keys:
+            self.form.addkey(taskkey)
+            #self.form.keys.append(taskkey)
+            gipsy.KeyCallback(self.writekey, taskkey, task=cb.task)
+        else:
+            self.form.errorMsg.setText("e"+gipsy.usertext('R_'+cb.notifykey, default=1, defval=''))
+            self.form.status.setText("ss"+gipsy.usertext('S_'+cb.notifykey, default=1, defval=''))
+            cb.deschedule()
+            gipsy.aborttask( self.task_upper)
+           
+            
+        
+        
+    def launchTask(self,task, form):
+        self.form=form
+        taskname = task
+        self.task_upper=task.split()[0].upper()
+
+        if not taskname:                                          # empty input:
+            return                                                 # ignore
+        global counter
+        counter +=1
+        notifykey = 'TASKCOM='
+        
+        try:
+            gipsy.xeq(taskname, notifykey)                         # start task
+            gipsy.KeyCallback(self.finished, notifykey, task=taskname)  # register callback
+            gipsy.KeyCallback(self.taskrequest, 'K_'+notifykey,task=taskname, notifykey=notifykey)
+            #gipsy.KeyCallback(self.show_status, 'S_'+notifykey, task=taskname, notifykey=notifykey)
+            
+        except:
+            self.form.showStatus('Cannot run %s' % taskname)  # failed to start
+

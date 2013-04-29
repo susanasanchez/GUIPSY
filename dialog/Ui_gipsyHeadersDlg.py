@@ -1,0 +1,65 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'gipsyHeadersDlg.ui'
+#
+# Created: Thu Aug 25 14:14:45 2011
+#      by: PyQt4 UI code generator 4.7.2
+#
+# WARNING! All changes made in this file will be lost!
+
+from PyQt4 import QtCore, QtGui
+
+class Ui_gipsyHeaderDlg(object):
+    def setupUi(self, gipsyHeaderDlg):
+        gipsyHeaderDlg.setObjectName("gipsyHeaderDlg")
+        gipsyHeaderDlg.resize(495, 713)
+        self.verticalLayout = QtGui.QVBoxLayout(gipsyHeaderDlg)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.scrollArea = QtGui.QScrollArea(gipsyHeaderDlg)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollAreaWidgetContents = QtGui.QWidget(self.scrollArea)
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 475, 591))
+        self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.headerLayout = QtGui.QGridLayout(self.scrollAreaWidgetContents)
+        self.headerLayout.setObjectName("headerLayout")
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.verticalLayout.addWidget(self.scrollArea)
+        self.groupBox = QtGui.QGroupBox(gipsyHeaderDlg)
+        self.groupBox.setObjectName("groupBox")
+        self.horizontalLayout = QtGui.QHBoxLayout(self.groupBox)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.newHeaderName1 = QtGui.QLineEdit(self.groupBox)
+        self.newHeaderName1.setMaxLength(8)
+        self.newHeaderName1.setObjectName("newHeaderName1")
+        self.horizontalLayout.addWidget(self.newHeaderName1)
+        self.newHeaderData1 = QtGui.QLineEdit(self.groupBox)
+        self.newHeaderData1.setMaxLength(72)
+        self.newHeaderData1.setObjectName("newHeaderData1")
+        self.horizontalLayout.addWidget(self.newHeaderData1)
+        self.newHeaderButton1 = QtGui.QPushButton(self.groupBox)
+        self.newHeaderButton1.setText("")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/add_icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.newHeaderButton1.setIcon(icon)
+        self.newHeaderButton1.setObjectName("newHeaderButton1")
+        self.horizontalLayout.addWidget(self.newHeaderButton1)
+        spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.verticalLayout.addWidget(self.groupBox)
+        self.buttonBox = QtGui.QDialogButtonBox(gipsyHeaderDlg)
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Close)
+        self.buttonBox.setObjectName("buttonBox")
+        self.verticalLayout.addWidget(self.buttonBox)
+
+        self.retranslateUi(gipsyHeaderDlg)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), gipsyHeaderDlg.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), gipsyHeaderDlg.reject)
+        QtCore.QMetaObject.connectSlotsByName(gipsyHeaderDlg)
+
+    def retranslateUi(self, gipsyHeaderDlg):
+        gipsyHeaderDlg.setWindowTitle(QtGui.QApplication.translate("gipsyHeaderDlg", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(QtGui.QApplication.translate("gipsyHeaderDlg", "Add a new header item", None, QtGui.QApplication.UnicodeUTF8))
+
+import resources_rc

@@ -1,0 +1,71 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+import functools
+
+
+import Ui_gipsyHeadersDlg
+
+class gipsyHeadersDlg(QDialog,Ui_gipsyHeadersDlg.Ui_gipsyHeaderDlg):
+    def __init__(self, items, parent=None):
+        super(gipsyHeadersDlg, self).__init__(parent)
+        self.setupUi(self)
+        self.headerLines={}
+        self.headerButtons={}
+        
+        #The list of items is going to be a dictionary
+        self.items={}
+        for key,  value in items:
+            self.items[key]=value
+        
+    
+    def load(self):
+        # Remove previous headerItem to update 
+        while self.headerLayout.count()>0:
+            item=self.headerLayout.takeAt(0)
+            if item != None:
+                w=item.widget()
+                if w:
+                    w.deleteLater()
+        row=0
+        for key, value in self.items.iteritems():
+            self.headerLines[key]=QLineEdit(QString(str(value)))
+            self.headerLines[key].setFixedWidth(125)
+            self.headerLines[key].setMaxLength(72)
+            curried = functools.partial(self.emitKeyChanged, key)
+            self.connect(self.headerLines[key],  SIGNAL("editingFinished()"), curried)
+            self.headerButtons[key]=QPushButton(QString("-"))
+            curried=functools.partial(self.emitKeyDelete, key)
+            self.connect(self.headerButtons[key],  SIGNAL("clicked()"), curried) 
+            self.headerLayout.addWidget(QLabel(QString(key)), row, 0)
+            self.headerLayout.addWidget(self.headerLines[key], row, 1)
+            self.headerLayout.addWidget(self.headerButtons[key], row, 2)
+            self.headerLayout.addItem(QSpacerItem(761, 20,QSizePolicy.Expanding, QSizePolicy.Minimum), row, 3)
+            row += 1
+#        self.newHeaderName1=QLineEdit()
+#        self.newHeaderData1=QLineEdit()
+#        self.newHeaderButton1=QPushButton(QString("+"))  
+#        self.newHeaderData1.setMaxLength(72)
+#        self.newHeaderName1.setMaxLength(8)
+#        self.headerLayout.addWidget(self.newHeaderName1, row, 0)
+#        self.headerLayout.addWidget(self.newHeaderData1, row, 1) 
+#        self.headerLayout.addWidget(self.newHeaderButton1, row, 2) 
+        self.connect(self.newHeaderButton1,  SIGNAL("clicked()"), self.emitNew)
+        self.headerLayout.addItem(QSpacerItem(761, 20, QSizePolicy.Expanding, QSizePolicy.Minimum), row, 3)
+        
+        
+
+    def getItems(self):
+        return self.items
+        
+    def emitNew(self):
+        key=self.newHeaderName1.text()
+        value=self.newHeaderData1.text()
+        self.items[key]=value
+        self.load()
+        
+    def emitKeyDelete(self, key):
+        del self.items[key]
+        self.load()
+    
+    def emitKeyChanged(self, key):
+        self.items[key]=self.headerLines[key].text()

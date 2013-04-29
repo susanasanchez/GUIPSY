@@ -1,0 +1,159 @@
+
+Program:      RFITS
+
+Purpose:      Load FITS files from tape into a GIPSY set.
+
+Category:     FITS, TAPES, UTILITY
+
+File:         rfits.c
+
+Author:       K.G. Begeman
+
+Description:  The program RFITS is designed to load FITS files into
+              GIPSY sets. Since the F in FITS stands for flexible,
+              it is not that simple to comprehend the data structure
+              which is to be loaded. Therefore RFITS needs a lot of
+              interaction with the user, and the user must know what
+              is on tape and where it is on tape.
+              Since this program must also be flexible, it will always
+              be in devellopment, which means that there will be
+              a constant interaction between the user and the programmer.
+              So don't hesitate to bring forward suggestions for
+              improvement, or even criticism.
+
+Keywords:
+
+*** AUTO=     Try to run in automatice mode [Y].
+              In automatice mode the program will do its best to
+              comprehend the FITS structure on tape. FITS items for
+              which the program has some reasonable defaults will
+              not be asked. In non-automatic mode all items will be
+              asked.
+
+*** NODATA=   Create only set headers [N].
+              With NODATA=Y no data is read, only the set headers
+              are created.
+
+*** HISTORY=  Copy history information from FITS file to Set header [Y].
+
+*** COMMENT=  Copy comments from FITS file to Set Header [Y].
+
+    FITSFILE= Name of file with FITS data [read from tape device].
+              If a file name is entered, the keywords INTAPE= and
+              INFILES= will be skipped. This keyword, and all the
+              following keywords are repeated. After the first filename
+              is read, the default will change to [RFITS quits].
+
+    INTAPE=   Tape device to load from [list of all tape devices].
+
+    INFILES=  File numbers on tape to load data from [RFITS quits].
+              Maximum number of files is 200. The first time this
+              keyword is asked, the current file on tape has file
+              number 0, the previous file (if present) has file number
+              -1 and the next file has file number +1. All numbers will
+              be relative to this initial position. It is also important
+              to know that the program reads the tape in forward direction,
+              meaning that it does not care about the order of file numbers
+              entered by the user.
+              This keyword, and all the following keywords are repeated.
+
+    OUTSET=   Set to load data into. The following keywords depend
+              on whether the set already exists or not.
+
+*** BLANK=    Redefine the FITS BLANK value as specified in the FITS
+              header [value from FITS header]. This option is useful
+              if the program which created the FITS file made a
+              mistake.
+
+              --------------------------------------------------------
+              The following keywords deal with the FITS structure on
+              tape. If the program comprehends this structure, the
+              keywords will be hidden. You can force all keywords to
+              be prompted with AUTO=N.
+              The asterix in the keyword will be replaced by the
+              corresponding axis number.
+              --------------------------------------------------------
+
+    CTYPE*=   Enter the corresponding axis name. Default is chosen as
+              smart as possible. If the set does not exist, the user may
+              type any other legal axis name. If the axis name found in
+              the FITS file is NOT a correct axis name, the user must
+              supply a legal axis name.
+              It is also possible to SKIP an axis or to HIDE an axis.
+              The default will again be chosen as smart as possible.
+              NOTE: Frequency axes to which a velocity system is
+              attached must be indicated by FREQ-OHEL, FREQ-OLSR,
+              FREQ-RHEL or FREQ-RLSR.
+              NOTE: This keyword is also asked (hidden) if the set
+              does not yet exist. It will ask for extra axes names
+              to be added to the new set, all with length 1.
+
+    CUNIT*=   Enter the units of the axis on the FITS tape. This
+              keyword only appears if the set does not yet exist
+              and the corresponding FITS descriptor is not present.
+              Default depends on CTYPE and is normally as prescribed
+              by the FITS standard.
+
+    CRVAL*=   Enter the reference value on the axis. This keyword only
+              appears if the set does not yet exist.
+              Default will be chosen as best we can.
+
+    CDELT*=   Enter the pixel separation along the axis. This keyword only
+              appears if the set does not yet exist.
+              Note: WSRT data might have the wrong sign for CDELT3.
+
+*** LIMITS*=  Enter the range in grids along the axis [whole axis].
+              If the set does already exist, this keyword will not be asked.
+              Note that GIPSY does not allow to extend axes in any
+              direction. Only the last axis in a GIPSY set may be
+              extended, so with this keyword you can make room for
+              data which should be loaded at lower grid positions.
+
+    GRID*=    Enter the first grid position along the axis [first on axis].
+              This keyword is only asked if the set does not yet exist.
+              Default will be chosen as best we can.
+
+    FREQ0=    Rest frequency of observation in Hz. This keyword only
+              appears if FITS descriptor not found in FITS file and
+              the axis is a frequency axis with velocity information.
+
+    VEL=      Velocity of first grid on axis. This keywords is only asked
+              for old FITS files which have been written by VMS GIPSY.
+
+Example:      <USER  > RFITS,AUTO=N
+              <USER  > RFITS,INTAPE=IMPORT
+              <USER  > RFITS,INFILES=31
+              <USER  > RFITS,OUTSET=NGC4214
+              <USER  > RFITS,CTYPE1=RA-NCP
+              <USER  > RFITS,CUNIT1=
+              <USER  > RFITS,LIMITS1=
+              <USER  > RFITS,GRID1=
+              <USER  > RFITS,CTYPE2=DEC-NCP
+              <USER  > RFITS,CUNIT2=
+              <USER  > RFITS,LIMITS2=
+              <USER  > RFITS,GRID2=
+              <USER  > RFITS,CTYPE3=FREQ-OHEL
+              <USER  > RFITS,CUNIT3=MHZ
+              <USER  > RFITS,CDELT3=-2.5/64
+              <USER  > RFITS,LIMITS3=1 32
+              <USER  > RFITS,GRID3=32
+              <USER  > RFITS,FREQ0=
+              <USER  > RFITS,CTYPE4=
+              <USER  > RFITS,CTYPE5=
+              <USER  > RFITS,INFILES=
+
+Updates:      May 24, 1990: KGB, Document created.
+              Nov 26, 1991: KGB, Automatic mode implemented.
+              Feb 26, 1993: KGB, Modification for NEWSTAR FITS.
+              Mar 19, 1993: KGB, Extending the dimensions of new set.
+              Apr 23, 1993: KGB, Bug repaired, keyword NODATA added.
+              Apr 14, 1994: KGB, Bug when reading multiple NMAP cubes repaired.
+              Feb  5, 1996: KGB, Keyword FITSFILE= implemented.
+              Dec 14, 1999: VOG, Allow axis names X1...Xn as default for 
+                                 missing CTYPEs in FITS header
+              Mar  3, 2005: JPT, Implemented 64-bit float (BITPIX = -64)
+              Apr 12, 2009: VOG, Replaced definition of function nint with
+                                 one that uses function floor(). This is to
+                                 enforce compatibility with other coordinate
+                                 routines and to avoid problems with values
+                                 of CRPIX that end on .5

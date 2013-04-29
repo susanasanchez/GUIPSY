@@ -1,0 +1,221 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+import Ui_workspaceBrowser
+
+
+
+class workspaceBrowser(QWidget,Ui_workspaceBrowser.Ui_workspaceBrowser):
+    def __init__(self,  sessionName=None):
+        super(workspaceBrowser, self).__init__()
+        self.setupUi(self)
+#INTERESTING ATRIBUTES INHERITED 
+  #workspaceTree (QTreeWidget)
+#NEW ATRIBUTES
+        self.ICON_SET = QIcon()
+        self.ICON_SET.addPixmap(QPixmap(":/cube.gif"), QIcon.Normal, QIcon.Off)
+        self.itemSet=QTreeWidgetItem(self.workspaceTree)
+        self.itemSet.setText(0,"SETS")
+        self.itemSet.setIcon(0, self.ICON_SET)
+        self.itemSet.setHidden(True)
+
+        self.ICON_TABLE = QIcon()
+        self.ICON_TABLE.addPixmap(QPixmap(":/table.jpg"), QIcon.Normal, QIcon.Off)
+        self.itemTable= QTreeWidgetItem(self.workspaceTree)
+        self.itemTable.setText(0,"TABLES")
+        self.itemTable.setIcon(0, self.ICON_TABLE)
+        self.itemTable.setHidden(True)
+        
+        self.ICON_IMAGE = QIcon()
+        self.ICON_IMAGE.addPixmap(QPixmap(":/image.gif"), QIcon.Normal, QIcon.Off)
+        self.itemImage= QTreeWidgetItem(self.workspaceTree)
+        self.itemImage.setText(0,"IMAGES")
+        self.itemImage.setIcon(0, self.ICON_IMAGE)
+        self.itemImage.setHidden(True)
+        
+        self.ICON_HELP = QIcon()
+        self.ICON_HELP.addPixmap(QPixmap(":/help.gif"), QIcon.Normal, QIcon.Off)
+        self.itemHelp= QTreeWidgetItem(self.workspaceTree)
+        self.itemHelp.setText(0,"HELP")
+        self.itemHelp.setIcon(0, self.ICON_HELP)
+        self.itemHelp.setHidden(True)
+        
+        self.ICON_COLA = QIcon()
+        self.ICON_COLA.addPixmap(QPixmap(":/cola.png"), QIcon.Normal, QIcon.Off)
+        self.itemCola= QTreeWidgetItem(self.workspaceTree)
+        self.itemCola.setText(0,"COLA")
+        self.itemCola.setIcon(0, self.ICON_COLA)
+        self.itemCola.setHidden(True)
+        
+        self.ICON_TEXT = QIcon()
+        self.ICON_TEXT.addPixmap(QPixmap(":/text.jpg"), QIcon.Normal, QIcon.Off)
+        self.itemText= QTreeWidgetItem(self.workspaceTree)
+        self.itemText.setText(0,"TEXT")
+        self.itemText.setIcon(0, self.ICON_TEXT)
+        self.itemText.setHidden(True)
+        
+        self.ICON_PYFILE = QIcon()
+        self.ICON_PYFILE.addPixmap(QPixmap(":/python.png"), QIcon.Normal, QIcon.Off)
+        self.itemPyfile= QTreeWidgetItem(self.workspaceTree)
+        self.itemPyfile.setText(0,"PYFILE")
+        self.itemPyfile.setIcon(0, self.ICON_PYFILE)
+        self.itemPyfile.setHidden(True)
+
+        self.workspaceTree.setColumnCount(2)
+        self.workspaceTree.setColumnHidden(1, True)
+        self.workspaceTree.setHeaderLabels(["files"])
+        
+        self.connect(self.workspaceTree,SIGNAL("itemClicked(QTreeWidgetItem *, int)"), self.itemSelected)
+        self.connect(self.workspaceTree,SIGNAL("itemDoubleClicked(QTreeWidgetItem *, int)"), self.itemDoubleClicked)
+        if(sessionName==None):
+            self.workspaceTree.headerItem().setText(0,"Untitled Session")
+        else:
+            self.workspaceTree.headerItem().setText(0,sessionName)
+        
+      
+        
+    def addFile(self, type,  filename ,  shortname, father=None,  info=None):
+       
+        if type=="SET":
+ 
+            if father is not None:
+              items=self.workspaceTree.findItems(QString(father), Qt.MatchExactly|Qt.MatchRecursive, 1)   
+              if(len(items)==1):
+                  itemFather=items[0]
+              
+
+            else:
+                 self.itemSet.setHidden(False)
+                 itemFather=self.itemSet
+            
+            
+            item=QTreeWidgetItem(itemFather)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_SET)
+            
+            item.setToolTip(0, info)
+        
+        if type=="SETTABLE":
+	    if father is not None:
+              items=self.workspaceTree.findItems(QString(father), Qt.MatchExactly|Qt.MatchRecursive, 1)   
+              if(len(items)==1):
+                  itemFather=items[0]
+	    else:
+	      self.itemTable.setHidden(False)
+	      itemFather=self.itemTable
+
+            item=QTreeWidgetItem(itemFather)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_TABLE)
+
+	if type=="TABLE":
+	    self.itemTable.setHidden(False)
+            item=QTreeWidgetItem(self.itemTable)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_TABLE)
+           
+        if type=="IMAGE":
+            self.itemImage.setHidden(False)
+            item=QTreeWidgetItem(self.itemImage)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_IMAGE)
+            
+        if type=="HELP":
+            self.itemHelp.setHidden(False)
+            item=QTreeWidgetItem(self.itemHelp)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_HELP)
+        if type=="COLA":
+            self.itemCola.setHidden(False)
+            item=QTreeWidgetItem(self.itemCola)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_COLA)
+        if type=="TEXT":
+            self.itemText.setHidden(False)
+            item=QTreeWidgetItem(self.itemText)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_TEXT)
+        if type=="PYFILE":
+            self.itemPyfile.setHidden(False)
+            item=QTreeWidgetItem(self.itemPyfile)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setIcon(0, self.ICON_PYFILE)
+    
+    def delFile(self, type, filename):
+        
+        itemsToDelete=self.workspaceTree.findItems(QString(filename), Qt.MatchExactly|Qt.MatchRecursive, 1) 
+        if(len(itemsToDelete)==1):
+            
+            if type=="SET":
+                self.itemSet.removeChild(itemsToDelete[0])
+                if (self.itemSet.childCount() < 1):
+                    self.itemSet.setHidden(True)
+            if type=="TABLE":
+                self.itemTable.removeChild(itemsToDelete[0])
+                if (self.itemTable.childCount() < 1):
+                    self.itemTable.setHidden(True)
+            if type=="IMAGE":
+                self.itemImage.removeChild(itemsToDelete[0])
+                if (self.itemImage.childCount() < 1):
+                    self.itemImage.setHidden(True)
+            
+            if type=="COLA":
+                self.itemCola.removeChild(itemsToDelete[0])
+                if (self.itemCola.childCount() < 1):
+                    self.itemCola.setHidden(True)
+            if type=="HELP":
+                self.itemHelp.removeChild(itemsToDelete[0])
+                if (self.itemHelp.childCount() < 1):
+                    self.itemHelp.setHidden(True)
+            if type=="TEXT":
+                self.itemText.removeChild(itemsToDelete[0])
+                if (self.itemText.childCount() < 1):
+                    self.itemText.setHidden(True)
+            if type=="PYFILE":
+                self.itemPyfile.removeChild(itemsToDelete[0])
+                if (self.itemPyfile.childCount() < 1):
+                    self.itemPyfile.setHidden(True)
+
+    
+    def selectFile (self,  filename):
+        
+        for item in self.workspaceTree.selectedItems():
+            self.workspaceTree.setItemSelected(item, False)
+
+        itemsToSelect=self.workspaceTree.findItems(QString(filename), Qt.MatchExactly|Qt.MatchRecursive, 1)
+        for item in itemsToSelect:
+            self.workspaceTree.setItemSelected(item, True)
+        
+        self.workspaceTree.scrollToItem(item) 
+    
+    def itemSelected(self, item):
+        
+        if item:
+            filename=item.text(1)
+            self.emit(SIGNAL("itemSelected"), filename)
+            return True
+
+    def itemDoubleClicked(self, item):
+        
+        if item:
+            filename=item.text(1)
+            self.emit(SIGNAL("itemDoubleClicked"), filename)
+            return True
+
+    def updateSessionTitle(self, title):
+         self.workspaceTree.headerItem().setText(0,title)
+        
+
+    def updateToolTip(self, filename, info):
+        
+        itemsToUpdate=self.workspaceTree.findItems(QString(filename), Qt.MatchExactly|Qt.MatchRecursive, 1) 
+        if(len(itemsToUpdate)==1):
+            itemsToUpdate[0].setToolTip(0, info)
+            

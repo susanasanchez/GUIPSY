@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>extend</class>
+ <widget class="QFrame" name="extend">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>425</width>
+    <height>431</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Frame</string>
+  </property>
+  <property name="frameShape">
+   <enum>QFrame::NoFrame</enum>
+  </property>
+  <property name="frameShadow">
+   <enum>QFrame::Raised</enum>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="ctypeLabel">
+     <property name="text">
+      <string>CTYPE</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="ctypeBox"/>
+   </item>
+   <item row="0" column="2">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>172</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="naxisLabel">
+     <property name="text">
+      <string>NAXIS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="naxisLine"/>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="crpixLabel">
+     <property name="text">
+      <string>CRPIX</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLineEdit" name="crpixLine"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="cunitLabel">
+     <property name="text">
+      <string>CUNIT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QComboBox" name="cunitBox"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="crvalLabel">
+     <property name="text">
+      <string>CRVAL</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLineEdit" name="crvalLine"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="cdeltLabel">
+     <property name="text">
+      <string>CDELT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="cdeltLine"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="crotaLabel">
+     <property name="text">
+      <string>CROTA</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="crotaLine"/>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="dunitLabel">
+     <property name="text">
+      <string>DUNIT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="dunitLine"/>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="drvalLabel">
+     <property name="text">
+      <string>DRVAL</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QLineEdit" name="drvalLine"/>
+   </item>
+   <item row="9" column="0">
+    <widget class="QLabel" name="freqLabel">
+     <property name="text">
+      <string>FREQ0</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QLineEdit" name="freqLine"/>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,2870 @@
+import sys
+import functools
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from Ui_clip import *
+from Ui_meanSum import *
+from Ui_combin import *
+from Ui_copy import *
+from Ui_editset import *
+from Ui_decim import *
+from Ui_minbox import *
+from Ui_regrid import *
+from Ui_transform import *
+from Ui_snapper import *
+from Ui_velsmo import *
+from Ui_transpose import *
+from Ui_extend import *
+from gipsyClasses.gipsySet import *
+from gipsyClasses.gipsyTask import *
+
+from general import *
+
+from new_exceptions import *
+
+
+
+class view_clip(QDialog,Ui_clip):
+    def __init__(self,filename):
+        super(view_clip, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "RANGE=", "CVAL=", "BVAL="] #List of the keys/parameters of task, nowadays
+        #self.keys=["INSET=", "BOX=", "OUTSET=", "CVAL=", "BVAL="] #List of the keys/parameters of task, nowadays
+        self.gt=gipsyTask()
+        self.log=""
+        self.inset=""
+        self.outsetPath=""
+        
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+            self.insetLabel.setText(shortname)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+        
+ 
+                
+        
+        self.connect(self.replaceButton, SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.insideBlank, SIGNAL("stateChanged(int)"),  self.insideBlankChanged)
+        self.connect(self.outsideBlank, SIGNAL("stateChanged(int)"), self.outsideBlankChanged)
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/clip"):
+            with open(TASKFILES+"/clip", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                if key =="RANGE":
+                    min, max=value.split()
+                    self.maxLine.setText(max)
+                    self.minLine.setText(min)
+                elif key=="CVAL":
+                    if value.strip()=="":
+                        self.insideBlank.setCheckState(Qt.Checked)
+                    else:
+                        self.valueInside.setText(value)
+                elif key=="BVAL":
+                    if value.strip()=="":
+                        self.outsideBlank.setCheckState(Qt.Checked)
+                    else:
+                        self.valueOutside.setText(value)
+
+    
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        dir = os.path.dirname(self.insetPath)
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+        
+    def showStatus(self, status, wi=""):
+        self.status.setText(status)
+        if wi =="error":
+            self.highlightError(status)
+ 
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetLine.setPalette(p)
+        if "clipped" in status:
+            self.valueInside.setPalette(p)
+        if "outside" in status:
+            self.valueOutside.setPalette(p)
+        if "range" in status:
+            self.maxLine.setPalette(p)
+            self.minLine.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)
+        self.valueInside.setPalette(p)
+        self.valueOutside.setPalette(p)
+        self.maxLine.setPalette(p)
+        self.minLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        self.updateFileTask()
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            minvalue=str(self.minLine.text())
+            maxvalue=str(self.maxLine.text())
+            self.outsetPath=str(self.outsetLine.text())
+            self.taskcommand='CLIP INSET=%s BOX= OUTSET=%s RANGE=%s %s OKAY=Y'%(self.insetPath, self.outsetPath,minvalue, maxvalue)
+            #self.taskcommand='clip inset=%s box= outset=%s  okay=Y'%(self.insetPath, self.outsetPath)
+            if self.insideBlank.checkState() == Qt.Checked:
+                cval=""
+            else:
+                cval=str(self.valueInside.text()).strip()
+            self.taskcommand=self.taskcommand+" CVAL=%s"%(cval)
+            if self.outsideBlank.checkState() == Qt.Checked:
+                bval=""
+            else:
+                bval=str(self.valueOutside.text()).strip()
+            self.taskcommand=self.taskcommand+" BVAL=%s"%(bval)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+    def updateFileTask(self):
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/clip", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+    def insideBlankChanged(self, status):
+        if status==Qt.Checked:
+            self.valueInside.setEnabled(False)
+        else:
+            self.valueInside.setEnabled(True)
+
+    def outsideBlankChanged(self, status):
+        if status==Qt.Checked:
+            self.valueOutside.setEnabled(False)
+        else:
+            self.valueOutside.setEnabled(True)
+            
+                
+                
+class view_meanSum(QDialog,Ui_meanSum):
+    def __init__(self,filename):
+        super(view_meanSum, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS=", "CUT="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.inset=""
+        self.outsetPath=""
+        
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+           
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+            
+            #Getting the default subset 
+            self.dim=self.inset.getThirdDimension()
+            self.insetLabel.setText(shortname+" "+self.dim)
+ 
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+    
+    
+    
+    def browserOutset(self):
+        dir = os.path.dirname(self.insetPath)
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+        self.highlightError(status)
+    def showStatus(self, status, wi=""):
+        self.status.setText(status)
+        if wi =="error":
+            self.highlightError(status)
+             
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status or "directory" in status:
+            self.outsetLine.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            self.outsetPath=str(self.outsetLine.text())
+            task=self.comboOperation.currentText()
+            
+            self.taskcommand='%s INSET=%s %s BOX= WEIGHTS= CUT= OUTSET=%s OKAY=yes'%(task, self.insetPath, self.dim,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+class view_combin(QDialog,Ui_combin):
+    def __init__(self,filenames):
+        super(view_combin, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["RESULT01=", "SET01=", "BOX01=", "SET02=", "BOX02=", "SET03=", "BOX03=",  "SETOUT01=", "OPTION=", "RESULT02=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetLabel=[]
+        self.insetPath=[]
+        
+        
+        if len(filenames) >0:
+            for name in filenames:
+                self.setsBox.addItem(name)
+            
+
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.addSetButton, SIGNAL("clicked()"), self.addSet )
+        self.connect(self.clearButton, SIGNAL("clicked()"), self.clearCombinSets)
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/combin"):
+            with open(TASKFILES+"/combin", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                value.strip()
+                if key =="RESULT01":
+                    self.operationLine.setText(value)
+                elif key=="OPTION":
+                    try:
+                        value=int(value)
+                    except:
+                        pass
+                    else:
+                        if value==0:
+                            self.operationBox.setCurrentIndex(self.operationBox.findText("Inside"))
+                            self.complementaryBox.setCurrentIndex(self.complementaryBox.findText("Blank"))
+                        elif value ==1:
+                            self.operationBox.setCurrentIndex(self.operationBox.findText("Inside"))
+                            self.complementaryBox.setCurrentIndex(self.complementaryBox.findText("Transfers"))
+                        elif value==2:
+                            p=QPalette()
+                            p.setColor(QPalette.Base, QColor(255, 0,0))
+                            self.operationLine.setPalette(p)
+                            self.operationBox.setCurrentIndex(self.operationBox.findText("Outside"))
+                            self.complementaryBox.setCurrentIndex(self.complementaryBox.findText("Blanks"))
+                        elif value==3:
+                            self.operationBox.setCurrentIndex(self.operationBox.findText("Outside"))
+                            self.complementaryBox.setCurrentIndex(self.complementaryBox.findText("Transfers"))
+    
+    
+    def addSet(self):
+
+        filename=str(self.setsBox.currentText())
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+     
+        tmp=gipsySet()
+        tmp.loadSet(filename)
+        tmp_dim=tmp.getThirdDimension()
+        
+        tmp_insetLabel=QLabel(QString(shortname+" "+tmp_dim))
+        tmp_insetLabel.setToolTip(filename)
+        self.insetLabel.append(tmp_insetLabel)
+        
+        frame=QGroupBox()
+        gridLayout = QtGui.QGridLayout(frame)
+        
+        self.combinLayout.addWidget(frame)
+       
+        current=len(self.insetLabel)-1
+        frame.setTitle("$"+str(current+1))
+        gridLayout.addWidget(QPushButton("Inset"), 0, 0)
+        gridLayout.addWidget(QPushButton("Box"), 1, 0)
+        gridLayout.addWidget( tmp_insetLabel, 0, 1)
+        gridLayout.addWidget(QLabel("Entire Set"), 1, 1)
+        gridLayout.addWidget(QPushButton("Header"), 0, 2)
+        
+        if not self.clearButton.isEnabled():
+            self.clearButton.setEnabled(True)
+        
+        
+
+    def clearCombinSets(self):
+        while self.combinLayout.count()>0:
+            item=self.combinLayout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+        
+        del self.insetLabel[:]
+        del self.insetPath[:]
+        self.clearButton.setEnabled(False)
+        
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        self.status.setText(status)
+      
+        if wi =="error":
+            self.highlightError(status)
+             
+
+    def highlightError(self, status):
+        
+        if "parameter" in status:
+            p=QPalette()
+            p.setColor(QPalette.Foreground, QColor(255, 0,0))
+            self.combinSets.setPalette(p)
+            
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.operationLine.setPalette(p)
+            
+        if "output" in status:
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.outsetLine.setPalette(p)
+        if "expression" in status:
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.operationLine.setPalette(p)
+            
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)    
+        self.operationLine.setPalette(p)    
+        p.setColor(QPalette.Foreground, QColor(0, 0,0))
+        self.combinSets.setPalette(p)
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            #Componing SETXX y BOXX
+            input=""
+            index=1
+            for label in self.insetLabel:
+                setname=str(label.toolTip())
+                dim = str(label.text()).split()[1]
+                if index<10:
+                    input=input+"SET0"+str(index)+"="+setname+" "+dim+" BOX0"+str(index)+"= "
+                else:
+                    input=input+"SET"+str(index)+"="+setname+" "+dim+" BOX"+str(index)+"= "
+                index +=1
+                
+            self.outsetPath=str(self.outsetLine.text())
+            operation=str(self.operationLine.text())
+            operationBox=self.operationBox.currentText()
+            complementaryBox=self.complementaryBox.currentText()
+            if operationBox == "Inside":
+                if complementaryBox =="Blank":
+                    option=0
+                else:
+                    option=1
+            else:
+                if complementaryBox =="Blank":
+                    option=2
+                else:
+                    option=3
+                    
+            self.taskcommand='COMBIN %s RESULT01=%s OPTION=%s SETOUT01=%s RESULT02= OKAY='%(input, operation, option,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            #self.showStatus(self.taskcommand)
+            
+    def updateFileTask(self):
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/combin", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+class view_copy(QDialog,Ui_copy):
+    def __init__(self,filename):
+        super(view_copy, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "MAKEBLANK="] #List of the keys/parameters of task, nowadays
+        self.gt=gipsyTask()
+        self.log=""
+        self.inset=""
+        self.outsetPath=""
+        
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+            self.insetLabel.setText(shortname)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+        
+        self.connect(self.replaceButton, SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/copy"):
+            with open(TASKFILES+"/copy", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                if key =="MAKEBLANK":
+                    if value.upper().strip() =="YES":
+                        self.checkBlank.setCheckState(Qt.Checked)
+                    else:
+                        self.checkBlank.setCheckState(Qt.Unchecked)
+                    
+    
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        dir = os.path.dirname(self.insetPath)
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+        self.highlightError(errorMsg)
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status[:40]+"s")
+            if wi =="error":
+                self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetLine.setPalette(p)
+        if "Output" in status:
+            self.outsetLine.setPalette(p)
+        
+       
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        self.updateFileTask()
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            self.outsetPath=str(self.outsetLine.text())
+            if self.checkBlank.checkState() == Qt.Checked:
+                blank="YES"
+            else:
+                blank="NO"
+            
+                
+            self.taskcommand='COPY INSET=%s BOX= OUTSET=%s MAKEBLANK=%s OKAY=Y'%(self.insetPath, self.outsetPath, blank)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+    def updateFileTask(self):
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/copy", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+class view_editset(QDialog,Ui_editset):
+    def __init__(self,filename):
+        super(view_editset, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=",  "EXPRESSION=", "ANOTHER="] #List of the keys/parameters of task, nowadays
+        self.gt=gipsyTask()
+        self.log=""
+        self.inset=""
+        self.outsetPath=""
+        
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+            self.insetLabel.setText(shortname)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+        
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/editset"):
+            with open(TASKFILES+"/editset", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                if key =="EXPRESSION":
+                    self.expressionLine.setText(value)
+                    
+    
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+        self.highlightError(errorMsg)
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status[:40])
+            if wi =="error":
+                self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "expression" in status:
+            self.expressionLine.setPalette(p)
+       
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.expressionLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        self.updateFileTask()
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            expression=str(self.expressionLine.text())
+            
+            self.taskcommand='EDITSET INSET=%s BOX= EXPRESSION=%s ANOTHER= '%(self.insetPath, expression)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+    def updateFileTask(self):
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/editset", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+class view_decim(QDialog,Ui_decim):
+    def __init__(self,filename):
+        super(view_decim, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "DECIM=", "SHIFT=", "OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+           
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+            
+            #Getting the default subset 
+            thirdDim=self.inset.getThirdDimension()
+            self.insetLabel.setText(shortname+" "+thirdDim)
+            
+            self.dimensions=self.inset.getAxes()
+            self.decim=[]
+            self.shift=[]
+            for i in range(len(self.dimensions)):
+                d=self.dimensions[i]
+                if d != thirdDim:
+                    frame=QFrame()
+                    vertLayout = QtGui.QHBoxLayout(frame)
+                    self.dimensionLayout.addWidget(frame)
+                    vertLayout.addWidget(QLabel(str(d)))
+                    vertLayout.addWidget(QLabel("DECIM"))
+                    editlineDec=QLineEdit()
+                    self.decim.append(editlineDec)
+                    vertLayout.addWidget(editlineDec)
+                    vertLayout.addWidget(QLabel("SHIFT"))
+                    editlineShi=QLineEdit()
+                    self.shift.append(editlineShi)
+                    vertLayout.addWidget(editlineShi)
+
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        
+        #Load the last values
+#        if os.path.isfile(TASKFILES+"/combin"):
+#            with open(TASKFILES+"/combin", "r") as f:
+#                lines=f.readlines()
+#        
+#            for line in lines:
+#                key, value=line.split("=")
+#                key=key.upper()
+#                value.strip()
+#                if key =="RESULT01":
+#                    self.operationLine.setText(value)
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        if "directory" in status:
+            self.outsetLine.setPalette(p)
+        if "decimation" in status:
+            for label in self.decim:
+                label.setPalette(p)
+        if status is "":
+            for label in self.shift:
+                label.setPalette(p)
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)    
+        for label in self.decim:
+            label.setPalette(p)
+        for label in self.shift:
+            label.setPalette(p)
+            
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            
+            decimValue=""
+            for editline in self.decim:
+                value=str(editline.text())
+                if value.strip()=="":
+                    editline.setText("1")
+                    value="1"
+                decimValue=decimValue+" "+value
+            
+            shiftValue=""
+            for editline in self.shift:
+                value=str(editline.text())
+                if value.strip()=="":
+                    editline.setText("0")
+                    value="0"
+                shiftValue=shiftValue+" "+value
+
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='DECIM INSET=%s BOX= DECIM=%s SHIFT=%s OUTSET=%s OKAY=YES'%(self.insetPath, decimValue.strip(), shiftValue.strip(), self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            self.updateFileTask()
+            
+#            filecola=TASKFILES+"/decim"
+#            colacommand="COLA name=%s"%filecola
+#            self.gt.launchTask(colacommand, self)
+
+    def updateFileTask(self):
+#        try:
+#            os.mkdir(TASKFILES)
+#        except OSError: #The dir already exists
+#            pass
+#        with open(TASKFILES+"/decim.col", "w") as f:
+#            f.write("\"")
+#            f.write(self.taskcommand+"\n")
+#            f.write("\"")
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/decim", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+
+
+class view_minbox(QDialog,Ui_minbox):
+    def __init__(self,filename):
+        super(view_minbox, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "MARGIN=", "SQUARE=", "OUTSET=", "MINBOX=","OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+           
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+            
+            #Getting the default subset 
+            thirdDim=self.inset.getThirdDimension()
+            self.insetLabel.setText(shortname+" "+thirdDim)
+
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        
+        #Load the last values
+#        if os.path.isfile(TASKFILES+"/combin"):
+#            with open(TASKFILES+"/combin", "r") as f:
+#                lines=f.readlines()
+#        
+#            for line in lines:
+#                key, value=line.split("=")
+#                key=key.upper()
+#                value.strip()
+#                if key =="RESULT01":
+#                    self.operationLine.setText(value)
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        
+  
+        
+        
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+            
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        #self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            
+            margin=self.marginLine.text()
+            
+            if (self.squareCheck.checkState() == Qt.Checked):
+                square="YES"
+            else:
+                square="NO"
+
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='MINBOX INSET=%s BOX= MARGIN=%s SQUARE=%s OUTSET=%s MINBOX= OKAY=YES'%(self.insetPath, margin, square, self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            self.updateFileTask()
+            
+
+
+    def updateFileTask(self):
+
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/decim", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+
+class view_regrid(QDialog,Ui_regrid):
+    def __init__(self,filename):
+        super(view_regrid, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=","AXNAME=", "CDELT=", "IPOL=","WIDTH=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        
+        self.insetPath=filename
+        self.inset=gipsySet()
+        self.inset.loadSet(filename)
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+       
+        self.insetLabel.setToolTip(filename)
+        self.insetLabel.setText(shortname)
+        self.boxLabel.setText("Entire set")
+        
+        #Getting the list axis 
+        self.connect(self.axnameBox, SIGNAL("currentIndexChanged(QString)"), self.changeUnit ) 
+        self.dimensions=self.inset.getAxes()
+        self.decim=[]
+        self.shift=[]
+        for i in range(len(self.dimensions)):
+            d=self.dimensions[i]
+            self.axnameBox.addItem(d)
+        
+
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+      
+        
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/regrid"):
+            with open(TASKFILES+"/regrid", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                value.strip()
+                if key =="CDELT":
+                    self.cdeltLine.setText(value)
+                if key=="IPOL":
+                    self.ipolBox.setCurrentIndex(self.ipolBox.findText(value))
+                if key=="WIDTH":
+                    self.widthLine.setText(value)
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        if "width" in status:
+            self.widthLine.setPalette(p)
+        if "spac." in status:
+            self.cdeltLine.setPalette(p)
+        
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        self.outsetLine.setPalette(p)
+        self.widthLine.setPalette(p)    
+        self.cdeltLine.setPalette(p)
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            
+            axname=str(self.axnameBox.currentText())
+            cdelt=str(self.cdeltLine.text())
+            ipol=self.ipolBox.currentIndex()+1
+            width=str(self.widthLine.text())
+            
+
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='REGRID INSET=%s BOX= AXNAME=%s CDELT=%s IPOL=%s WIDTH=%s OUTSET=%s  OKAY=YES'%(self.insetPath, axname, cdelt, str(ipol), width, self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            self.updateFileTask()
+            
+
+
+    def updateFileTask(self):
+
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/decim", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+    def changeUnit(self, text):
+        i=int(self.dimensions.index(text))+1
+        key="CUNIT"+str(i)
+        try:
+            unit=self.inset.getHeaderValue(key)
+        except gipsyException as g:
+            QMessageBox.warning(self, "Reading UNITS failed", QString(g.msj))
+        else:
+            self.unitLabel.setText(QString(unit))
+
+
+
+class view_transform(QDialog,Ui_transform):
+    def __init__(self,filename):
+        super(view_transform, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=","POS=", "OPERATION=", "TRANSLXY=","ANGLE=","SCALEXY=", "XSHEAR=", "YSHEAR=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        
+        self.insetPath=filename
+        self.inset=gipsySet()
+        self.inset.loadSet(filename)
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+       
+        self.insetLabel.setToolTip(filename)
+        self.insetLabel.setText(shortname)
+        self.boxLabel.setText("Entire set")
+        
+        self.connect(self.operationBox, SIGNAL("currentIndexChanged(int)"), self.enableParameters)
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+      
+       #The default option is the first item
+        self.enableParameters(0)
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/regrid"):
+            with open(TASKFILES+"/regrid", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                value.strip()
+                if key =="CDELT":
+                    self.cdeltLine.setText(value)
+                if key=="IPOL":
+                    self.ipolBox.setCurrentIndex(self.ipolBox.findText(value))
+                if key=="WIDTH":
+                    self.widthLine.setText(value)
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        if "centre" in status:
+            self.xposLine.setPalette(p)
+            self.yposLine.setPalette(p)
+        if "translation" in status:
+            self.translxLine.setPalette(p)
+            self.translyLine.setPalette(p)
+        if "scaling" in status:
+            self.scalexLine.setPalette(p)
+            self.scaleyLine.setPalette(p)
+            
+        if  "rotation" in status:
+            self.angleLine.setPalette(p)
+        if "shear" in status:
+            if "X:" in status:
+                self.xshearLine.setPalette(p)
+            else:
+                self.yshearLine.setPalette(p)
+
+        
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        self.outsetLine.setPalette(p)
+        
+        self.xposLine.setPalette(p)
+        self.yposLine.setPalette(p)
+        self.translxLine.setPalette(p)
+        self.translyLine.setPalette(p)
+        self.angleLine.setPalette(p)
+        self.xshearLine.setPalette(p)
+        self.yshearLine.setPalette(p)
+        self.scalexLine.setPalette(p)
+        self.scaleyLine.setPalette(p)
+  
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            
+            xpos=str(self.xposLine.text())
+            ypos=str(self.yposLine.text())
+            operation=str(self.operationBox.currentIndex()+1)
+            translx=str(self.translxLine.text())
+            transly=str(self.translyLine.text())
+            angle=str(self.angleLine.text())
+            scalex=str(self.scalexLine.text())
+            scaley=str(self.scaleyLine.text())
+            xshear=str(self.xshearLine.text())
+            yshear=str(self.yshearLine.text())
+
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='TRANSFORM INSET=%s BOX= POS=%s %s OPERATION=%s TRANSLXY=%s %s\
+                         ANGLE=%s SCALEXY=%s %s XSHEAR=%s YSHEAR=%s OUTSET=%s  OKAY=YES'\
+                                            %(self.insetPath, xpos, ypos,  operation,  translx,  transly,  angle,  scalex,  scaley, \
+                                              xshear,  yshear,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            self.updateFileTask()
+            
+
+
+    def updateFileTask(self):
+
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/decim", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+    def enableParameters(self, index):
+        i=index+1
+        
+        if i==1: #Translation
+            self.translxLine.setEnabled(True)
+            self.translyLine.setEnabled(True)
+            
+            self.angleLine.setEnabled(False)
+            self.scalexLine.setEnabled(False)
+            self.scaleyLine.setEnabled(False)
+            self.xshearLine.setEnabled(False)
+            self.yshearLine.setEnabled(False)
+        elif i==2: #Rotation
+            self.translxLine.setEnabled(False)
+            self.translyLine.setEnabled(False)
+            
+            self.angleLine.setEnabled(True)
+            
+            self.scalexLine.setEnabled(False)
+            self.scaleyLine.setEnabled(False)
+            self.xshearLine.setEnabled(False)
+            self.yshearLine.setEnabled(False)
+        elif i==3: #Scaling
+            self.translxLine.setEnabled(False)
+            self.translyLine.setEnabled(False)
+            self.angleLine.setEnabled(False)
+            
+            self.scalexLine.setEnabled(True)
+            self.scaleyLine.setEnabled(True)
+            
+            self.xshearLine.setEnabled(False)
+            self.yshearLine.setEnabled(False)
+        elif i==4 or i==5 or i==6: #Reflection 
+            self.translxLine.setEnabled(False)
+            self.translyLine.setEnabled(False)
+            self.angleLine.setEnabled(False)
+            self.scalexLine.setEnabled(False)
+            self.scaleyLine.setEnabled(False)
+            self.xshearLine.setEnabled(False)
+            self.yshearLine.setEnabled(False)
+        elif i==7: # X Shear
+            self.translxLine.setEnabled(False)
+            self.translyLine.setEnabled(False)
+            self.angleLine.setEnabled(False)
+            self.scalexLine.setEnabled(False)
+            self.scaleyLine.setEnabled(False)
+            
+            self.xshearLine.setEnabled(True)
+            
+            self.yshearLine.setEnabled(False)
+        elif i==8: #Translation
+            self.translxLine.setEnabled(False)
+            self.translyLine.setEnabled(False)
+            
+            self.angleLine.setEnabled(False)
+            self.scalexLine.setEnabled(False)
+            self.scaleyLine.setEnabled(False)
+            self.xshearLine.setEnabled(False)
+            
+            self.yshearLine.setEnabled(True)
+            
+class view_snapper(QDialog,Ui_snapper):
+    def __init__(self,filename):
+        super(view_snapper, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=","REPSIZE=", "OLDVAL=", "NEWVAL=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        
+        self.insetPath=filename
+        self.inset=gipsySet()
+        self.inset.loadSet(filename)
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+       
+        self.insetLabel.setToolTip(filename)
+        self.insetLabel.setText(shortname)
+        self.boxLabel.setText("Entire set")
+        
+        
+        curried = functools.partial(self.checkChanged,self.newvalCheck, self.newvalLine)
+        self.connect(self.newvalCheck,SIGNAL("stateChanged(int)"),  curried)
+        curried = functools.partial(self.checkChanged,self.oldvalCheck, self.oldvalLine)
+        self.connect(self.oldvalCheck,SIGNAL("stateChanged(int)"),  curried)
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        self.oldvalCheck.setCheckState(Qt.Checked)
+        self.newvalCheck.setCheckState(Qt.Checked)
+       
+        
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/snapper"):
+            with open(TASKFILES+"/snapper", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                value.strip()
+                if key =="REPSIZE":
+                    repsize=value.split()
+                    if len(repsize)==2:
+                        self.repsizexLine.setText(value.split()[0])
+                        self.repsizeyLine.setText(value.split()[1])
+                if key=="OLDVAL":
+                    if value.strip() !="":
+                        self.oldvalLine.setText(value)
+                        self.oldvalCheck.setCheckState(Qt.Unchecked)
+                    else:
+                        self.oldvalCheck.setCheckState(Qt.Checked)
+                if key=="NEWVAL":
+                    if value.strip() !="":
+                        self.newvalCheck.setCheckState(Qt.Unchecked)
+                        self.newvalLine.setText(value)
+                    else:
+                         self.newvalCheck.setCheckState(Qt.Checked)
+                    
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        if "box" in status:
+            self.repsizexLine.setPalette(p)
+            self.repsizeyLine.setPalette(p)
+        if "map" in status:
+            self.oldvalLine.setPalette(p)
+        if "new" in status:
+            self.newvalLine.setPalette(p)
+     
+
+        
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        self.outsetLine.setPalette(p)
+        
+        self.repsizexLine.setPalette(p)
+        self.repsizeyLine.setPalette(p)
+        self.oldvalLine.setPalette(p)
+        self.newvalLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            
+            repsize=str(self.repsizexLine.text())+" "+str(self.repsizeyLine.text())
+            if self.oldvalCheck.isChecked():
+                oldval=""
+            else:
+                oldval=str(self.oldvalLine.text())
+            if self.newvalCheck.isChecked():
+                newval=""
+            else:
+                newval=str(self.newvalLine.text())
+                
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='SNAPPER INSET=%s BOX= OLDVAL=%s NEWVAL=%s REPSIZE=%s OUTSET=%s  OKAY=YES'\
+                                            %(self.insetPath, oldval, newval,  repsize,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            self.updateFileTask()
+            
+
+
+    def updateFileTask(self):
+
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/snapper", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+    def checkChanged(self, checkbox, line):
+        if checkbox.isChecked():
+            line.setEnabled(False)
+        else:
+            line.setEnabled(True)
+
+class view_velsmo(QDialog,Ui_velsmo):
+    def __init__(self,filename):
+        super(view_velsmo, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS="] #List of the keys/parameters of task, nowadays
+        self.gt=gipsyTask()
+        self.log=""
+        self.inset=""
+        self.outsetPath=""
+        
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            shortname=os.path.basename(filename)
+            shortname=shortname.split(".")[0]
+            #Getting the default subset 
+            self.dim=self.inset.getThirdDimension()
+            
+            self.insetLabel.setText(shortname+" "+self.dim)
+            
+            
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText("Entire set")
+        
+ 
+                
+        
+        self.connect(self.replaceButton, SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        #Load the last values
+#        if os.path.isfile(TASKFILES+"/copy"):
+#            with open(TASKFILES+"/copy", "r") as f:
+#                lines=f.readlines()
+#        
+#            for line in lines:
+#                key, value=line.split("=")
+#                key=key.upper()
+#                if key =="MAKEBLANK":
+#                    if value.upper().strip() =="YES":
+#                        self.checkBlank.setCheckState(Qt.Checked)
+#                    else:
+#                        self.checkBlank.setCheckState(Qt.Unchecked)
+#                    
+    
+    
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        dir = os.path.dirname(self.insetPath)
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+        self.highlightError(errorMsg)
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status[:40])
+            if wi =="error":
+                self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetLine.setPalette(p)
+        if "Output" in status:
+            self.outsetLine.setPalette(p)
+        
+       
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+#        self.updateFileTask()
+        
+            
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            self.outsetPath=str(self.outsetLine.text())
+            
+            self.taskcommand='VELSMO INSET=%s %s BOX= OUTSET=%s WEIGHTS= OKAY=Y'%(self.insetPath, self.dim, self.outsetPath)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+#    def updateFileTask(self):
+#        parameter=self.taskcommand.split()[1:]
+#        l=len(parameter)
+#        i=0
+#        lines=[]
+#        while i<l:
+#            p=parameter[i]
+#            i+=1
+#            while i<l:
+#                if not "=" in parameter[i]:
+#                    p=p+" "+parameter[i]
+#                    i +=1
+#                else:
+#                    break
+#            
+#            lines.append(p)
+#        
+#        try:
+#            os.mkdir(TASKFILES)
+#        except OSError: #The dir already exists
+#            pass
+#        with open(TASKFILES+"/copy", "w") as f:
+#            for line in lines:
+#                f.write(line+"\n")
+
+
+class view_transpose(QDialog,Ui_transpose):
+    def __init__(self,filename):
+        super(view_transpose, self).__init__()
+        self.setupUi(self)
+        
+        self.keys=["INSET=", "BOX=","AXPERM=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        
+        self.insetPath=filename
+        self.inset=gipsySet()
+        self.inset.loadSet(filename)
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+       
+        self.insetLabel.setToolTip(filename)
+        self.insetLabel.setText(shortname)
+        self.boxLabel.setText("Entire set")
+        
+        #Getting the list axis 
+        self.dimensions=self.inset.getAxes()
+        l=len(self.dimensions)
+        for i in range(l):
+            self.axesList.addItem(self.dimensions[i])
+            
+            
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        self.connect(self.upButton, SIGNAL("clicked()"), self.reorderUp)
+        self.connect(self.downButton,  SIGNAL("clicked()"), self.reorderDown)
+        
+        #Load the last values
+#        if os.path.isfile(TASKFILES+"/snapper"):
+#            with open(TASKFILES+"/snapper", "r") as f:
+#                lines=f.readlines()
+#        
+#            for line in lines:
+#                key, value=line.split("=")
+#                key=key.upper()
+#                value.strip()
+#                if key =="REPSIZE":
+#                    repsize=value.split()
+#                    if len(repsize)==2:
+#                        self.repsizexLine.setText(value.split()[0])
+#                        self.repsizeyLine.setText(value.split()[1])
+#                if key=="OLDVAL":
+#                    if value.strip() !="":
+#                        self.oldvalLine.setText(value)
+#                        self.oldvalCheck.setCheckState(Qt.Unchecked)
+#                    else:
+#                        self.oldvalCheck.setCheckState(Qt.Checked)
+#                if key=="NEWVAL":
+#                    if value.strip() !="":
+#                        self.newvalCheck.setCheckState(Qt.Unchecked)
+#                        self.newvalLine.setText(value)
+#                    else:
+#                         self.newvalCheck.setCheckState(Qt.Checked)
+                    
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+     
+
+        
+            
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        self.outsetLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+               
+            axperm=""
+            for i in range(self.axesList.count()):
+                dim=self.axesList.item(i).text()
+                axperm=axperm+ " "+ dim.split("-")[0]
+                
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='TRANSPOSE INSET=%s BOX= AXPERM=%s OUTSET=%s  OKAY=YES'\
+                                            %(self.insetPath,axperm ,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+#            self.updateFileTask()
+            
+
+
+#    def updateFileTask(self):
+#
+#        parameter=self.taskcommand.split()[1:]
+#        l=len(parameter)
+#        i=0
+#        lines=[]
+#        while i<l:
+#            p=parameter[i]
+#            i+=1
+#            while i<l:
+#                if not "=" in parameter[i]:
+#                    p=p+" "+parameter[i]
+#                    i +=1
+#                else:
+#                    break
+#            
+#            lines.append(p)
+#        
+#        try:
+#            os.mkdir(TASKFILES)
+#        except OSError: #The dir already exists
+#            pass
+#        with open(TASKFILES+"/snapper", "w") as f:
+#            for line in lines:
+#                f.write(line+"\n")
+
+    def reorderUp(self):
+        index=self.axesList.currentRow()
+        if (index >0):
+            prevIndex=index-1
+            dimension=self.axesList.takeItem(index)
+            prevDim=self.axesList.takeItem(prevIndex)
+            self.axesList.insertItem(prevIndex, dimension)
+            self.axesList.insertItem(index,  prevDim)
+            self.axesList.setCurrentRow(prevIndex)
+
+    def reorderDown(self):
+        index=self.axesList.currentRow()
+        l=self.axesList.count()
+        if (index <l):
+            nextIndex=index+1
+            nextDim=self.axesList.takeItem(nextIndex)
+            dimension=self.axesList.takeItem(index)
+            self.axesList.insertItem(index,  nextDim)
+            self.axesList.insertItem(nextIndex, dimension)
+            self.axesList.setCurrentRow(nextIndex)
+
+class view_extend(QDialog,Ui_extend):
+    def __init__(self,filename):
+        super(view_extend, self).__init__()
+        self.setupUi(self)
+        
+#        self.keys=["INSET=", "BOX=","CTYPE1=","NAXIS1=", "CRPIX1=", "CUNIT1=", "CRVAL1="\
+#                          "CDELT1=", "CROTA1=", "DUNIT1=", "DRVAL1=", "FREQ0=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+    
+        self.gt=gipsyTask()
+        self.log=""
+        self.outsetPath=""
+        self.insetPath=""
+        
+        
+        self.insetPath=filename
+        self.inset=gipsySet()
+        self.inset.loadSet(filename)
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+        
+        self.dim=self.inset.getThirdDimension()
+        self.insetLabel.setText(shortname+" "+self.dim)
+        self.insetLabel.setToolTip(filename)
+        
+        self.boxLabel.setText("Entire set")
+        
+        self.n_axes=len(self.inset.getAxes())+1
+        
+        self.keys=["INSET=", "BOX=","CTYPE"+str(self.n_axes)+"=","NAXIS"+str(self.n_axes)+"=", "CRPIX"+str(self.n_axes)+"=", \
+                        "CUNIT"+str(self.n_axes)+"=", "CRVAL"+str(self.n_axes)+"=", "CDELT"+str(self.n_axes)+"=", \
+                        "CROTA"+str(self.n_axes)+"=", "DUNIT"+str(self.n_axes)+"=", "DRVAL"+str(self.n_axes)+"=", "FREQ0=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+ 
+
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        
+        self.connect(self.ctypeBox,   SIGNAL("currentIndexChanged(QString)"), self.updateCunit)
+        
+        for key,  val in GIPSY_COORDS.iteritems():
+            self.ctypeBox.addItem(QString(key))
+        
+       
+        #Load the last values
+        if os.path.isfile(TASKFILES+"/extend"):
+            with open(TASKFILES+"/extend", "r") as f:
+                lines=f.readlines()
+        
+            for line in lines:
+                key, value=line.split("=")
+                key=key.upper()
+                value.strip()
+                if key.find("CTYPE") !=-1:
+                    self.ctypeBox.setCurrentIndex(self.ctypeBox.findText(QString(value.strip())))
+                if key.find("NAXIS") !=-1:
+                    self.naxisLine.setText(value)
+                if key.find("CRPIX") !=-1:
+                    self.crpixLine.setText(value)
+                if key.find("CUNIT") != -1:
+                    index=self.cunitBox.findText(QString(value.strip()))
+                    if index != -1:
+                        self.cunitBox.setCurrentIndex(index)
+                if key.find("CRVAL") != -1:
+                    self.crvalLine.setText(value.strip())
+                if key.find("CDELT") !=-1:
+                    self.cdeltLine.setText(value.strip())
+                if key.find("CROTA")!=-1:
+                    self.crotaLine.setText(value.strip())
+                if key.find("DUNIT")!=-1:
+                    self.dunitLine.setText(value.strip())
+                if key.find("DRVAL")!=-1:
+                    self.drvalLine.setText(value.strip())
+                if key.find("FREQ0")!=-1:
+                    self.freqLine.setText(value.strip())
+
+    def replaceSet(self):
+        self.outsetLine.setText(self.insetPath)
+        self.outsetPath=self.insetPath
+    
+    def browserOutset(self):
+        
+        dir = os.path.dirname(".")
+        self.outsetPath= unicode(QFileDialog.getSaveFileName(self,"Select the output SET", dir))
+        self.outsetLine.setText(self.outsetPath)
+
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.extra_panel_layout.addLayout(layout)
+        
+        
+    def showError(self, errorMsg):
+        self.errorMsg.setText(errorMsg)
+       
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status)
+    
+        if wi =="error":
+            self.highlightError(status)
+             
+
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetLine.setPalette(p)
+        if "length" in status:
+            self.naxisLine.setPalette(p)
+        if "reference" in status:
+            self.crpixLine.setPalette(p)
+        if "Physical" in status:
+            self.cunitBox.setPalette(p)
+        if "value" in status:
+            self.crvalLine.setPalette(p)
+        if "grid" in status:
+            self.cdeltLine.setPalette(p)
+        if "rotation" in status:
+            self.crotaLine.setPalette(p)
+        if "Secondary units" in status:
+            self.dunitLine.setPalette(p)
+        if "Secondary reference" in status:
+            self.drvalLine.setPalette(p)
+        if "frequency" in status:
+            self.freqLine.setPalette(p)
+            
+     
+
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        self.outsetLine.setPalette(p)
+        
+        self.naxisLine.setPalette(p)
+        self.crpixLine.setPalette(p)
+        self.cunitBox.setPalette(p)
+        self.crvalLine.setPalette(p)
+        self.cdeltLine.setPalette(p)
+        self.crotaLine.setPalette(p)
+        self.dunitLine.setPalette(p)
+        self.drvalLine.setPalette(p)
+        self.freqLine.setPalette(p)
+            
+        self.status.setText("")
+        self.errorMsg.setText("")
+
+    def finished(self):
+        self.status.setText("Done")
+        self.updateFileTask()
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+        self.emit(SIGNAL("taskExecuted(log)"), "xeq(\""+self.taskcommand+"\")")
+        
+
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+               
+            ctype=self.ctypeBox.currentText()
+            naxis=self.naxisLine.text()
+            crpix=self.crpixLine.text()
+            cunit=self.cunitBox.currentText()
+            crval=self.crvalLine.text()
+            cdelt=self.cdeltLine.text()
+            crota=self.crotaLine.text()
+            dunit=self.dunitLine.text()
+            drval=self.drvalLine.text()
+            freq=self.freqLine.text()
+                
+            self.outsetPath=str(self.outsetLine.text())
+                    
+            self.taskcommand='EXTEND INSET=%s BOX= CTYPE%s=%s NAXIS%s=%s CRPIX%s=%s \
+                         CUNIT%s=%s CRVAL%s=%s CDELT%s=%s CROTA%s=%s \
+                         DUNIT%s=%s DRVAL%s=%s FREQ0=%s OUTSET=%s  OKAY=YES CTYPE%s='\
+                                            %(self.insetPath,self.n_axes, ctype,  self.n_axes, naxis,  self.n_axes,crpix, \
+                                              self.n_axes, cunit, self.n_axes,crval,  self.n_axes,cdelt,  self.n_axes,crota,  \
+                                              self.n_axes,dunit , self.n_axes, drval,  freq,  self.outsetPath, self.n_axes+1)
+         
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+            
+
+
+    def updateFileTask(self):
+
+        parameter=self.taskcommand.split()[1:]
+        l=len(parameter)
+        i=0
+        lines=[]
+        while i<l:
+            p=parameter[i]
+            i+=1
+            while i<l:
+                if not "=" in parameter[i]:
+                    p=p+" "+parameter[i]
+                    i +=1
+                else:
+                    break
+            
+            lines.append(p)
+        
+        try:
+            os.mkdir(TASKFILES)
+        except OSError: #The dir already exists
+            pass
+        with open(TASKFILES+"/extend", "w") as f:
+            for line in lines:
+                f.write(line+"\n")
+
+    def updateCunit(self):
+        type=str(self.ctypeBox.currentText())
+        
+        self.cunitBox.clear()
+        if type != "":
+            units=GIPSY_COORDS[type]
+            for unit in units:
+                self.cunitBox.addItem(QString(unit))
+        
+        if str(type) =="FREQ":
+            self.freqLine.setEnabled(True)
+            self.dunitLine.setEnabled(True)
+            self.drvalLine.setEnabled(True)
+        else:
+            self.freqLine.setEnabled(False)
+            self.dunitLine.setEnabled(False)
+            self.drvalLine.setEnabled(False)
+
+
+

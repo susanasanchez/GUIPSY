@@ -1,0 +1,2075 @@
+import sys
+import functools
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from Ui_viewtask import *
+from Ui_clip import *
+from Ui_combin import *
+from Ui_copy import *
+from Ui_editset import *
+from Ui_extend import *
+from Ui_meanSum import *
+from Ui_minbox import *
+from Ui_regrid import *
+from Ui_snapper import *
+from Ui_transform import *
+from Ui_transpose import *
+from gipsyClasses.gipsySet import *
+from gipsyClasses.gipsyTask import *
+from setbrowser import *
+from general import *
+
+from new_exceptions import *
+
+def saveTaskValues(taskcommand):
+    
+    taskname=taskcommand.split()[0]
+    taskname=taskname.lower()
+    parameter=taskcommand.split()[1:]
+    l=len(parameter)
+    i=0
+    lines=[]
+    while i<l:
+        p=parameter[i]
+        i+=1
+        while i<l:
+            if not "=" in parameter[i]:
+                p=p+" "+parameter[i]
+                i +=1
+            else:
+                break
+        
+        lines.append(p)
+    
+    try:
+        os.mkdir(TASKFILES)
+    except OSError: #The dir already exists
+        pass
+    with open(TASKFILES+taskname, "w") as f:
+        for line in lines:
+            f.write(line+"\n")
+
+def getTaskValues(taskname):
+    if os.path.isfile(TASKFILES+taskname):
+        gipsy.anyout(TASKFILES+taskname)
+        with open(TASKFILES+taskname, "r") as f:
+            lines=f.readlines()
+        output={}
+        for line in lines:
+            key, value=line.split("=")
+            key=key.upper()
+            value=value.strip()
+            output[key]=value
+            
+        return output
+    else:
+        return None
+                
+                
+                
+class view_task(QDialog, Ui_viewtask):
+    def __init__(self, filename):
+        super(view_task, self).__init__()
+        self.setupUi(self)
+        
+        self.insetPath=filename
+        self.inset=None
+        self.updateInsetLabels()
+
+        self.outsetPathLabel.setText(os.path.abspath(".")[-40:])
+        self.outsetPathLabel.setToolTip(os.path.abspath("."))
+        
+        self.connect(self.browserButton, SIGNAL("clicked()"), self.browserOutset)
+        self.connect(self.insetButton,  SIGNAL("clicked()"),self.browserInset )
+        self.connect(self.boxButton,  SIGNAL("clicked()"),self.browserInset )
+        
+    
+    def browserInset(self):
+        subset=self.insetLabel.text()
+        box=self.boxLabel.text()
+        Dlg=setbrowser(self.insetPath, subset, box)
+        if Dlg.exec_():
+            subset=Dlg.subsetLine.text()
+            box=Dlg.boxLine.text()
+            path=Dlg.setPath
+            self.insetLabel.setText(subset)
+            self.insetLabel.setToolTip(path)
+            self.boxLabel.setText(box)
+            self.insetPath=path
+            #Clear possible errors about inset
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 255,255))
+            p.setColor(QPalette.WindowText, QColor(64, 64,64))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+            self.status.setText("")
+            self.errorMsg.setText("")
+            
+            #self.updateInsetLabels()
+            self.emit(SIGNAL("insetChanged(String)"), path)
+
+    def updateInsetLabels(self):
+        if self.insetPath!=None:
+            del self.inset
+            self.inset=gipsySet()
+            self.inset.loadSet(self.insetPath)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(self.insetPath), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(self.insetPath)
+            self.boxLabel.setText(boxText)
+
+    def browserOutset(self):
+        dir=self.outsetPathLabel.toolTip()
+        path= unicode(QFileDialog.getExistingDirectory(self,"Select the output SET", dir))
+        if path!="":
+            self.outsetPath=path
+            self.outsetPathLabel.setText(self.outsetPath[-40:])
+            self.outsetPathLabel.setToolTip(self.outsetPath)
+        
+    def addkey(self, key):
+        #delete previus keys field
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+                        
+        #It is a new key/parameter 
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()', compare=False)
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+       
+        
+        
+    def showError(self, errorMsg):
+        if "ABORT" not in errorMsg:
+            self.errorMsg.setText(errorMsg[:60])
+        
+    def showStatus(self, status, wi=""):
+        if "ABORT" not in status:
+            self.status.setText(status[:60])
+        if wi =="error":
+            self.highlightError(status)
+    
+    def clearExtraLayout(self):
+        self.status.setText("Done")
+       
+        #delete all extraLayout
+        while self.extra_panel_layout.count()>0:
+            item=self.extra_panel_layout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+            
+    def insetDefaultText(self, setname, axes):
+        i=0
+        boxtext=""
+        subsetText=setname
+        xbox=[]
+        ybox=[]
+        for axe in axes:
+            (axename, range)=axe
+            if i<2:
+                x, y=range.split()
+                xbox.append(x)
+                ybox.append(y)
+            else:
+                subsetText=subsetText+" "+axename
+            
+            i +=1
+        
+       
+        for x in xbox:
+            boxtext=boxtext+" "+x
+        for y in ybox:
+            boxtext=boxtext+" "+y
+        
+        return (subsetText, boxtext)
+    
+class view_clip(view_task):
+    def __init__(self,filename):
+        super(view_clip, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "RANGE=", "CVAL=", "BVAL="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.clipFrame = Ui_clip()
+        self.clipFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("CLIP")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.clipFrame.insideBlank, SIGNAL("stateChanged(int)"),  self.insideBlankChanged)
+        self.connect(self.clipFrame.outsideBlank, SIGNAL("stateChanged(int)"), self.outsideBlankChanged)
+        
+       #Load the last values
+        values=getTaskValues("clip")
+        if values !=None:
+            if values.has_key("RANGE"):
+                minmax=values["RANGE"].split()
+                if len(minmax)==2:
+                    self.clipFrame.minLine.setText(minmax[0])
+                    self.clipFrame.maxLine.setText(minmax[1])
+                   
+            if values.has_key("CVAL"):
+                if values["CVAL"]=="":
+                    self.clipFrame.insideBlank.setCheckState(Qt.Checked)
+                else:
+                    self.clipFrame.valueInside.setText(values["CVAL"])
+            if values.has_key("BVAL"):
+                if values["BVAL"]=="":
+                    self.clipFrame.outsideBlank.setCheckState(Qt.Checked)
+                else:
+                    self.clipFrame.valueOutside.setText(values["BVAL"])
+        else: #Show default values
+            self.clipFrame.insideBlank.setCheckState(Qt.Checked)
+            self.clipFrame.outsideBlank.setCheckState(Qt.Checked)
+        
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "clipped" in status:
+            self.clipFrame.valueInside.setPalette(p)
+        if "outside" in status:
+            self.clipFrame.valueOutside.setPalette(p)
+        if "range" in status:
+            self.clipFrame.maxLine.setPalette(p)
+            self.clipFrame.minLine.setPalette(p)
+        
+        if "subsets" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.clipFrame.valueInside.setPalette(p)
+        self.clipFrame.valueOutside.setPalette(p)
+        self.clipFrame.maxLine.setPalette(p)
+        self.clipFrame.minLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            minvalue=unicode(self.clipFrame.minLine.text())
+            maxvalue=unicode(self.clipFrame.maxLine.text())
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            
+            self.taskcommand='CLIP INSET=%s BOX=%s OUTSET=%s RANGE=%s %s OKAY=Y'%(inset, box, self.outsetPath,minvalue, maxvalue)
+
+            if self.clipFrame.insideBlank.checkState() == Qt.Checked:
+                cval=""
+            else:
+                cval=unicode(self.clipFrame.valueInside.text()).strip()
+            self.taskcommand=self.taskcommand+" CVAL=%s"%(cval)
+            if self.clipFrame.outsideBlank.checkState() == Qt.Checked:
+                bval=""
+            else:
+                bval=unicode(self.clipFrame.valueOutside.text()).strip()
+            self.taskcommand=self.taskcommand+" BVAL=%s"%(bval)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+
+    def insideBlankChanged(self, status):
+        if status==Qt.Checked:
+            self.clipFrame.valueInside.setEnabled(False)
+        else:
+            self.clipFrame.valueInside.setEnabled(True)
+
+    def outsideBlankChanged(self, status):
+        if status==Qt.Checked:
+            self.clipFrame.valueOutside.setEnabled(False)
+        else:
+            self.clipFrame.valueOutside.setEnabled(True)
+            
+class view_combin(view_task):
+    def __init__(self,filenames):
+        super(view_combin, self).__init__(filename)
+        
+        self.keys=["RESULT01=", "SET01=", "BOX01=", "SET02=", "BOX02=", "SET03=", "BOX03=",  "SETOUT01=", "OPTION=", "RESULT02=", "OKAY="] #List of the keys/parameters of task, nowadays
+
+        self.log=""
+        self.outsetPath=""
+        self.insetLabel=[]
+        self.insetPath=[]
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.combinFrame = Ui_combin()
+        self.combinFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("COMBIN")
+        self.insetFrame.hide() 
+        self.replaceButton.hide()
+        
+        if len(filenames) >0:
+            for name in filenames:
+                self.combinFrame.setsBox.addItem(name)
+            
+
+        
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.combinFrame.addSetButton, SIGNAL("clicked()"), self.addSet )
+        self.connect(self.combinFrame.clearButton, SIGNAL("clicked()"), self.clearCombinSets)
+        
+        
+        
+       #Load the last values
+        values=getTaskValues("combin")
+        if values !=None:
+            if values.has_key("RESULT01"):
+                self.combinFrame.operationLine.setText(values["RESULT01"])
+            if values.has_key("OPTION"):
+                try:
+                    value=int(values["OPTION"])
+                except:
+                    pass
+                else:
+                    if value==0:
+                        self.combinFrame.operationBox.setCurrentIndex(self.combinFrame.operationBox.findText("Inside"))
+                        self.combinFrame.complementaryBox.setCurrentIndex(self.combinFrame.complementaryBox.findText("Blank"))
+                    elif value ==1:
+                        self.combinFrame.operationBox.setCurrentIndex(self.combinFrame.operationBox.findText("Inside"))
+                        self.combinFrame.complementaryBox.setCurrentIndex(self.combinFrame.complementaryBox.findText("Transfers"))
+                    elif value==2:
+                        p=QPalette()
+                        p.setColor(QPalette.Base, QColor(255, 0,0))
+                        self.combinFrame.operationLine.setPalette(p)
+                        self.combinFrame.operationBox.setCurrentIndex(self.combinFrame.operationBox.findText("Outside"))
+                        self.combinFrame.complementaryBox.setCurrentIndex(self.combinFrame.complementaryBox.findText("Blanks"))
+                    elif value==3:
+                        self.combinFrame.operationBox.setCurrentIndex(self.combinFrame.operationBox.findText("Outside"))
+                        self.combinFrame.complementaryBox.setCurrentIndex(self.combinFrame.complementaryBox.findText("Transfers"))
+ 
+    def addSet(self):
+
+        filename=unicode(self.combinFrame.setsBox.currentText())
+        shortname=os.path.basename(filename)
+        shortname=shortname.split(".")[0]
+     
+        tmp=gipsySet()
+        tmp.loadSet(filename)
+        tmp_dim=tmp.getThirdDimension()
+        
+        tmp_insetLabel=QLabel(QString(shortname+" "+tmp_dim))
+        tmp_insetLabel.setToolTip(filename)
+        self.insetLabel.append(tmp_insetLabel)
+        
+        frame=QGroupBox()
+        gridLayout = QtGui.QGridLayout(frame)
+        
+        self.combinFrame.combinLayout.addWidget(frame)
+       
+        current=len(self.insetLabel)-1
+        frame.setTitle("$"+unicode(current+1))
+        gridLayout.addWidget(QPushButton("Inset"), 0, 0)
+        gridLayout.addWidget(QPushButton("Box"), 1, 0)
+        gridLayout.addWidget( tmp_insetLabel, 0, 1)
+        gridLayout.addWidget(QLabel("Entire Set"), 1, 1)
+        gridLayout.addWidget(QPushButton("Header"), 0, 2)
+        
+        if not self.combinFrame.clearButton.isEnabled():
+            self.combinFrame.clearButton.setEnabled(True)
+        
+        
+
+    def clearCombinSets(self):
+        while self.combinFrame.combinLayout.count()>0:
+            item=self.combinFrame.combinLayout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+        
+        del self.insetLabel[:]
+        del self.insetPath[:]
+        self.combinFrame.clearButton.setEnabled(False)
+
+   
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "parameter" in status:
+            p=QPalette()
+            p.setColor(QPalette.Foreground, QColor(255, 0,0))
+            self.combinFrame.combinSets.setPalette(p)
+            
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.combinFrame.operationLine.setPalette(p)
+            
+        if "output" in status:
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "expression" in status:
+            p=QPalette()
+            p.setColor(QPalette.Base, QColor(255, 0,0))
+            self.combinFrame.operationLine.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        
+        self.outsetPathLabel.setPalette(p)    
+        self.outsetNameLine.setPalette(p)
+        self.combinFrame.operationLine.setPalette(p)    
+        p.setColor(QPalette.Foreground, QColor(0, 0,0))
+        self.combinFrame.combinSets.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            #Componing SETXX y BOXX
+            input=""
+            index=1
+            for label in self.insetLabel:
+                setname=unicode(label.toolTip())
+                dim = unicode(label.text()).split()[1]
+                if index<10:
+                    input=input+"SET0"+unicode(index)+"="+setname+" "+dim+" BOX0"+unicode(index)+"= "
+                else:
+                    input=input+"SET"+unicode(index)+"="+setname+" "+dim+" BOX"+unicode(index)+"= "
+                index +=1
+                
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+unicode(self.outsetNameLine.text())
+            operation=unicode(self.combinFrame.operationLine.text())
+            operationBox=self.combinFrame.operationBox.currentText()
+            complementaryBox=self.combinFrame.complementaryBox.currentText()
+            if operationBox == "Inside":
+                if complementaryBox =="Blank":
+                    option=0
+                else:
+                    option=1
+            else:
+                if complementaryBox =="Blank":
+                    option=2
+                else:
+                    option=3
+                    
+            self.taskcommand='COMBIN %s RESULT01=%s OPTION=%s SETOUT01=%s RESULT02= OKAY='%(input, operation, option,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+class view_copy(view_task):
+    def __init__(self,filename):
+        super(view_copy, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "MAKEBLANK="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.copyFrame = Ui_copy()
+        self.copyFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("COPY")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+       
+        
+       #Load the last values
+        values=getTaskValues("copy")
+        if values !=None:
+            if values.has_key("MAKEBLANK"):
+                value=values["MAKEBLANK"]
+                if value.upper().strip() =="YES":
+                    self.copyFrame.checkBlank.setCheckState(Qt.Checked)
+                else:
+                    self.copyFrame.checkBlank.setCheckState(Qt.Unchecked)
+        
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status or "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+       
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.insetLabel.setPalette(p)
+        self.boxLabel.setPalette(p)
+        
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+        if (role==QDialogButtonBox.ApplyRole):
+            if self.copyFrame.checkBlank.checkState() == Qt.Checked:
+                blank="YES"
+            else:
+                blank="NO"   
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='COPY INSET=%s BOX=%s OUTSET=%s MAKEBLANK=%s OKAY=Y'%(inset, box,  self.outsetPath, blank)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+
+class view_decim(view_task):
+    def __init__(self,filename):
+        super(view_decim, self).__init__(filename)
+        #self.inset and self.insetPath are handled by parent class, view_task
+        
+        self.keys=["INSET=", "DECIM=", "SHIFT=", "OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+       
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        self.decimFrame = QtGui.QFrame()
+        self.dimensionLayout = QtGui.QVBoxLayout(self.decimFrame)
+        self.horizontalLayout.addWidget(self.decimFrame)
+        
+        self.setWindowTitle("DECIM")
+        self.showRelatedData()
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self, SIGNAL("insetChanged(String)"), self.showRelatedData)
+        
+        #LOAD LAST VALUES?
+        
+
+    def clearRelatedData(self):
+        
+        #delete all extraLayout
+        while self.dimensionLayout.count()>0:
+            item=self.dimensionLayout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+
+    def showRelatedData(self):
+        
+        if self.insetPath!=None:
+#            if unicode(self.insetLabel.toolTip()) !="":
+#                subsetText=unicode(self.insetLabel.text())
+#                boxText=unicode(self.boxLabel.text())
+#            else:
+#                
+#                (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+#                self.insetLabel.setText(subsetText)
+#                self.insetLabel.setToolTip(filename)
+#                self.boxLabel.setText(boxText)
+
+            
+            self.clearRelatedData()
+            
+            subsetText=unicode(self.insetLabel.text())
+            boxText=unicode(self.boxLabel.text())            
+            self.dimensions=self.inset.getAxes()
+            self.decim=[]
+            self.shift=[]
+            for i in range(len(self.dimensions)):
+                d=self.dimensions[i]
+                if d not in subsetText.split():
+                    frame=QFrame()
+                    vertLayout = QtGui.QHBoxLayout(frame)
+                    self.dimensionLayout.addWidget(frame)
+                    vertLayout.addWidget(QLabel(unicode(d)))
+                    vertLayout.addWidget(QLabel("DECIM"))
+                    editlineDec=QLineEdit()
+                    self.decim.append(editlineDec)
+                    editlineDec.setText("1")
+                    vertLayout.addWidget(editlineDec)
+                    vertLayout.addWidget(QLabel("SHIFT"))
+                    editlineShi=QLineEdit()
+                    self.shift.append(editlineShi)
+                    vertLayout.addWidget(editlineShi)
+                    editlineShi.setText("0")
+
+    def replaceSet(self):
+        if unicode(self.insetLabel.toolTip()) != "":
+            self.insetPath=unicode(self.insetLabel.toolTip())
+            self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+            self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+            self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status or "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "decimation" in status:
+            for label in self.decim:
+                label.setPalette(p)
+        if status is "":
+            for label in self.shift:
+                label.setPalette(p)
+                
+        if "subsets" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        for label in self.decim:
+            label.setPalette(p)
+        for label in self.shift:
+            label.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+       
+        if (role==QDialogButtonBox.ApplyRole):
+            if self.insetPath == None:
+                return
+
+            decimValue=""
+            for editline in self.decim:
+                value=unicode(editline.text())
+                if value.strip()=="":
+                    editline.setText("1")
+                    value="1"
+                decimValue=decimValue+" "+value
+            
+            shiftValue=""
+            for editline in self.shift:
+                value=unicode(editline.text())
+                if value.strip()=="":
+                    editline.setText("0")
+                    value="0"
+                shiftValue=shiftValue+" "+value
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+                
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='DECIM INSET=%s BOX=%s DECIM=%s SHIFT=%s OUTSET=%s OKAY=YES'%(inset, box, decimValue.strip(), shiftValue.strip(), self.outsetPath)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+class view_editset(view_task):
+    def __init__(self,filename):
+        super(view_editset, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=",  "EXPRESSION=", "ANOTHER="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.editsetFrame = Ui_editset()
+        self.editsetFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.outsetFrame.hide()
+        
+        self.setWindowTitle("EDITSET")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+        
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+       #Load the last values
+        values=getTaskValues("editset")
+        if values !=None:
+            if values.has_key("EXPRESSION"):
+                self.editsetFrame.expressionLine.setText(values["EXPRESSION"])
+                
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+      
+        if "expression" in status:
+           self.editsetFrame.expressionLine.setPalette(p)
+            
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.editsetFrame.expressionLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            expression=unicode(self.editsetFrame.expressionLine.text())
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='EDITSET INSET=%s BOX=%s EXPRESSION=%s ANOTHER= '%(inset, box, expression)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+
+class view_extend(view_task):
+    def __init__(self,filename):
+        super(view_extend, self).__init__(filename)
+        
+        
+        self.log=""
+        self.inset=""
+        self.insetPath=None
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.extendFrame = Ui_extend()
+        self.extendFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("EXTEND")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+            self.n_axes=len(self.inset.getAxes())+1
+        
+            self.keys=["INSET=", "BOX=","CTYPE"+unicode(self.n_axes)+"=","NAXIS"+unicode(self.n_axes)+"=", "CRPIX"+unicode(self.n_axes)+"=", \
+                        "CUNIT"+unicode(self.n_axes)+"=", "CRVAL"+unicode(self.n_axes)+"=", "CDELT"+unicode(self.n_axes)+"=", \
+                        "CROTA"+unicode(self.n_axes)+"=", "DUNIT"+unicode(self.n_axes)+"=", "DRVAL"+unicode(self.n_axes)+"=", "FREQ0=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+ 
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.extendFrame.ctypeBox,   SIGNAL("currentIndexChanged(QString)"), self.updateCunit)
+        
+        for key,  val in GIPSY_COORDS.iteritems():
+            self.extendFrame.ctypeBox.addItem(QString(key))
+            
+       #Load the last values
+        values=getTaskValues("extend")
+        if values !=None:
+            for key, value in values.iteritems():
+                if key.find("CTYPE") !=-1:
+                    self.extendFrame.ctypeBox.setCurrentIndex(self.extendFrame.ctypeBox.findText(QString(value.strip())))
+                if key.find("NAXIS") !=-1:
+                    self.extendFrame.naxisLine.setText(value)
+                if key.find("CRPIX") !=-1:
+                    self.extendFrame.crpixLine.setText(value)
+                if key.find("CUNIT") != -1:
+                    index=self.extendFrame.cunitBox.findText(QString(value.strip()))
+                    if index != -1:
+                        self.extendFrame.cunitBox.setCurrentIndex(index)
+                if key.find("CRVAL") != -1:
+                    self.extendFrame.crvalLine.setText(value.strip())
+                if key.find("CDELT") !=-1:
+                    self.extendFrame.cdeltLine.setText(value.strip())
+                if key.find("CROTA")!=-1:
+                    self.extendFrame.crotaLine.setText(value.strip())
+                if key.find("DUNIT")!=-1:
+                    self.extendFrame.dunitLine.setText(value.strip())
+                if key.find("DRVAL")!=-1:
+                    self.extendFrame.drvalLine.setText(value.strip())
+                if key.find("FREQ0")!=-1:
+                    self.extendFrame.freqLine.setText(value.strip())
+
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "length" in status:
+            self.extendFrame.naxisLine.setPalette(p)
+        if "reference" in status:
+            self.extendFrame.crpixLine.setPalette(p)
+        if "Physical" in status:
+            self.extendFrame.cunitBox.setPalette(p)
+        if "value" in status:
+            self.extendFrame.crvalLine.setPalette(p)
+        if "grid" in status:
+            self.extendFrame.cdeltLine.setPalette(p)
+        if "rotation" in status:
+            self.extendFrame.crotaLine.setPalette(p)
+        if "Secondary units" in status:
+            self.extendFrame.dunitLine.setPalette(p)
+        if "Secondary reference" in status:
+            self.extendFrame.drvalLine.setPalette(p)
+        if "frequency" in status:
+            self.extendFrame.freqLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.extendFrame.naxisLine.setPalette(p)
+        self.extendFrame.crpixLine.setPalette(p)
+        self.extendFrame.cunitBox.setPalette(p)
+        self.extendFrame.crvalLine.setPalette(p)
+        self.extendFrame.cdeltLine.setPalette(p)
+        self.extendFrame.crotaLine.setPalette(p)
+        self.extendFrame.dunitLine.setPalette(p)
+        self.extendFrame.drvalLine.setPalette(p)
+        self.extendFrame.freqLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        if self.insetPath == None:
+            return
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+           
+            
+            ctype=self.extendFrame.ctypeBox.currentText()
+            naxis=self.extendFrame.naxisLine.text()
+            crpix=self.extendFrame.crpixLine.text()
+            cunit=self.extendFrame.cunitBox.currentText()
+            crval=self.extendFrame.crvalLine.text()
+            cdelt=self.extendFrame.cdeltLine.text()
+            crota=self.extendFrame.crotaLine.text()
+            dunit=self.extendFrame.dunitLine.text()
+            drval=self.extendFrame.drvalLine.text()
+            freq=self.extendFrame.freqLine.text()
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='EXTEND INSET=%s BOX=%s CTYPE%s=%s NAXIS%s=%s CRPIX%s=%s CUNIT%s=%s CRVAL%s=%s CDELT%s=%s CROTA%s=%s DUNIT%s=%s DRVAL%s=%s FREQ0=%s OUTSET=%s  OKAY=YES CTYPE%s='\
+                                            %(inset, box,self.n_axes, ctype,  self.n_axes, naxis,  self.n_axes,crpix, \
+                                              self.n_axes, cunit, self.n_axes,crval,  self.n_axes,cdelt,  self.n_axes,crota,  \
+                                              self.n_axes,dunit , self.n_axes, drval,  freq,  self.outsetPath, self.n_axes+1)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+    def updateCunit(self, unitName):
+        #type=unicode(self.extendFrame.ctypeBox.currentText())
+        type=unicode(unitName)
+        
+        self.extendFrame.cunitBox.clear()
+        if type != "":
+            units=GIPSY_COORDS[type]
+            for unit in units:
+                self.extendFrame.cunitBox.addItem(QString(unit))
+        
+        if unicode(type) =="FREQ":
+            self.extendFrame.freqLine.setEnabled(True)
+            self.extendFrame.dunitLine.setEnabled(True)
+            self.extendFrame.drvalLine.setEnabled(True)
+        else:
+            self.extendFrame.freqLine.setEnabled(False)
+            self.extendFrame.dunitLine.setEnabled(False)
+            self.extendFrame.drvalLine.setEnabled(False)
+        
+        if unicode(type) =="DEC":
+            self.extendFrame.crotaLine.setEnabled(True)
+        else:
+            self.extendFrame.crotaLine.setEnabled(False)
+            
+class view_meanSum(view_task):
+    def __init__(self,filename):
+        super(view_meanSum, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS=", "CUT="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.meanSumFrame = Ui_meanSum()
+        self.meanSumFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("MEAN / SUM")
+        self.replaceButton.hide()
+        
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+       #LOAD LAST VALUES?
+        
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status or "directory" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+        
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+       
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            task=unicode(self.meanSumFrame.comboOperation.currentText()).upper()
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='%s INSET=%s BOX=%s WEIGHTS= CUT= OUTSET=%s OKAY=yes'%(task, inset, box, self.outsetPath)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+class view_minbox(view_task):
+    def __init__(self,filename):
+        super(view_minbox, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "MINBOX=","MARGIN=", "SQUARE="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.minboxFrame = Ui_minbox()
+        self.minboxFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("MINBOX")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+       #Load the last values
+        values=getTaskValues("minbox")
+        if values !=None:
+            if values.has_key("MARGIN"):
+                self.minboxFrame.marginLine.setText(values["MARGIN"])
+                   
+            if values.has_key("SQUARE"):
+                if values["SQUARE"]=="Y":
+                    self.minboxFrame.squareCheck.setCheckState(Qt.Checked)
+                else:
+                    self.minboxFrame.squareCheck.setCheckState(Qt.Unchecked)        
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "margin" in status:
+            self.minboxFrame.marginLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+ 
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        
+        self.minboxFrame.marginLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        self.showResults()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            margin=unicode(self.minboxFrame.marginLine.text())
+            if self.minboxFrame.squareCheck.checkState() == Qt.Checked:
+                square="Y"
+            else:
+                square="N"
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='MINBOX INSET=%s BOX=%s OUTSET=%s MINBOX= MARGIN=%s SQUARE=%s OKAY=Y'%(inset, box, self.outsetPath,margin, square)
+
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+
+    def showResults(self):
+        #First, clear previus results
+
+        while self.minboxFrame.resultLayout.count()>0:
+            item=self.minboxFrame.resultLayout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        w.deleteLater()
+        
+        #Read the data from the table
+        self.inset=gipsySet()
+        self.inset.loadSet(self.insetPath)
+        tablesInfo=self.inset.getTablesInfo()
+      
+        for info in tablesInfo:
+            if info[1]=="MBOX":
+                
+                row=self.inset.getTableData(info[0])
+                print "ROW"
+                print row
+        data=row["MINBOX"][0]
+        #Show the data
+        data=data.split()
+        ini=0
+        end=4
+        while (end < len(data)):
+            labelData=QLabel(" ".join(data[ini:end]))
+            self.minboxFrame.resultLayout.addWidget(labelData)
+            ini+=4
+            end +=4
+            
+
+class view_regrid(view_task):
+    def __init__(self,filename):
+        super(view_regrid, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=","AXNAME=", "CDELT=", "IPOL=","WIDTH=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.regridFrame = Ui_regrid()
+        self.regridFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("REGRID")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+         #Getting the list axis 
+        self.connect(self.regridFrame.axnameBox, SIGNAL("currentIndexChanged(QString)"), self.changeUnit ) 
+        self.connect(self.regridFrame.ipolBox,  SIGNAL("currentIndexChanged(QString)"),  self.changeIpol)
+        self.dimensions=self.inset.getAxes()
+        self.decim=[]
+        self.shift=[]
+        for i in range(len(self.dimensions)):
+            d=self.dimensions[i]
+            self.regridFrame.axnameBox.addItem(d)
+        #set initial parameter
+        self.regridFrame.widthLine.setEnabled(False)
+            
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        
+       #Load the last values
+        values=getTaskValues("regrid")
+        if values !=None:
+            if values.has_key("CDELT"):
+                self.regridFrame.cdeltLine.setText(values["CDELT"])
+            if values.has_key("IPOL"):
+                try:
+                    index=int(values["IPOL"])-1
+                except:
+                    index=0
+                self.regridFrame.ipolBox.setCurrentIndex(index)
+            if values.has_key("WIDTH"):
+                self.regridFrame.widthLine.setText(values["WIDTH"])
+ 
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "width" in status:
+            self.regridFrame.widthLine.setPalette(p)
+        if "spac." in status:
+            self.regridFrame.cdeltLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.regridFrame.widthLine.setPalette(p)
+        self.regridFrame.cdeltLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            axname=unicode(self.regridFrame.axnameBox.currentText())
+            cdelt=unicode(self.regridFrame.cdeltLine.text())
+            ipol=self.regridFrame.ipolBox.currentIndex()+1
+            if self.regridFrame.widthLine.isEnabled():
+                width=unicode(self.regridFrame.widthLine.text())
+            else:
+                width=""
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            
+            self.taskcommand='REGRID INSET=%s BOX=%s AXNAME=%s CDELT=%s IPOL=%s WIDTH=%s OUTSET=%s  OKAY=YES'%(inset, box, axname, cdelt, unicode(ipol), width, self.outsetPath)            
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            
+    def changeUnit(self, text):
+        i=int(self.dimensions.index(text))+1
+        key="CUNIT"+unicode(i)
+        try:
+            unit=self.inset.getHeaderValue(key)
+        except gipsyException as g:
+            QMessageBox.warning(self, "Reading UNITS failed", QString(g.msj))
+        else:
+            self.regridFrame.unitLabel.setText(QString(unit))
+    
+    def changeIpol(self, ipolname):
+        
+        if unicode(ipolname)=="Sinc":
+            self.regridFrame.widthLine.setEnabled(True)
+        else:
+            self.regridFrame.widthLine.setEnabled(False)
+
+class view_snapper(view_task):
+    def __init__(self,filename):
+        super(view_snapper, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=","REPSIZE=", "OLDVAL=", "NEWVAL=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.snapperFrame = Ui_snapper()
+        self.snapperFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("SNAPPER")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+
+        curried = functools.partial(self.checkChanged,self.snapperFrame.newvalCheck, self.snapperFrame.newvalLine)
+        self.connect(self.snapperFrame.newvalCheck,SIGNAL("stateChanged(int)"),  curried)
+        curried = functools.partial(self.checkChanged,self.snapperFrame.oldvalCheck, self.snapperFrame.oldvalLine)
+        self.connect(self.snapperFrame.oldvalCheck,SIGNAL("stateChanged(int)"),  curried)
+        
+        self.connect(self.replaceButton,  SIGNAL("clicked()"),  self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        
+       #Load the last values
+        values=getTaskValues("snapper")
+        if values !=None:
+            if values.has_key("REPSIZE"):
+                repsize=values["REPSIZE"].split()
+                if len(repsize)==2:
+                    self.snapperFrame.repsizexLine.setText(repsize[0])
+                    self.snapperFrame.repsizeyLine.setText(repsize[1])
+            if values.has_key("OLDVAL"):
+                if values["OLDVAL"] !="":
+                    self.snapperFrame.oldvalLine.setText(values["OLDVAL"])
+                    self.snapperFrame.oldvalCheck.setCheckState(Qt.Unchecked)
+                else:
+                    self.snapperFrame.oldvalCheck.setCheckState(Qt.Checked)
+            if values.has_key("NEWVAL"):
+                if values["NEWVAL"]!="":
+                    self.snapperFrame.newvalCheck.setCheckState(Qt.Unchecked)
+                    self.snapperFrame.newvalLine.setText(values["NEWVAL"])
+                else:
+                     self.snapperFrame.newvalCheck.setCheckState(Qt.Checked)
+    
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "box" in status:
+            self.snapperFrame.repsizexLine.setPalette(p)
+            self.snapperFrame.repsizeyLine.setPalette(p)
+        if "map" in status:
+            self.snapperFrame.oldvalLine.setPalette(p)
+        if "new" in status:
+            self.snapperFrame.newvalLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.snapperFrame.repsizexLine.setPalette(p)
+        self.snapperFrame.repsizeyLine.setPalette(p)
+        self.snapperFrame.oldvalLine.setPalette(p)
+        self.snapperFrame.newvalLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            repsize=unicode(self.snapperFrame.repsizexLine.text())+" "+unicode(self.snapperFrame.repsizeyLine.text())
+            if self.snapperFrame.oldvalCheck.isChecked():
+                oldval=""
+            else:
+                oldval=unicode(self.snapperFrame.oldvalLine.text())
+            if self.snapperFrame.newvalCheck.isChecked():
+                newval=""
+            else:
+                newval=unicode(self.snapperFrame.newvalLine.text())
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='SNAPPER INSET=%s BOX=%s OLDVAL=%s NEWVAL=%s REPSIZE=%s OUTSET=%s  OKAY=YES'\
+                                            %(inset, box, oldval, newval,  repsize,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            
+    def checkChanged(self, checkbox, line):
+        if checkbox.isChecked():
+            line.setEnabled(False)
+        else:
+            line.setEnabled(True)
+
+
+class view_transform(view_task):
+    def __init__(self,filename):
+        super(view_transform, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=","POS=", "OPERATION=", "TRANSLXY=","ANGLE=","SCALEXY=", "XSHEAR=", "YSHEAR=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.transformFrame = Ui_transform()
+        self.transformFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("TRANSFORM")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.transformFrame.operationBox, SIGNAL("currentIndexChanged(int)"), self.enableParameters)
+        
+        #Set initial parameter
+        self.transformFrame.operationBox.setCurrentIndex(1)
+        self.transformFrame.operationBox.setCurrentIndex(0)
+        #Load the last values
+        values=getTaskValues("transform")
+        if values !=None:
+
+            if values.has_key("POS"):
+                if len(values["POS"].split()) ==2:
+                    x, y=values["POS"].split()
+                    self.transformFrame.xposLine.setText(x)
+                    self.transformFrame.yposLine.setText(y)
+            if values.has_key("OPERATION"):
+                op=values["OPERATION"]
+                self.transformFrame.operationBox.setCurrentIndex( self.transformFrame.operationBox.findText(values["OPERATION"]))
+            if values.has_key("TRANSLXY"):
+                if len(values["TRANSLXY"].split()) ==2:
+                    x, y=values["TRANSLXY"].split()
+                    self.transformFrame.translxLine.setText(x)
+                    self.transformFrame.translyLine.setText(y)
+            if values.has_key("ANGLE"):
+                self.transformFrame.angleLine.setText(values["ANGLE"])
+            if values.has_key("SCALEXY"):
+                if len(values["SCALEXY"].split()) ==2:
+                    x, y=values["SCALEXY"].split()
+                    self.transformFrame.scalexLine.setText(x)
+                    self.transformFrame.scaleyLine.setText(y)
+            if values.has_key("XSHEAR"):
+                self.transformFrame.xshearLine.setText(values["XSHEAR"])
+            if values.has_key("YSHEAR"):
+                self.transformFrame.yshearLine.setText(values["YSHEAR"])
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+            
+        if "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "centre" in status:
+            self.transformFrame.xposLine.setPalette(p)
+            self.transformFrame.yposLine.setPalette(p)
+        if "translation" in status:
+            self.transformFrame.translxLine.setPalette(p)
+            self.transformFrame.translyLine.setPalette(p)
+        if "scaling" in status:
+            self.transformFrame.scalexLine.setPalette(p)
+            self.transformFrame.scaleyLine.setPalette(p)
+            
+        if  "rotation" in status:
+            self.transformFrame.angleLine.setPalette(p)
+        if "shear" in status:
+            if "X:" in status:
+                self.transformFrame.xshearLine.setPalette(p)
+            else:
+                self.transformFrame.yshearLine.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        self.transformFrame.xposLine.setPalette(p)
+        self.transformFrame.yposLine.setPalette(p)
+        self.transformFrame.translxLine.setPalette(p)
+        self.transformFrame.translyLine.setPalette(p)
+        self.transformFrame.angleLine.setPalette(p)
+        self.transformFrame.xshearLine.setPalette(p)
+        self.transformFrame.yshearLine.setPalette(p)
+        self.transformFrame.scalexLine.setPalette(p)
+        self.transformFrame.scaleyLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            xpos=unicode(self.transformFrame.xposLine.text())
+            ypos=unicode(self.transformFrame.yposLine.text())
+            operation=unicode(self.transformFrame.operationBox.currentIndex()+1)
+            translx=unicode(self.transformFrame.translxLine.text())
+            transly=unicode(self.transformFrame.translyLine.text())
+            angle=unicode(self.transformFrame.angleLine.text())
+            scalex=unicode(self.transformFrame.scalexLine.text())
+            scaley=unicode(self.transformFrame.scaleyLine.text())
+            xshear=unicode(self.transformFrame.xshearLine.text())
+            yshear=unicode(self.transformFrame.yshearLine.text())
+            
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='TRANSFORM INSET=%s BOX= POS=%s %s OPERATION=%s TRANSLXY=%s %s ANGLE=%s SCALEXY=%s %s XSHEAR=%s YSHEAR=%s OUTSET=%s  OKAY=YES'\
+                                            %(inset, box, xpos, ypos,  operation,  translx,  transly,  angle,  scalex,  scaley, \
+                                              xshear,  yshear,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+            
+    def enableParameters(self, index):
+        i=index+1
+        
+        if i==1: #Translation
+            self.transformFrame.translxLine.setEnabled(True)
+            self.transformFrame.translyLine.setEnabled(True)
+            
+            self.transformFrame.angleLine.setEnabled(False)
+            self.transformFrame.scalexLine.setEnabled(False)
+            self.transformFrame.scaleyLine.setEnabled(False)
+            self.transformFrame.xshearLine.setEnabled(False)
+            self.transformFrame.yshearLine.setEnabled(False)
+        elif i==2: #Rotation
+            self.transformFrame.translxLine.setEnabled(False)
+            self.transformFrame.translyLine.setEnabled(False)
+            
+            self.transformFrame.angleLine.setEnabled(True)
+            
+            self.transformFrame.scalexLine.setEnabled(False)
+            self.transformFrame.scaleyLine.setEnabled(False)
+            self.transformFrame.xshearLine.setEnabled(False)
+            self.transformFrame.yshearLine.setEnabled(False)
+        elif i==3: #Scaling
+            self.transformFrame.translxLine.setEnabled(False)
+            self.transformFrame.translyLine.setEnabled(False)
+            self.transformFrame.angleLine.setEnabled(False)
+            
+            self.transformFrame.scalexLine.setEnabled(True)
+            self.transformFrame.scaleyLine.setEnabled(True)
+            
+            self.transformFrame.xshearLine.setEnabled(False)
+            self.transformFrame.yshearLine.setEnabled(False)
+        elif i==4 or i==5 or i==6: #Reflection 
+            self.transformFrame.translxLine.setEnabled(False)
+            self.transformFrame.translyLine.setEnabled(False)
+            self.transformFrame.angleLine.setEnabled(False)
+            self.transformFrame.scalexLine.setEnabled(False)
+            self.transformFrame.scaleyLine.setEnabled(False)
+            self.transformFrame.xshearLine.setEnabled(False)
+            self.transformFrame.yshearLine.setEnabled(False)
+        elif i==7: # X Shear
+            self.transformFrame.translxLine.setEnabled(False)
+            self.transformFrame.translyLine.setEnabled(False)
+            self.transformFrame.angleLine.setEnabled(False)
+            self.transformFrame.scalexLine.setEnabled(False)
+            self.transformFrame.scaleyLine.setEnabled(False)
+            
+            self.transformFrame.xshearLine.setEnabled(True)
+            
+            self.transformFrame.yshearLine.setEnabled(False)
+        elif i==8: #Translation
+            self.transformFrame.translxLine.setEnabled(False)
+            self.transformFrame.translyLine.setEnabled(False)
+            
+            self.transformFrame.angleLine.setEnabled(False)
+            self.transformFrame.scalexLine.setEnabled(False)
+            self.transformFrame.scaleyLine.setEnabled(False)
+            self.transformFrame.xshearLine.setEnabled(False)
+            
+            self.transformFrame.yshearLine.setEnabled(True)
+
+class view_transpose(view_task):
+    def __init__(self,filename):
+        super(view_transpose, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=","AXPERM=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.transposeFrame = Ui_transpose()
+        self.transposeFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("TRANSPOSE")
+        self.replaceButton.hide()
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+            
+            #Getting the list axis 
+            self.dimensions=self.inset.getAxes()
+            l=len(self.dimensions)
+            for i in range(l):
+                self.transposeFrame.axesList.addItem(self.dimensions[i])
+
+        
+        
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        self.connect(self.transposeFrame.upButton, SIGNAL("clicked()"), self.reorderUp)
+        self.connect(self.transposeFrame.downButton,  SIGNAL("clicked()"), self.reorderDown)        
+       
+       #LOAD LAST VALUES?
+        
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            axperm=""
+            for i in range(self.transposeFrame.axesList.count()):
+                dim=self.transposeFrame.axesList.item(i).text()
+                axperm=axperm+ " "+ dim.split("-")[0]
+                
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+                
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='TRANSPOSE INSET=%s BOX=%s AXPERM=%s OUTSET=%s  OKAY=YES'\
+                                            %(inset, box,axperm ,  self.outsetPath)
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+
+    def reorderUp(self):
+        index=self.transposeFrame.axesList.currentRow()
+        if (index >0):
+            prevIndex=index-1
+            dimension=self.transposeFrame.axesList.takeItem(index)
+            prevDim=self.transposeFrame.axesList.takeItem(prevIndex)
+            self.transposeFrame.axesList.insertItem(prevIndex, dimension)
+            self.transposeFrame.axesList.insertItem(index,  prevDim)
+            self.transposeFrame.axesList.setCurrentRow(prevIndex)
+
+    def reorderDown(self):
+        index=self.transposeFrame.axesList.currentRow()
+        l=self.transposeFrame.axesList.count()
+        if (index <l):
+            nextIndex=index+1
+            nextDim=self.transposeFrame.axesList.takeItem(nextIndex)
+            dimension=self.transposeFrame.axesList.takeItem(index)
+            self.transposeFrame.axesList.insertItem(index,  nextDim)
+            self.transposeFrame.axesList.insertItem(nextIndex, dimension)
+            self.transposeFrame.axesList.setCurrentRow(nextIndex)
+
+class view_velsmo(view_task):
+    def __init__(self,filename):
+        super(view_velsmo, self).__init__(filename)
+        
+        self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.inset=""
+        self.insetPath=""
+        self.outsetPath=""
+        self.gt=gipsyTask()
+        
+        
+        self.setWindowTitle("VELSMO")
+        if filename!=None:
+            self.insetPath=filename
+            self.inset=gipsySet()
+            self.inset.loadSet(filename)
+            
+            (subsetText, boxText)=self.insetDefaultText(os.path.basename(filename), self.inset.getInfoAxes())
+            self.insetLabel.setText(subsetText)
+            self.insetLabel.setToolTip(filename)
+            self.boxLabel.setText(boxText)
+
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+               
+
+   
+
+
+    def replaceSet(self):
+        self.insetPath=unicode(self.insetLabel.toolTip())
+        self.outsetPathLabel.setText(os.path.dirname(self.insetPath)[-40:])
+        self.outsetPathLabel.setToolTip(os.path.dirname(self.insetPath))
+        self.outsetNameLine.setText(os.path.basename(self.insetPath))
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status or "output" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self):
+        self.emit(SIGNAL("taskExecuted(String)"), "xeq(\""+self.taskcommand+"\")")
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            setname=unicode(self.outsetNameLine.text())
+            if setname == "":
+                p=QPalette()
+                p.setColor(QPalette.Base, QColor(255, 0,0))
+                self.outsetPathLabel.setPalette(p)
+                self.outsetNameLine.setPalette(p)
+                return
+            self.outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            box=unicode(self.boxLabel.text())
+            self.taskcommand='VELSMO INSET=%s BOX=%s OUTSET=%s WEIGHTS= OKAY=Y'%(inset, box, self.outsetPath)
+
+            
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)

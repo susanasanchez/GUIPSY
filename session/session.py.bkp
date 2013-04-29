@@ -1,0 +1,188 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+import networkx as nx
+import pickle
+
+class session(object):
+    def __init__(self):
+        """ ATRIBUTES
+            fitsname: string of the pathfile+filename to the  fits
+            setname: string of the pathfile+filename to the set where will be created
+        """
+        self.setTree= [] #List of graph
+        self.workflow= QString()
+        self.sessionfile= None
+        self.tableFiles=[]
+        self.imageFiles=[]
+        self.helpFiles=[]
+        self.colaFiles=[]
+        self.textFiles=[]
+        self.pyFiles=[]
+        self.dirty=False
+        
+    def setToSession(self, pathfile, father=None ):
+        self.dirty=True
+        if father==None:
+            G=nx.DiGraph()
+            G.add_node(pathfile)
+            self.setTree.append(G)
+        else:
+            for g in self.setTree:
+                if g.has_node(father):
+                    g.add_node(pathfile)
+                    g.add_edge(father, pathfile)
+                     
+    
+    def tableToSession(self, pathfile):
+        self.dirty=True
+        self.tableFiles.append(pathfile)
+        
+    def imageToSession(self, pathfile):
+        self.dirty=True
+        self.imageFiles.append(pathfile)
+    
+    def helpToSession(self, pathfile):
+        self.dirty=True
+        self.helpFiles.append(pathfile)
+    def colaToSession(self, pathfile):
+        self.dirty=True
+        self.colaFiles.append(pathfile)
+    def textToSession(self, pathfile):
+        self.dirty=True
+        self.textFiles.append(pathfile)
+    def pyfileToSession(self, pathfile):
+        self.dirty=True
+        self.pyFiles.append(pathfile)
+ 
+    def saveSession(self, filename=None):
+        if filename is not None:
+            self.sessionfile=filename
+            output = open(self.sessionfile, 'wb')
+            pickle.dump(self, output)
+            output.close()
+        elif self.sessionfile is not None:
+            output = open(self.sessionfile, 'wb')
+            pickle.dump(self, output)
+            output.close()
+        self.dirty=False
+    
+    def loadSession(self, sessionfile):
+        if sessionfile is not None:
+            try:
+                read = open(sessionfile, 'rb')
+            except IOError as e:
+                raise e
+                return
+            try:
+                tmp=pickle.load(read)
+            except KeyError as k:
+                raise k
+                return
+            self.sessionfile=tmp.sessionfile
+            self.setTree=tmp.setTree
+            self.workflow=tmp.workflow
+            self.tableFiles=tmp.tableFiles
+            self.imageFiles=tmp.imageFiles
+            self.helpFiles=tmp.helpFiles
+            self.colaFiles=tmp.colaFiles
+            self.textFiles=tmp.textFiles
+            self.pyFiles=tmp.pyFiles
+            self.dirty=False
+            
+                
+        
+    
+    def isDirty(self):
+        return self.dirty
+    
+    def setDirty(self):
+        self.dirty=True
+        
+    def has_sessionfile(self):
+        if self.sessionfile is None:
+            return False
+        else:
+            return True
+
+    def has_tableFiles(self):
+        if len(self.tableFiles) >0:
+            return True
+        else:
+            return False
+
+    def has_imageFiles(self):
+        if len(self.imageFiles) >0:
+            return True
+        else:
+            return False
+
+    def has_helpFiles(self):
+        if len(self.helpFiles) >0:
+            return True
+        else:
+            return False
+            
+    def has_colaFiles(self):
+        if len(self.colaFiles) >0:
+            return True
+        else:
+            return False
+    
+    def has_textFiles(self):
+        if len(self.textFiles) >0:
+            return True
+        else:
+            return False
+            
+    def has_pyFiles(self):
+        if len(self.pyFiles) >0:
+            return True
+        else:
+            return False
+
+    def setParents(self):
+        parents=[]
+        for key,  val in self.setTree.iteritems():
+            if val== None:
+                parents.append(key)
+        return parents
+    
+    def setChildren(self,  parent):
+        children=[]
+        for key, val in self.setTree.iteritems():
+            if val==parent:
+                children.append(key)
+        return children
+
+    def getWorkflowText(self):
+        return self.workflow
+    
+    def updateWorkflowText(self, text):
+        self.workflow=QString(text)
+        
+    
+    def listOfTreeSet(self):
+        l=[]
+        for g in self.setTree:
+            dict={}
+            for k, v in g.pred.iteritems():
+                if len(v.keys())>0:
+                    dict[k]=v.keys()[0]
+                else:
+                    dict[k]=""
+            l.append(dict)
+        return l
+    
+    def childrenSet(self, setname):
+        for tree in self.setTree:
+            if setname in tree:
+                return tree.successors(setname)
+        
+        
+    def toRoot(self, setname):
+        for tree in self.setTree:
+            if setname in tree:
+                
+                    
+                
+            

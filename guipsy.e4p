@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Project SYSTEM "Project-4.6.dtd">
+<!-- eric4 project file for project guipsy -->
+<!-- Saved: 2013-04-25, 14:47:44 -->
+<!-- Copyright (C) 2013 ,  -->
+<Project version="4.6">
+  <Language></Language>
+  <ProgLanguage mixed="0">Python</ProgLanguage>
+  <ProjectType>Qt4</ProjectType>
+  <Description></Description>
+  <Version>0.1</Version>
+  <Author></Author>
+  <Email></Email>
+  <Sources>
+    <Source>workflow/__init__.py</Source>
+    <Source>workflow/Ui_workflow.py</Source>
+    <Source>workflow/workflow.py</Source>
+    <Source>launch/view_pyfile.py</Source>
+    <Source>launch/view_cola.py</Source>
+    <Source>launch/Ui_launch.py</Source>
+    <Source>launch/__init__.py</Source>
+    <Source>launch/syntax.py</Source>
+    <Source>help/view_help.py</Source>
+    <Source>help/view_helpFile.py</Source>
+    <Source>help/__init__.py</Source>
+    <Source>help/Ui_help.py</Source>
+    <Source>help/Ui_helpFile.py</Source>
+    <Source>text/Ui_text.py</Source>
+    <Source>text/view_text.py</Source>
+    <Source>text/__init__.py</Source>
+    <Source>dialog/historyDlg.py</Source>
+    <Source>dialog/plotTableWindow.py</Source>
+    <Source>dialog/gipsyHeadersDlg.py</Source>
+    <Source>dialog/myeditarea.py</Source>
+    <Source>dialog/Ui_historyDlg.py</Source>
+    <Source>dialog/__init__.py</Source>
+    <Source>dialog/Ui_plotTableWindow.py</Source>
+    <Source>dialog/Ui_tableHeadersDlg.py</Source>
+    <Source>dialog/Ui_gipsyHeadersDlg.py</Source>
+    <Source>dialog/tableHeadersDlg.py</Source>
+    <Source>dialog/Ui_editPlotDlg.py</Source>
+    <Source>__init__.py</Source>
+    <Source>images/view_image.py</Source>
+    <Source>images/__init__.py</Source>
+    <Source>images/Ui_images.py</Source>
+    <Source>table/__init__.py</Source>
+    <Source>table/view_table.py</Source>
+    <Source>table/Ui_table.py</Source>
+    <Source>browser/Ui_workspaceBrowser.py</Source>
+    <Source>browser/__init__.py</Source>
+    <Source>browser/workspaceBrowser.py</Source>
+    <Source>session/session.py</Source>
+    <Source>session/__init__.py</Source>
+    <Source>resources_rc.py</Source>
+    <Source>new_exceptions.py</Source>
+    <Source>gipsyClasses/__init__.py</Source>
+    <Source>gipsyClasses/Ui_gipsySet.py</Source>
+    <Source>gipsyClasses/xreverse.py</Source>
+    <Source>gipsyClasses/view_gipsySet.py</Source>
+    <Source>gipsyClasses/gipsySet.py</Source>
+    <Source>gipsyClasses/gipsyTask.py</Source>
+    <Source>gipsyClasses/Ui_clip.py</Source>
+    <Source>gipsyClasses/view_tasks.py</Source>
+    <Source>gipsyClasses/Ui_viewtask.py</Source>
+    <Source>gipsyClasses/Ui_combin.py</Source>
+    <Source>gipsyClasses/Ui_copy.py</Source>
+    <Source>gipsyClasses/Ui_extend.py</Source>
+    <Source>gipsyClasses/Ui_meanSum.py</Source>
+    <Source>gipsyClasses/Ui_regrid.py</Source>
+    <Source>gipsyClasses/Ui_snapper.py</Source>
+    <Source>gipsyClasses/Ui_transform.py</Source>
+    <Source>gipsyClasses/Ui_transpose.py</Source>
+    <Source>table/Ui_tablePreview.py</Source>
+    <Source>gipsyClasses/setbrowser.py</Source>
+    <Source>gipsyClasses/Ui_setbrowser.py</Source>
+    <Source>gipsyClasses/Ui_reswri.py</Source>
+    <Source>gipsyClasses/tablebrowser.py</Source>
+    <Source>gipsyClasses/Ui_galmod.py</Source>
+    <Source>gipsyClasses/Ui_pplot.py</Source>
+    <Source>gipsyClasses/Ui_profil.py</Source>
+    <Source>gipsyClasses/Ui_shuffle.py</Source>
+    <Source>gipsyClasses/Ui_ellint.py</Source>
+    <Source>gipsyClasses/Ui_tablebrowser.py</Source>
+    <Source>guipsy.pyw</Source>
+    <Source>general.py</Source>
+    <Source>gipsyClasses/Ui_rfits.py</Source>
+    <Source>gipsyClasses/Ui_wfits.py</Source>
+    <Source>dialog/Ui_fitsHeaderDlg.py</Source>
+    <Source>dialog/Ui_aboutDlg.py</Source>
+    <Source>dialog/aboutDlg.py</Source>
+  </Sources>
+  <Forms>
+    <Form>ui_interfaces/clip.ui</Form>
+    <Form>ui_interfaces/plotTableWindow.ui</Form>
+    <Form>ui_interfaces/launch.ui</Form>
+    <Form>ui_interfaces/snapper.ui</Form>
+    <Form>ui_interfaces/minbox.ui</Form>
+    <Form>ui_interfaces/workflow.ui</Form>
+    <Form>ui_interfaces/extend.ui</Form>
+    <Form>ui_interfaces/editset.ui</Form>
+    <Form>ui_interfaces/fileBrowser.ui</Form>
+    <Form>ui_interfaces/tableHeadersDlg.ui</Form>
+    <Form>ui_interfaces/helpFile.ui</Form>
+    <Form>ui_interfaces/combin.ui</Form>
+    <Form>ui_interfaces/copy.ui</Form>
+    <Form>ui_interfaces/images.ui</Form>
+    <Form>ui_interfaces/historyDlg.ui</Form>
+    <Form>ui_interfaces/help.ui</Form>
+    <Form>ui_interfaces/text.ui</Form>
+    <Form>ui_interfaces/gipsyHeadersDlg.ui</Form>
+    <Form>ui_interfaces/regrid.ui</Form>
+    <Form>ui_interfaces/gipsySet.ui</Form>
+    <Form>ui_interfaces/tablePreview.ui</Form>
+    <Form>ui_interfaces/transpose.ui</Form>
+    <Form>ui_interfaces/transform.ui</Form>
+    <Form>ui_interfaces/viewtask.ui</Form>
+    <Form>ui_interfaces/editPlotDlg.ui</Form>
+    <Form>ui_interfaces/meanSum.ui</Form>
+    <Form>ui_interfaces/setbrowser.ui</Form>
+    <Form>ui_interfaces/workspaceBrowser.ui</Form>
+    <Form>ui_interfaces/table.ui</Form>
+    <Form>ui_interfaces/insert.ui</Form>
+    <Form>ui_interfaces/reswri.ui</Form>
+  </Forms>
+  <Translations>
+  </Translations>
+  <Resources>
+    <Resource>resources.qrc</Resource>
+  </Resources>
+  <Interfaces>
+  </Interfaces>
+  <Others>
+  </Others>
+  <Vcs>
+    <VcsType>None</VcsType>
+  </Vcs>
+  <FiletypeAssociations>
+    <FiletypeAssociation pattern="*.ui" type="FORMS" />
+    <FiletypeAssociation pattern="*.idl" type="INTERFACES" />
+    <FiletypeAssociation pattern="*.qm" type="TRANSLATIONS" />
+    <FiletypeAssociation pattern="*.ptl" type="SOURCES" />
+    <FiletypeAssociation pattern="*.pyw" type="SOURCES" />
+    <FiletypeAssociation pattern="*.ui.h" type="FORMS" />
+    <FiletypeAssociation pattern="*.ts" type="TRANSLATIONS" />
+    <FiletypeAssociation pattern="*.py" type="SOURCES" />
+    <FiletypeAssociation pattern="*.qrc" type="RESOURCES" />
+  </FiletypeAssociations>
+</Project>

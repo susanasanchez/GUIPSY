@@ -1,0 +1,35 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file alias="filenew.png">resources/images/filenew.png</file>
+<file alias="fileopen.png">resources/images/fileopen.png</file>
+<file alias="filesave.png">resources/images/filesave.png</file>
+<file alias="filesaveas.png">resources/images/filesaveas.png</file>
+<file alias="tab-close.png">resources/images/tab-close.png</file>
+<file alias="filequit.png">resources/images/filequit.png</file>
+<file alias="cola.png">resources/images/cola.png</file>
+<file alias="cube.png">resources/images/cube.png</file>
+<file alias="help.png">resources/images/help.png</file>
+<file alias="table.png">resources/images/table.png</file>
+<file alias="column_add_after.png">resources/images/column_add.png</file>
+<file alias="column_delete.png">resources/images/column_delete.png</file>
+<file alias="row_add.png">resources/images/row_add.png</file>
+<file alias="row_delete.png">resources/images/row_delete.png</file>
+<file alias="image.png">resources/images/image.png</file>
+<file alias="text.png">resources/images/text.png</file>
+<file alias="python.png">resources/images/python.png</file>
+<file alias="session.png">resources/images/session.png</file>
+<file alias="session-close.png">resources/images/session-close.png</file>
+<file alias="plot.png">resources/images/plot.png</file>
+<file alias="replace.png">resources/images/replace.png</file>
+<file alias="loading.png">resources/images/loading.png</file>
+<file alias="arrowUp.png">resources/images/arrowUp.png</file>
+<file alias="arrowDown.png">resources/images/arrowDown.png</file>
+<file alias="icon_gui.png">resources/images/icon_gui.png</file>
+<file alias="edit_icon.png">resources/images/edit_icon.png</file>
+<file alias="delete_icon.png">resources/images/delete_icon.png</file>
+<file alias="delete_icon.png">resources/images/delete_icon.png</file>
+<file alias="add_icon.png">resources/images/add_icon.png</file>
+<file >resources/python_templates/template_test.py</file>
+<file >resources/cola_templates/template_test.col</file>
+</qresource>
+</RCC>

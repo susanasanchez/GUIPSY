@@ -1,0 +1,37 @@
+import sys
+import shutil
+
+import Ui_images
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from new_exceptions import *
+
+class view_image(QScrollArea,Ui_images.Ui_images):
+    def __init__(self):
+        super(view_image, self).__init__()
+        self.setupUi(self)
+
+    #INTERESTING INHERITED ATRIBUTES
+    #graphicsView: a panel to display the image
+        self.filename=""
+    
+    def loadImage(self,  filename):
+        self.filename=filename
+        image = QImage(filename)
+        if image.isNull():
+            raise imageExceptions("Failed to read %s" % fname)
+        else:
+            self.scene = QGraphicsScene()
+            self.scene.addPixmap(QPixmap.fromImage(image))
+            self.graphicsView.setScene(self.scene)
+    
+    def save(self, newFile):
+        
+        try:
+            shutil.copyfile(self.filename,  newFile)
+        except IOError as e:
+            raise e
+            return
+        
+        

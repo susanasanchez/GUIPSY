@@ -1,0 +1,240 @@
+# -*- coding: utf-8 -*-
+import sys
+import functools
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+
+from Ui_setbrowser import *
+from gipsyClasses.gipsySet import *
+from general import *
+
+from new_exceptions import *
+
+
+class setbrowser(QDialog, Ui_setbrowser):
+    def __init__(self, filename, subset,  box):
+        super(setbrowser, self).__init__()
+        self.setPath=None
+        self.axesInfo=None
+        self.axesList=None
+        self.setupUi(self)
+        self.subButtons={}
+        self.boxButtons={}
+        self.groupCheckBox={}
+        self.RangeListLabel={}
+        self.RangeListEdit={}
+        
+        self.connect(self.browseButton, SIGNAL("clicked()"), self.browser)
+        
+        
+        if filename != None and subset !="" and box !="":
+            
+            self.setPath=filename
+            set=gipsySet()
+            set.loadSet(self.setPath)
+            self.axesInfo=set.getInfoAxes()
+            self.axesList=set.getAxes()
+            del set
+            
+            self.subsetLine.setText(subset)
+            self.boxLine.setText(box)
+            self.showDefaultAxes()
+            self.showUpdatedAxes(unicode(subset),  unicode(box))
+        else:
+            self.showDefaultAxes()
+    
+    
+    def browser(self):
+        dir = os.path.dirname(".")
+        fName = unicode(QFileDialog.getOpenFileName(self, "File open ", dir,SETFORMAT))
+        if (fName==""):
+            return
+        self.setPath=unicode(os.path.splitext(fName)[0])
+        set=gipsySet()
+        set.loadSet(self.setPath)
+        self.axesInfo=set.getInfoAxes()
+        self.axesList=set.getAxes()
+        del set
+        self.clearAxesLayout()
+        self.showDefaultAxes()
+    
+    def clearAxesLayout(self):
+              #delete all extraLayout
+        while self.axesLayout.count()>0:
+            item=self.axesLayout.takeAt(0)
+            if item != None:
+                l=item.layout()
+                if l:
+                    while l.count()>0:
+                        item2=l.takeAt(0)
+                        if item2 !=None:
+                            w2=item2.widget()
+                            if w2:
+                                
+                                w2.deleteLater()
+                else:
+                    w=item.widget()
+                    if w:
+                        
+                        w.deleteLater()
+                        
+    def showDefaultAxes(self):
+        if self.setPath==None:
+            return
+        self.setnameLine.setText(self.setPath)
+        
+        subsetText=os.path.basename(self.setPath)+" "
+        boxtext=""
+        xbox=[]
+        ybox=[]
+        for i, axe in enumerate(self.axesInfo):
+            (axename, range)=axe
+            if i<2:
+                x, y=range.split()
+                xbox.append(x)
+                ybox.append(y)
+            else:
+                subsetText=subsetText+" "+axename
+        for x in xbox:
+            boxtext=boxtext+" "+x
+        for y in ybox:
+            boxtext=boxtext+" "+y
+        
+        self.subsetLine.setText(subsetText)
+        self.boxLine.setText(boxtext)
+   
+        for i, axe in enumerate(self.axesInfo):
+            (axename, range)=axe
+            self.axesLayout.addWidget(QLabel(QString(axename)), i, 0)
+            self.groupCheckBox[i]=QButtonGroup()
+            sub=QRadioButton(QString("SUB"))
+            if (i >1):
+                sub.setChecked(True)
+            self.groupCheckBox[i].addButton(sub, 0)
+            box=QRadioButton(QString("BOX"))
+            if (i <2):
+                box.setChecked(True)
+            self.groupCheckBox[i].addButton(box, 1)
+            self.axesLayout.addWidget(sub, i, 1)
+            self.axesLayout.addWidget(box, i, 2)
+            if (i>1): 
+                self.RangeListLabel[i]=QLabel(QString("List: "))
+            else:
+                self.RangeListLabel[i]=QLabel(QString("Range: "))
+                
+            curried = functools.partial(self.changeRangeList,i)
+            self.connect(self.groupCheckBox[i],SIGNAL("buttonClicked(int)"),   curried)
+            self.axesLayout.addWidget(self.RangeListLabel[i], i, 3)
+            
+            self.RangeListEdit[i]=QLineEdit()            
+            self.connect(self.RangeListEdit[i], SIGNAL("textChanged(QString)"), self.updateLines)
+            self.axesLayout.addWidget(self.RangeListEdit[i], i, 4)
+            
+            limitLabel=QLabel(QString("["+range+"]"))
+            self.axesLayout.addWidget(limitLabel, i, 5)
+
+
+
+    def updateLines(self):
+        perror=QPalette() #Error palette
+        perror.setColor(QPalette.Base, QColor(255, 0,0))
+        p=QPalette() #write palette
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        subsettext=os.path.basename(self.setPath)+" "
+        xbox=[]
+        ybox=[]
+        for i, axe in enumerate(self.axesInfo):
+            (axename, range)=axe
+            group=self.groupCheckBox[i]
+            buttonSub=group.button(0)
+            if buttonSub.isChecked():
+                subsettext=subsettext+unicode(axename)+" "+unicode(self.RangeListEdit[i].text())+" "
+               
+            else:
+                text=unicode(self.RangeListEdit[i].text())
+                text=text.strip()
+                if text=="":
+                    self.RangeListEdit[i].setPalette(p)
+                    self.RangeListEdit[i].setToolTip("")
+                    xbox.append(range.split()[0])
+                    ybox.append(range.split()[1])
+                    
+                elif len(text.split()) >2:
+                    self.RangeListEdit[i].setPalette(perror)
+                    self.RangeListEdit[i].setToolTip(ERROR_SETBROWSER['overflow'])
+                    xbox.append(range.split()[0])
+                    ybox.append(range.split()[1])
+                elif len(text.split()) <2:
+                    self.RangeListEdit[i].setPalette(perror)
+                    self.RangeListEdit[i].setToolTip(ERROR_SETBROWSER['twovalues'])
+                    xbox.append(range.split()[0])
+                    ybox.append(range.split()[1])
+                else:
+                    x, y=text.split()
+                    try:
+                        int(x)
+                        int (y)
+                    except:
+                        self.RangeListEdit[i].setPalette(perror)
+                        self.RangeListEdit[i].setToolTip(ERROR_SETBROWSER['syntax'])
+                        xbox.append(range.split()[0])
+                        ybox.append(range.split()[1])
+                    else:
+                        self.RangeListEdit[i].setPalette(p)
+                        self.RangeListEdit[i].setToolTip("")
+                        xbox.append(x)
+                        ybox.append(y)
+        
+        self.subsetLine.setText(subsettext)
+        boxtext=""
+        for x in xbox:
+            boxtext=boxtext+" "+x
+        for y in ybox:
+            boxtext=boxtext+" "+y
+        self.boxLine.setText(boxtext)
+        
+        
+    def showUpdatedAxes(self, subset, box):
+               
+        subsetList=subset.split()
+        boxList=box.split()
+        n_box=0
+        for i, axe in enumerate(self.axesInfo):
+            (axename, range)=axe
+            if axename in subsetList:
+                b=self.groupCheckBox[i].button(0)
+                b.setChecked(True)
+                j=subsetList.index(axename)
+                while (len(subsetList)> j+1):
+                    if subsetList[j+1] not in self.axesList:
+                        tmp=unicode(self.RangeListEdit[i].text())
+                        tmp=tmp+" "+unicode(subsetList[j+1])
+                        self.RangeListEdit[i].setText(tmp)
+                    else:
+                        break
+                    j=j+1
+            else:
+                group=self.groupCheckBox[i]
+                b=group.button(1)
+                b.setChecked(True)
+                n_box +=1
+        j=0
+        for i,  axe in enumerate(self.axesInfo):
+            b=self.groupCheckBox[i].button(1)
+            if b.isChecked():
+                if len(boxList)> j+n_box:
+                    text=boxList[j]+" "+boxList[j+n_box]
+                    self.RangeListEdit[i].setText(text)
+                j +=1
+        
+        
+    def changeRangeList(self, key, id):
+        group=self.groupCheckBox[key]
+        buttonSub=group.button(0)
+        if buttonSub.isChecked():
+            self.RangeListLabel[key].setText("List: ")
+        else:
+            self.RangeListLabel[key].setText("Range: ")
+        
+        self.updateLines()

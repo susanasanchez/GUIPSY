@@ -1,0 +1,109 @@
+import gipsy
+import gipsy
+from gipsy import *
+
+import sys
+import time
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+
+from new_exceptions import *
+
+c =0
+class dinamicalForm(QDialog):
+    def __init__(self, taskname,parent=None):
+        super(dinamicalForm,self).__init__(parent)
+        self.keys = []
+        taskname=taskname.upper()
+        cmdlab = QLabel('Running '+taskname)
+        #self.lineedit = QLineEdit()
+        layout = QHBoxLayout() 
+        layout.addWidget(cmdlab)
+        #layout.addWidget(self.lineedit)
+        self.label = QLabel('Ready')
+        self.label2 = QLabel()
+        self.label2.setStyleSheet('QLabel {color: red}')
+        self.layout = QVBoxLayout()
+        self.layout.addLayout(layout)
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.label2)
+        self.setLayout(self.layout)
+        self.setWindowTitle('Task launcher')
+
+    def addkey(self, key):
+        label = QLabel(key)
+        lineedit = QLineEdit()
+        gipsy.QtLink(key, lineedit, 'returnPressed()')
+        layout = QHBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(lineedit)
+        self.layout.addLayout(layout)
+
+    def addCloseButton(self):
+        button = QPushButton("Close this form")
+        layout = QHBoxLayout()
+        layout.addWidget(button)
+        self.layout.addLayout(layout)
+        self.connect(button, SIGNAL("clicked()"), self.closeForm)
+
+    def closeForm(self):
+        self.done(0)
+
+class gipsyTask(object):
+  
+    
+    def __init__(self):
+        return
+        
+    
+    def sendTask(self, task):
+        task=task.lower()
+        key=str(time.time())
+        try:
+            xeq(task, key)
+        except XeqError as e:
+            #raise gipsyException("Unavailable run %s task"%(task))	
+            raise gipsyException(str(e))
+            return
+        
+
+    def finished(self,cb):
+        self.form.addCloseButton()
+        cb.deschedule()                                          # deregister
+  
+
+
+    def writekey(self,cb):
+        gipsy.wkey(cb.key+gipsy.usertext(cb.key, default=2, defval=''), cb.task)
+        self.form.label2.setText('')
+
+    def show_status(self,cb):
+        self.form.label.setText(gipsy.usertext(cb.key))
+
+    def taskrequest(self,cb):
+        taskkey = gipsy.usertext(cb.key)
+        if taskkey not in self.form.keys:
+            self.form.addkey(taskkey)
+            self.form.keys.append(taskkey)
+            gipsy.KeyCallback(self.writekey, taskkey, task=cb.task)
+            taskmsg = gipsy.usertext('M_'+cb.notifykey, default=2)
+        self.form.label2.setText(gipsy.usertext('R_'+cb.notifykey, default=2, defval=''))
+
+    def launchTask(self,task):
+        self.form = dinamicalForm(task)
+        self.form.show()
+        taskname = task
+        
+        if not taskname:                                          # empty input:
+            return                                                 # ignore
+        notifykey = 'TASKCOM='
+        
+        try:
+            gipsy.xeq(taskname, notifykey)                         # start task
+            gipsy.KeyCallback(self.finished, notifykey, task=taskname)  # register callback
+            gipsy.KeyCallback(self.taskrequest, 'K_'+notifykey,task=taskname, notifykey=notifykey)
+            gipsy.KeyCallback(self.show_status, 'S_'+notifykey)
+            self.form.lineedit.setDisabled(True)
+        except:
+            self.form.label.setText('Cannot run %s' % taskname)        # failed to start 

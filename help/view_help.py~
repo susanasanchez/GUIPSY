@@ -1,0 +1,126 @@
+import os
+import glob
+from Ui_help import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+
+class view_help(QWidget,Ui_help):
+    def __init__(self):
+        super(view_help, self).__init__()
+        self.setupUi(self)
+        #INTERESTING INHERITED ATRIBUTES
+        #listWidget: it contains the list item with the names of the task or recipes
+        #lineEdit: it is where the user type the string to search a task or recipe name
+
+
+#DATA elements:
+        self.helpArea=helpContainer()
+
+#BUILDING THE  HELP AREA
+        self.helpArea.load()
+        self.populateList()
+
+        self.connect(self.listWidget,
+                SIGNAL("itemSelectionChanged()"),
+                self.itemSelected)
+        self.connect(self.lineEdit, SIGNAL("textChanged(QString)"),
+                     self.text_changed)
+        self.connect(self.listWidget,
+                SIGNAL("itemDoubleClicked(QListWidgetItem *)"),
+                self.openHelpFile)
+
+    def openHelpFile(self,  item):
+        identity_item=item.data(Qt.UserRole).toLongLong()[0]
+        t=self.helpArea.getItemHelp(identity_item)
+        self.emit(SIGNAL("openHelpFile(file)"), t.filedc1)
+        
+    def text_changed(self):
+        pattern = str(self.lineEdit.text()).upper()
+        items=self.listWidget.findItems(pattern,Qt.MatchStartsWith)
+        if(len(items)>0):
+            self.listWidget.setItemSelected(items[0],True)
+            self.listWidget.scrollToItem(items[0])
+        else:
+            item=self.listWidget.selectedItems()
+            for i in item:
+                i.setSelected(False)
+                self.textBrowser.setText("")
+
+
+
+    def itemSelected(self):
+        #retrieving the item selected
+        item= self.listWidget.selectedItems()
+        if(len(item)>0):
+            identity_item=item[0].data(Qt.UserRole).toLongLong()[0]
+            t=self.helpArea.getItemHelp(identity_item)
+            self.textBrowser.setText(t.smartHelp)
+
+    def populateList(self, selectedItemHelp=None):
+        selected = None
+        self.listWidget.clear()
+        for itemHelp in self.helpArea.inOrder():
+            item = QListWidgetItem(itemHelp.name)
+            item.setData(Qt.UserRole, QVariant(long(id(itemHelp))))
+            self.listWidget.addItem(item)
+            if selectedItemHelp is not None and selectedItemHelp == id(itemHelp):
+                selected = item
+        if selected is not None:
+            selected.setSelected(True)
+            self.listWidget.setCurrentItem(selected)
+
+
+
+class itemHelp(object):
+    def __init__(self,name, smartHelp, filedc1):
+        self.name=name
+        self.smartHelp=smartHelp
+        self.filedc1=filedc1
+        
+    def __cmp__(self, other):
+        return QString.localeAwareCompare(self.name,other.name)
+
+class helpContainer(object):
+    def __init__(self):
+        
+        self.itemsHelp = {}
+
+    def getItemHelp(self, identity):
+        return self.itemsHelp.get(identity)
+
+    def __len__(self):
+        return len(self.itemsHelp)
+
+
+    def __iter__(self):
+        for item in self.itemsHelp.values():
+            yield item
+            
+    
+
+
+    def inOrder(self):
+        
+        return sorted(self.itemsHelp.values())
+
+    def load(self):
+        p=os.environ.get("gip_tsk")
+        for file in glob.glob( p+"/*.dc1"):
+            #name=str(filename.split(".")[0])
+            basename=os.path.basename(file)
+            name=basename.split(".")[0]
+            if name!="":
+                f=open(file, "r")
+                wholeHelp=f.read()
+                f.close()
+                tmp=wholeHelp.split("Purpose:")[1]
+                smartHelp=tmp.split("\n")[0]
+                
+                filedc1=p+"/"+name+".dc1"
+                t=itemHelp(name,smartHelp,filedc1 )
+                self.itemsHelp[id(t)] = t
+           
+
+
+  

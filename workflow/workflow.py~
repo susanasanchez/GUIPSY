@@ -1,0 +1,40 @@
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+import Ui_workflow
+
+from dialog.myeditarea import MyEditArea
+
+
+class workflow(QWidget,Ui_workflow.Ui_workflow):
+    def __init__(self):
+        super(workflow, self).__init__()
+        self.setupUi(self)
+
+        #The log variable stores the python command except import and gipsy command
+        self.log=""
+
+        #workflowArea variable is the textArea where show the logs
+        self.workflowArea=MyEditArea()
+        self.verticalLayout.addWidget(self.workflowArea)
+        self.connect(self.workflowArea, SIGNAL("editingFinished"),self.updateWorkflow)
+
+        
+    def getWorkflowText(self):
+        return self.log
+    
+    def setWorkflowText(self, log):
+        self.log=log
+        text="#!/usr/bin/env/python\nimport gipsy\nfrom gipsy import *\ngipsy.init()\n\n"+log+"\n\ngipsy.finis()"
+        self.workflowArea.setPlainText(text)
+    
+    def appendWorkflowText(self, log):
+        self.log=self.log+log
+        text="#!/usr/bin/env/python\nimport gipsy\nfrom gipsy import *\ngipsy.init()\n\n"+self.log+"\n\ngipsy.finis()"
+        self.workflowArea.setPlainText(text)
+        
+    
+    def updateWorkflow(self):
+        self.log=self.workflowArea.toPlainText()
+        
+        
+

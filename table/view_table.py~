@@ -1,0 +1,612 @@
+import numpy
+from scipy.stats import nanmean
+
+
+import operator
+from Ui_table import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+
+from new_exceptions import *
+
+class view_table(QScrollArea,Ui_table):
+    """ This class is a subclass of Ui_table. The Ui_table class contains the graphical part
+    and view_table class contains the operational part. 
+    This class provides the view to show and editing the table 
+    
+    Parameters
+    -----------------
+    filename: String
+        The pathname of the table file
+    
+    
+    Attributes
+    ---------------
+    modelData: DataTableModel
+        Model for data table  
+    modelStat: DataTableModel
+        Model for the statistics table
+        
+    tableData: QTableView
+        Area to show data table 
+    tableStat: QTableView
+        Area to show statistics table 
+    headersButton: QPushButton
+        Botton to show the form with the data header
+    delColumn: QPushButton
+    addColumn: QPushButton
+    delRow: QPushButton
+    addRow: QPushButton
+    
+    """
+    def __init__(self, filename=""):
+        super(view_table, self).__init__()
+        self.setupUi(self)
+    
+        self.delColumnButton.setEnabled(False)
+        self.delRowButton.setEnabled(False)
+
+        self.modelData=DataTableModel(filename)
+        self.modelStat=StatTableModel()
+        
+        self.tableData.setSelectionMode(QTableView.ExtendedSelection)
+        
+
+        headerData=self.tableData.horizontalHeader()
+        headerStat=self.tableStat.horizontalHeader()
+        self.connect(headerData, SIGNAL("sectionClicked(int)"), self.seleccion)
+        self.HBData=self.tableData.horizontalScrollBar()
+        self.HBData.setTracking(True)
+     
+        self.connect(self.HBData, SIGNAL("valueChanged(int)"), self.twinScrollData)
+        
+        self.HBStat=self.tableStat.horizontalScrollBar()
+        self.HBStat.setTracking(True)
+        self.connect(self.HBStat, SIGNAL("valueChanged(int)"), self.twinScrollStat)
+        
+        self.connect(self.modelData, SIGNAL("dataChanged(QModelIndex,QModelIndex)"), self.calculateStat)
+
+        #Connecting button
+        self.connect(self.addRowButton,SIGNAL("clicked()"), self.addRow)
+        self.connect(self.delRowButton,SIGNAL("clicked()"), self.delRow)
+        self.connect(self.addColumnButton,SIGNAL("clicked()"), self.addColumn)
+        self.connect(self.delColumnButton,SIGNAL("clicked()"), self.delColumn)
+        self.connect(self.headersButton,  SIGNAL("clicked()"), self.emitShowTableHeaders)
+        self.connect(self.plotButton,  SIGNAL("clicked()"), self.emitPlotTable)
+    
+ 
+    def addRow(self):
+        row = self.modelData.rowCount()
+        self.modelData.insertRows(row)
+        index = self.modelData.index(row, 0)
+        self.tableData.setFocus()
+        self.tableData.setCurrentIndex(index)
+        self.tableData.edit(index)
+        
+    
+    def delRow(self):
+        index = self.tableData.currentIndex()
+        if not index.isValid():
+            return
+        row = index.row()
+
+        if QMessageBox.question(self, "Remove", 
+                QString("Are you sure you want to delete the row?"), QMessageBox.Yes|QMessageBox.No) == QMessageBox.No:
+            return
+        self.modelData.removeRows(row)
+        
+    def delColumn(self):
+        index = self.tableData.currentIndex()
+        if not index.isValid():
+            return
+        column= index.column()
+
+        if QMessageBox.question(self, "Remove", 
+                QString("Are you sure you want to delete the column?"), QMessageBox.Yes|QMessageBox.No) == QMessageBox.No:
+            return
+        self.modelData.removeColumn(column)     
+        
+    def addColumn(self):
+        index=self.tableData.currentIndex()
+  
+        self.modelData.insertColumn(index.column())
+        self.modelStat.insertColumn(index.column())
+        self.tableData.setFocus()
+        self.tableData.setCurrentIndex(index)
+        self.tableData.edit(index)
+        self.tableData.resizeColumnsToContents()
+          #Same size columns in both tables:
+        for i in range(0, self.modelData.columnCount()):
+            if self.tableData.columnWidth(i) > self.tableStat.columnWidth(i):
+                self.tableStat.setColumnWidth(i,  self.tableData.columnWidth(i))
+            else:
+                self.tableData.setColumnWidth(i,  self.tableStat.columnWidth(i))
+             
+    def calculateStat(self):
+        self.modelStat.emit(SIGNAL("layoutAboutToBeChanged()"))
+        self.modelStat.recalculate(self.modelData.getDataValues())
+        self.modelStat.emit(SIGNAL("layoutChanged()"))
+        
+    def seleccion(self, column):
+       
+        self.tableData.selectColumn(column)
+        self.tableData.resizeColumnsToContents()
+        #Same size columns in both tables:
+        for i in range(0, self.modelData.columnCount()):
+            if self.tableData.columnWidth(i) > self.tableStat.columnWidth(i):
+                self.tableStat.setColumnWidth(i,  self.tableData.columnWidth(i))
+            else:
+                self.tableData.setColumnWidth(i,  self.tableStat.columnWidth(i))
+
+    
+    def twinScrollData(self, value):
+        self.tableStat.horizontalScrollBar().setValue(value)
+        
+    def twinScrollStat(self, value):
+        self.tableData.horizontalScrollBar().setValue(value)
+    
+    def updateSelection(self, selected,  deselected):
+        
+        
+        self.delColumnButton.setEnabled(False)
+        self.delRowButton.setEnabled(False)
+        indexes=selected.indexes()
+        
+        #Finding out if threre is a column or a row selected to enable del column/row button
+        if (len(indexes)==self.modelData.columnCount()):
+            
+            #Maybe a row is selected
+            tmp=indexes[0].row()
+            for index in indexes:
+                if (tmp != index.row()):
+                    return
+                else:
+                    tmp=index.row()
+            self.delRowButton.setEnabled(True)
+                
+        elif (len(indexes)==self.modelData.rowCount()):
+            #Maybe a column is selected
+            tmp=indexes[0].column()
+            for index in indexes:
+                if (tmp != index.column()):
+                    return
+                else:
+                    tmp=index.column()
+            self.delColumnButton.setEnabled(True)
+        
+        
+        
+     
+    def loadTable(self):
+         error_msj=None
+         try:
+            error_msj=self.modelData.load()
+         except IOError as e:
+            raise e
+            return
+         except tableException as t:
+             raise t
+             return
+             
+         self.tableData.setModel(self.modelData)
+         
+         self.modelStat.setDataValues(self.modelData.getDataValues())
+         self.modelStat.load()
+         self.tableStat.setModel(self.modelStat)
+         self.tableData.setSortingEnabled(True)
+         self.tableData.resizeColumnsToContents()
+         self.tableStat.resizeColumnsToContents()
+  
+ 
+         #Same size columns in both tables:
+         for i in range(0, self.modelData.columnCount()):
+            if self.tableData.columnWidth(i) > self.tableStat.columnWidth(i):
+                self.tableStat.setColumnWidth(i,  self.tableData.columnWidth(i))
+            else:
+                self.tableData.setColumnWidth(i,  self.tableStat.columnWidth(i))
+             
+         self.tableStat.resizeColumnsToContents()
+         
+         
+        
+         self.connect(self.tableData.selectionModel(), SIGNAL("selectionChanged(const QItemSelection &, const QItemSelection &)"), self.updateSelection)
+         
+         if(error_msj):
+             return error_msj
+         else:
+             return
+         
+    def loadSetTable(self,cols):
+         error_msj=None
+         try:
+            error_msj=self.modelData.loadSetTable(cols)
+         except IOError as e:
+            raise e
+            return
+         except tableException as t:
+             raise t
+             return
+             
+         self.tableData.setModel(self.modelData)
+         
+         self.modelStat.setDataValues(self.modelData.getDataValues())
+         self.modelStat.load()
+         self.tableStat.setModel(self.modelStat)
+         self.tableData.setSortingEnabled(True)
+         self.tableData.resizeColumnsToContents()
+         self.tableStat.resizeColumnsToContents()
+  
+ 
+         #Same size columns in both tables:
+         for i in range(0, self.modelData.columnCount()):
+            if self.tableData.columnWidth(i) > self.tableStat.columnWidth(i):
+                self.tableStat.setColumnWidth(i,  self.tableData.columnWidth(i))
+            else:
+                self.tableData.setColumnWidth(i,  self.tableStat.columnWidth(i))
+             
+         self.tableStat.resizeColumnsToContents()
+         
+         
+        
+         self.connect(self.tableData.selectionModel(), SIGNAL("selectionChanged(const QItemSelection &, const QItemSelection &)"), self.updateSelection)
+         
+         if(error_msj):
+             return error_msj
+         else:
+             return         
+         
+    def save(self, filename=None):
+        try:
+            self.modelData.save(filename)
+        except IOError as e:
+            raise e
+            return
+  
+    def emitShowTableHeaders(self):
+        self.emit(SIGNAL("showTableHeaders()"))
+
+    def emitPlotTable(self):
+        self.emit(SIGNAL("plotTable()"))
+    
+    def getTableHeaders(self):
+        h=''.join(self.modelData.headers)
+        return h
+
+    def setTableHeaders(self, newHeaders):
+        self.modelData.headers=newHeaders
+        
+    def isDirty(self):
+        return self.modelData.dirty
+    
+    def getColumn(self, col):
+        return self.modelData.arrayColumns.tolist()[col]
+    
+    def getColumnTitles(self):
+        return  self.modelData.columnTitles
+   
+class StatTableModel(QAbstractTableModel):
+    def __init__(self):
+        super(StatTableModel , self).__init__()
+        self.dirty = False
+        self.dataValues=[]
+        self.h_headers=[]
+        self.dataStat =[]
+       
+    def  setDataValues(self, dataValues):
+        self.dataValues=dataValues
+        
+    def data(self, index, role=Qt.DisplayRole): 
+        lenStat=len(self.dataStat)
+        if not index.isValid() or not (0 <= index.row() < lenStat) or not (0<=index.column()<len(self.dataStat[0])):
+            return QVariant()
+        elif role == Qt.DisplayRole:
+            return str(self.dataStat[index.row()][index.column()])
+        elif role == Qt.BackgroundColorRole:
+            if(index.row()==0):
+                return QVariant(QColor(201, 204, 255))
+            if (index.row()==1):
+                return QVariant(QColor(217, 255, 199))
+                
+        
+    def setData(self, index, value, role=Qt.EditRole):
+        if index.isValid() :
+            self.dataStat[index.row()][index.column()]=value.toDouble()[0]
+            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index, index)
+            return True
+        return False
+        
+    def headerData(self, pos, orientation= Qt.Horizontal, role= Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant("Col "+str(pos))
+            
+        return QVariant()
+        
+    def load(self):
+
+        # Setting the stat table
+        #transpose of self.data (we have to calculate the stat by columns)
+        
+        m=numpy.matrix(self.dataValues, dtype=float)
+        means=[]
+        deviations=[]
+        for i, row in enumerate(m.H):
+            r=numpy.array(row)
+	    masked = numpy.ma.masked_array(r,numpy.isnan(r)) 
+	    
+	    means.append(masked.mean())
+	    deviations.append(numpy.std(masked))
+            #means.append(nanmean(r[0]))
+            #deviations.append(numpy.std(row))
+            
+            
+        self.dataStat.append(means)
+        self.dataStat.append(deviations)
+      
+        
+
+    def rowCount(self,  index=QModelIndex()): 
+        return len(self.dataStat)
+ 
+    def columnCount(self,  index=QModelIndex()): 
+        return len(self.dataStat[0]) 
+    
+    
+    def recalculate(self, dataValues):
+        self.dataValues=dataValues
+        if (len(self.dataStat)==2):
+            self.dataStat.pop()
+            self.dataStat.pop()
+        self.load()
+        self.emit(SIGNAL("dataChanged()"))
+    
+    def insertColumn(self, position,  index=QModelIndex()):
+        self.beginInsertColumns(QModelIndex(), position, position)
+        for i in range(self.rowCount()):
+            self.dataStat[i].insert(position, 0.0)
+        #self.h_headers.insert(position, titleColumn)
+        self.endInsertColumns()
+        self.dirty = True
+        return True
+
+ 
+class DataTableModel(QAbstractTableModel): 
+    def __init__(self, filename=""):
+        super(DataTableModel , self).__init__()
+        self.filename = filename
+        self.dirty = False
+        self.headers=[]
+        self.dataValues = []
+        self.delimiter= None
+        self.columnTitles=None
+        #list of column is needed in several operations
+        self.arrayColumns= None
+        
+        
+    
+    def getDataValues(self):
+        return self.dataValues
+       
+    def data(self, index, role=Qt.DisplayRole): 
+        lenData=len(self.dataValues)
+       
+        if not index.isValid() or not (0 <= index.row() < lenData) or not (0<=index.column()<len(self.dataValues[0])):
+            return QVariant()
+        #elif role == Qt.DisplayRole or role==Qt.EditRole:
+        elif role == Qt.DisplayRole:
+            return str(self.dataValues[index.row()][index.column()])
+        elif role==Qt.EditRole:
+            self.dirty=True
+            return str(self.dataValues[index.row()][index.column()])
+            
+      
+    def load(self):
+        #errors=None   
+        delimiters=[";", "|", None, ","]
+        try:
+            fh=open(self.filename, "rb")
+        except IOError as e:
+            raise e
+            return 
+        rows=fh.readlines()
+        fh.close()
+        for delimiter in delimiters:
+            self.headers=[]
+            self.dataValue=[]
+            n_col_tmp=-1
+            lines=rows
+            for i, line in enumerate (lines):
+              
+                splitted=line.split(delimiter)
+                if len(splitted)==1:
+                    self.headers.append(line)
+                else:
+                    floatRow=[]
+                    for j, data in enumerate(splitted):
+                        if data.strip() =="":
+                            data="NaN"
+                        try:
+                            floatRow.append(float(data.strip()))
+                        except ValueError as v:
+                            self.headers.append(line)
+                            floatRow=[]
+                            break
+                   
+                    if len(floatRow)>0:
+                        
+                        if n_col_tmp==-1:
+                            n_col_tmp=len(floatRow)
+                        if n_col_tmp != len(floatRow):
+                            self.headers.append(line)
+                        else:
+                            self.dataValues.append(floatRow)
+            if len(self.dataValues)!=0:
+                #Keep the delimiter
+                if(delimiter==None):
+                    self.delimiter="\t"
+                else:
+                    self.delimiter=delimiter
+                break
+        
+	if(len(self.dataValues)!=0):
+	  #list of column is needed in several operation
+	  m=numpy.matrix(self.dataValues, dtype=float)
+	  self.arrayColumns=m.H
+	  
+	  #The title columns are just colX
+	  self.columnTitles=["Col %s"% str(i) for i in range(self.columnCount())] 
+        
+        if len(self.dataValues)==0:
+	    #Maybe it is because is a one column tableData
+	    for data in self.headers:
+		try:
+		  data=float(data.strip())
+		except ValueError as v:
+		  raise tableException("Unexpected format table")
+		  return
+		
+		self.dataValues.append([data])
+	    #list of column is needed in several operation
+	    m=numpy.matrix(self.dataValues, dtype=float)
+	    self.arrayColumns=m.H
+	    self.columnTitles=["Col 0"]
+            
+        
+    def loadSetTable(self,cols):
+	self.delimiter="\t"
+	self.columnTitles=[]
+	listColumns=[]
+	for key,col in cols.iteritems():
+	  self.columnTitles.append(str(key))
+	  listColumns.append(col)
+	m=numpy.matrix(listColumns,dtype=float)
+	
+	self.dataValues=m.H.tolist()
+	self.arrayColumns=numpy.matrix(listColumns)
+
+        
+    def rowCount(self,  index=QModelIndex()): 
+        return len(self.dataValues)
+ 
+    def columnCount(self,  index=QModelIndex()): 
+        return len(self.dataValues[0]) 
+ 
+   
+
+    def headerData(self, col, orientation= Qt.Horizontal, role= Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            #return QVariant("Col "+str(col))
+	    return QVariant(self.columnTitles[col])
+        return QVariant()
+
+    def sort(self, Ncol, order):
+        """Sort table by given column number.
+        """
+        self.emit(SIGNAL("layoutAboutToBeChanged()"))
+        self.dataValues = sorted(self.dataValues, key=operator.itemgetter(Ncol))        
+        if order == Qt.DescendingOrder:
+            self.dataValues.reverse()
+        
+        self.emit(SIGNAL("layoutChanged()"))
+    
+    def setData(self, index, value, role=Qt.EditRole):
+        if index.isValid() :
+            if(value.toDouble()[1]==True):
+                self.dataValues[index.row()][index.column()]=value.toDouble()[0]
+            else:
+                value=QString("NaN")
+                self.dataValues[index.row()][index.column()]=value.toDouble()[0]
+            self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index, index)
+            return True
+        return False
+    
+    def flags(self, index):
+        lenData=len(self.dataValues)
+        if not index.isValid() or (index.row()>=lenData):
+            return Qt.ItemIsEnabled
+        return Qt.ItemFlags(QAbstractTableModel.flags(self, index)|
+                            Qt.ItemIsEditable)
+    
+    def insertRows(self, position, rows=1, index=QModelIndex()):
+        self.beginInsertRows(QModelIndex(), position,
+                             position + rows - 1)
+        for row in range(rows):
+            l=[float("NaN")]*self.columnCount()
+            self.dataValues.append(l)
+        self.endInsertRows()
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index, index)
+        self.dirty = True
+        
+        #list of column is needed in several operation
+        m=numpy.matrix(self.dataValues, dtype=float)
+        self.arrayColumns=m.H
+       
+        return True
+    
+    def removeRows(self, position,  index=QModelIndex()):
+        self.beginRemoveRows(QModelIndex(), position, position)
+        self.dataValues.pop(position)
+        self.endRemoveRows()
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index, index)
+        self.dirty = True
+        
+        #list of column is needed in several operation
+        m=numpy.matrix(self.dataValues, dtype=float)
+        self.arrayColumns=m.H
+        return True
+        
+    def insertColumn(self, position,  index=QModelIndex()):
+        self.beginInsertColumns(QModelIndex(), position, position)
+        for i in range(self.rowCount()):
+            self.dataValues[i].insert(position, float("NaN"))
+        self.endInsertColumns()
+        self.dirty = True
+        #list of column is needed in several operation
+        m=numpy.matrix(self.dataValues, dtype=float)
+        self.arrayColumns=m.H
+        #The title columns are just colX
+        self.columnTitles=["Col %s"% str(i) for i in range(self.columnCount())]
+        return True   
+    
+    def removeColumn(self,  position,   index=QModelIndex()):
+        self.beginRemoveColumns(QModelIndex(), position, position )
+        
+        #Build a list of column without deleted column
+        nm=numpy.matrix(self.dataValues, float)
+        condition=[1]*self.columnCount()
+        condition[position]=0
+        list_column=numpy.matrix(numpy.compress(condition, nm.H, axis=0),  float)
+        if(len(list_column.H) == self.rowCount()):
+            self.dataValues=[]
+            for i in range(0, len(list_column.H)):
+                self.dataValues.append(list_column.H[i].tolist()[0])
+        else:
+            return False
+        
+        self.endRemoveColumns()
+        self.emit(SIGNAL("dataChanged(QModelIndex,QModelIndex)"),index, index)
+        self.dirty = True
+        #list of column is needed in several operation
+        m=numpy.matrix(self.dataValues, dtype=float)
+        self.arrayColumns=m.H
+        #The title columns are just colX
+        self.columnTitles=["Col %s"% str(i) for i in range(self.columnCount())]
+        return True
+ 
+    def save(self, filename):
+        if filename!=None:
+            self.filename=filename
+        try:
+            fh=open(self.filename, "wb")
+        except IOError as e:
+            fh.close()
+            raise e
+            return 
+
+        fh.writelines(["%s"%item for item in self.headers])
+        for row in self.dataValues:
+             s="%s"+self.delimiter
+             fh.writelines([s%item for item in row])
+             fh.write("\n")
+        fh.close()
+
+
