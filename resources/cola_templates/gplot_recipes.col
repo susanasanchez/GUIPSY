@@ -1,0 +1,119 @@
+! Author: Rob Assendorp (19-12-'94)
+! http://www.astro.rug.nl/~gipsy/gplot/colademo.html
+! declare variables
+!
+real size,side,pixel,xid,yid,paper,scale,zero,sigma,upper
+string set,sett,objname,grdevice
+integer myerr
+!
+! size on paper
+!
+paper=120
+!
+! ask device name
+!
+grdevice = "tekt"
+read "grdevice [%grdevice]" grdevice
+!
+! ask setname and label
+!
+read "set to plot" set
+read "name to put in plot" objname
+!
+! if device name equals lps, then set PS file
+!
+IF grdevice = "lps" THEN
+  grdevice = "lps/%set-gray.ps"
+CIF
+!
+! get max of data, if not set use MNMX
+!
+myerr = rhead(set, 1, "DATAMAX", upper)
+IF upper < .001 THEN
+  "mnmx inset=%set"
+  myerr = rhead(set, 1, "DATAMAX", upper)
+CIF
+!
+! get size and pixel size of data
+!
+myerr = rhead(set, 1, "CDELT2", pixel)
+myerr = rhead(set, 1, "NAXIS1", size)
+size = size*pixel
+pixel = pixel*3600
+!
+! now ask box
+!
+read "Size of box in degree [%size]" size
+!
+! determine side of box
+!
+side=size*3600/pixel
+!
+! determine scale
+!
+scale=side/paper
+!
+! determine position for ID text
+!
+xid = side/2+scale*10
+yid = -side/2+1
+!
+! get zero, noise
+!
+read "background level" zero
+read "noise level" sigma
+!
+! Now go and plot
+!
+"gplot command=
+device %grdevice;
+inset %set;
+box -%side/2+1 -%side/2+1 %side/2 %side/2;
+xscale  %scale;
+yscale  %scale;
+location 50 30;
+xmargin 5;
+ymargin 5;
+level %zero-3*%sigma:%zero+3*%sigma:%sigma 2*%upper:2*%upper+14:1;
+grayscale;
+input ra.mac;
+axpos * 5 0 0
+axdelta 15 hmsmin
+axminor 3
+cgstep 0.5
+axis BPE;
+axtitle Right Ascension (1950.0);
+input ra.mac;
+axis TPA00E;
+input dec.mac;
+axpos * 40 0 0
+axdelt 5 degree
+axmin 5
+axis LPE;
+axtitle Declination (1950.0);
+input dec.mac;
+axis RPA00E;
+level %zero+3*%sigma %zero+4*%sigma %zero+6*%sigma %zero+10*%sigma %zero+20*%sigma;
+contour;
+level %zero+30*%sigma %zero+50*%sigma %zero+100*%sigma %zero+200*%sigma;
+contour;
+toplabel %objname;
+symbol 18;
+charheight 8;
+mmeter;
+charheight 3.5;            
+!
+! This info is not included in the plot displayed above.
+!
+move 180 180;text Set: %set;
+move 180 175;text Zero level: z\(0226)%zero;
+move 180 170;text Sigma level: s\(0226)%sigma;
+move 180 165;text Gray levels: z+n*s, n\(0226)-3,-2,-1,0,1,2,3;
+move 180 160;text Drawn contours: z+n*s, n\(0226)3,4,6,10,20,50,100,200;
+world;
+move %xid %yid;
+angle 90;
+charheight 2.0;
+id;
+quit
+"
