@@ -20,6 +20,7 @@ class gipsyHeadersDlg(QDialog,Ui_gipsyHeaderDlg):
         #The list of items is going to be a dictionary
         self.items={}
         for key,  value in items:
+            print "TIPO ", type(value)
             self.items[key]=value
         
     
@@ -41,7 +42,12 @@ class gipsyHeadersDlg(QDialog,Ui_gipsyHeaderDlg):
         keys.sort()
         for key in keys:
             value=self.items[key]
-            self.headerLines[key]=QLineEdit(QString(unicode(value)))
+            if isinstance(value, basestring):
+                self.headerLines[key]=QLineEdit(QString(value))
+            else:
+                self.headerLines[key]=QLineEdit(QString(str(value)))
+                
+            #self.headerLines[key]=QLineEdit(QString(unicode(value)))
             self.headerLines[key].setEnabled(False)
             #self.headerLines[key].setFixedWidth(125)
             #self.headerLines[key].setMaxLength(72)

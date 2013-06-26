@@ -2,7 +2,6 @@
 
 import gipsy
 from gipsy import *
-   
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -45,23 +44,40 @@ from general import *
 
 
 class document(object):
-    """
-    This class represents the different kind of document that GUIpsy can open: set, table, cola, text, python script, image.
-    The class document has two attributes:
-    docname: It is the whole path of the document
-    type: it is the type of the document. The possible types are:
-    - SET: Document is a set
-    - COLA: Document is a cola file
-    - COLTEMP: Document is a cola template
-    - TEXT: Document is a text file 
-    - PYFILE: Document is a python script 
-    - PYTEMP: Document is a python template
-    - IMAGE: Document is a image file(jpg, gif and other image format) 
-    - HELP: Document is a gipsy task help page
-    - TABLE: Document is a ascii table
-    - SETTABLE: Document is a table embedded in a gipsy SET
-    - VOTABLE: Document is a table with VO format 
-    - SESSION: Document is a session
+    """This class represents the different kind of document that GUIpsy can open: set, table, cola, text, python script, image. 
+    
+     **Attributes**
+    
+    docname : String
+        It is the whole path of the document
+    type: String    
+        it is the type of the document. The possible types are:
+        
+        - SET : 
+          Document is a set
+        - COLA : 
+          Document is a cola file
+        - COLTEMP : 
+          Document is a cola template
+        - TEXT : 
+          Document is a text file 
+        - PYFILE : 
+          Document is a python script 
+        - PYTEMP : 
+          Document is a python template
+        - IMAGE : 
+          Document is a image file(jpg, gif and other image format) 
+        - HELP : 
+          Document is a gipsy task help page
+        - TABLE : 
+          Document is a ascii table
+        - SETTABLE : 
+          Document is a table embedded in a gipsy SET
+        - VOTABLE : 
+          Document is a table with VO format 
+        - SESSION : 
+          Document is a session
+    
     """
     def __init__(self, docname, type):
         self.docname = docname
@@ -80,20 +96,40 @@ class document(object):
 
 class MainWindow(QMainWindow):
     """
-    This class is the main window of the application.  This inherits from QMainWindow class, so it has its own layout.
-    It is composed by this widget:
-    - self.browser: It is the widget of the left part. 
-    - self.workspaceBrowser: It is the tab which is showed in the self.browser widget. It inherits from workspaceBrowser class and it contains the session tree file structure.
-    - self.info: It is the widget of the right part.
-    - self.info_task: it is the tab which is showed in the self.info widget.It inherits from view_help class and it contains the list of gipsy task, and show some info about this task.
-    - self.documents: It is the central tabbed widget, which show all the documents opened in the application
+    This class is the main window of the application.  It inherits from QMainWindow class.
     
-    This class also contains these next attributes:
-    - self.allDocuments: A list of object of the class Document. It keeps a list of all the documents opened.
-    - self.allWidgets: A dictionary which store the widget of the different document opened. Each kind of document has its own widget to be showed, e.g. the widget for the tables contains a view to show the tabular data. The keys of ths dictionary is the whole path of the document showed in this widget.
-    - self.recentDocuments: A list of the documents paths recently opened
-    - self.recentTypes: A list of the types stored in self.recentDocuments
-    - self.session: The current session opened. If no session was opened, a default session will be stored in this attribute.
+   
+    **Main attributes**
+    
+    self.browser : :class:`PyQt4.QtGui.QTabWidget`
+        It is the widget of the left part. 
+    self.workspaceBrowser:  :class:`browser.workspaceBrowser`
+        It is the tab which is showed in the self.browser widget. It inherits from workspaceBrowser class and it contains the session tree file structure.
+    self.info : :class:`PyQt4.QtGui.QTabWidget`
+        It is the widget of the right part.
+    self.info_task: :class:`help.view_help`
+        it is the tab showed in the self.info widget. it contains the list of gipsy tasks, and show some info about this task.
+    self.documents : :class:`PyQt4.QtGui.QTabWidget`
+        It is the central tabbed widget, which show all the documents opened in the application
+    self.allDocuments : List
+        A list of object of the class :class:`document`. It keeps a list of all the documents opened.
+    self.allWidgets : Dictionary 
+        A dictionary which stores the widgets of the different documents opened. 
+        Each kind of document has its own widget to be showed, e.g. the widget for the tables contains a view to show the tabular data. The keys of this dictionary is the whole path of the document showed in this widget.
+    self.recentDocuments : List 
+        A list of the documents paths recently opened
+    self.recentTypes : List 
+        A list of the types stored in self.recentDocuments
+    self.session :  :class:`session.session`
+        The current session opened. If no session was opened, a default session will be stored in this attribute.
+    self.workflow : :class:`workflow.workflow`
+        It is the bottom widget used to show the log
+    self.hub : :class:`sampy.SAMPHubServer`
+        It stores the samp Hub connection
+    self.sampClient : :class:`sampy.SAMPIntegratedClient`
+        It store the sampy client which is listening for coord.pointAt.sky, image.load.fits, table.load.votable messages
+        
+        
     """
     
     
@@ -298,17 +334,17 @@ class MainWindow(QMainWindow):
 
         openGroup = QActionGroup(self)
         curried = functools.partial(self.fileOpenDocument,"SET")
-        openSetAction = self.createAction("S&et", curried, tip=menuTips['open_set'])
+        openSetAction = self.createAction("S&et", curried, icon=self.icon_set,  tip=menuTips['open_set'])
         curried = functools.partial(self.fileOpenDocument,"TABLE")
-        openTableAction = self.createAction("&Table", curried,tip=menuTips['open_table'])
+        openTableAction = self.createAction("&Table", curried, icon=self.icon_table, tip=menuTips['open_table'])
         curried = functools.partial(self.fileOpenDocument,"IMAGE")
-        openImageAction = self.createAction("&Image File", curried,tip=menuTips['open_image'])
+        openImageAction = self.createAction("&Image File", curried,icon=self.icon_image, tip=menuTips['open_image'])
         curried = functools.partial(self.fileOpenDocument,"COLA")
-        openColaAction = self.createAction("&Cola file", curried,tip=menuTips['open_cola'])
+        openColaAction = self.createAction("&Cola file", curried,icon=self.icon_cola, tip=menuTips['open_cola'])
         curried = functools.partial(self.fileOpenDocument,"TEXT")
-        openTextAction = self.createAction("Te&xt file", curried,tip=menuTips['open_text'])
+        openTextAction = self.createAction("Te&xt file", curried,icon=self.icon_text, tip=menuTips['open_text'])
         curried = functools.partial(self.fileOpenDocument,"PYFILE")
-        openPyfileAction = self.createAction("&Python file", curried,tip=menuTips['open_pyfile'])
+        openPyfileAction = self.createAction("&Python file", curried,icon=self.icon_pyfile, tip=menuTips['open_pyfile'])
         
         openSessionAction = self.createAction("&Session file", self.fileOpenSession,tip=menuTips['open_session'])
         
@@ -422,6 +458,9 @@ class MainWindow(QMainWindow):
         
         curried = functools.partial(self.interfaceTask,view_minbox, "minbox")
         MinBox=self.createAction("MinBox",curried,  icon=self.icon_task,  tip=menuTips['MinBox'])
+        
+        curried = functools.partial(self.interfaceTask,view_mnmx, "mnmx")
+        Mnmx=self.createAction("MNMX",curried,  icon=self.icon_task,  tip=menuTips['Mnmx'])
 
         curried = functools.partial(self.interfaceTask,view_regrid)
         Regrid=self.createAction("Regrid",curried, icon=self.icon_task, tip=menuTips['Regrid'])
@@ -455,7 +494,7 @@ class MainWindow(QMainWindow):
         curried = functools.partial(self.fileOpenDocument,"HELP",p+"/patch"+".dc1")
         Patch=self.createAction("Patch",slot=curried,  tip=menuTips['Patch'], icon=self.icon_help)
         self.addActions (editMenu, (  Clip, Combin, Copy,  Decim, Diminish,  EditSet,  Extend,  Insert,  
-                                    Mean,  MinBox,  Regrid,  Snapper, Transform, Transpose, Velsmo, None, Pyblot, 
+                                    Mean,  MinBox,  Mnmx, Regrid,  Snapper, Transform, Transpose, Velsmo, None, Pyblot, 
                                     None, conDit, conRem,  findGauss,  MFilter, Patch))
         
 #DISPLAY MENU
@@ -551,7 +590,7 @@ class MainWindow(QMainWindow):
                                                GaussCube,  RotMod ))
         
         self.taskMenuActions={ "clip":Clip, "combin":Combin, "copy":Copy,  "decim":Decim, "diminish":Diminish,  "editset":EditSet,  "extend":Extend,  "insert":Insert,  
-                                    "mean":Mean,  "minbox":MinBox,  "regrid":Regrid,  "snapper":Snapper, "transform":Transform, "transpose":Transpose, "velsmo":Velsmo, 
+                                    "mean":Mean,  "minbox":MinBox, "mnmx":Mnmx,  "regrid":Regrid,  "snapper":Snapper, "transform":Transform, "transpose":Transpose, "velsmo":Velsmo, 
                                     "pyblot":Pyblot, "condit":conDit, "conrem":conRem,  "findgauss":findGauss,  "mfilter":MFilter, "patch":Patch, "maps":Maps, "skycalq":SkyCalq,  
                                     "sliceview":Sliceview, "inspector":Inspector, "render":Render, "vtkvolume":VTKVolume, "allskyplot":AllSkyPlot, "cplot":CPlot, 
                                     "reproj":Reproj, "reprojfits":ReprojFits, "WCSFlux":WCSFlux,  "ellint":EllInt, "galmod":GalMod, "moments":Moments, 
@@ -984,9 +1023,9 @@ class MainWindow(QMainWindow):
         if type=="SET":
             (name,ext)=os.path.splitext(fName)
             fName=name
-#            if len(fName)>79:
-#                 QMessageBox.warning(self, "Setname too long", "Some GIPSY task as MNMX and WFITS do not support setname longer than 80, so please, select a setname  with shorter path")
-#                 return
+            if len(fName)>79:
+                QMessageBox.warning(self, "Setname too long", "The WFITS task of GIPSY does not support setname longer than 80.This task is used to send set files to other VO tools through SAMP, so this function will be disabled")
+                #return
         
         openIndex=self.isDocumentOpen(fName)
        

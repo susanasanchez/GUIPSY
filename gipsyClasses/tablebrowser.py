@@ -23,44 +23,35 @@ class tablebrowser(QDialog, Ui_tablebrowser):
         self.table=None
         self.column=None
             
-#        self.connect(self.openButton,  SIGNAL("clicked()"), self.browser)
         self.connect(self.tableBox, SIGNAL("currentIndexChanged(QString)"),self.updateColumnsList)
        
         
         #Generating  table list comboBox
+        lineEdit=QLineEdit()
+        lineEdit.setAlignment(Qt.AlignRight)
+        lineEdit.setReadOnly(True)
+        self.tableBox.setLineEdit(lineEdit)
+        
         index=0
         for key, val in view_tables.iteritems():
-            text=unicode(key)[-50:]
+            #text=unicode(key)[-50:]
+            text=unicode(key)
             self.tableBox.addItem(text, QVariant(key))
             self.tableBox.setItemData(index,unicode(key), Qt.ToolTipRole)
             index +=1
           
         self.connect(self.columnsBox, SIGNAL("currentIndexChanged(QString)"), self.updateColumnSelected)
-        #self.connect(self.columnsBox, SIGNAL("currentIndexChanged()"), self.updateColumnSelected)
         self.updateColumnsList(0)
     
-#    def browser(self):
-#        dir = os.path.dirname(".")
-#        fName = unicode(QFileDialog.getOpenFileName(self, "File open ", dir,TABLEFORMAT))
-#        if (fName==""):
-#            return
-#        self.tablePath=unicode(fName)
-#        self.table=view_table(fName)
-#        try:
-#            self.table.loadTable()
-#        except:
-#            return
-#        self.tablePathLabel.setText(self.tablePath)
-#        for index,  title in enumerate(self.table.getColumnTitles()):
-#            self.columnsBox.addItem(title, QVariant(index))
+
 
     def updateColumnsList(self,index):
         item=self.tableBox.itemData(self.tableBox.currentIndex(), Qt.ToolTipRole)
         text=self.tableBox.itemData(self.tableBox.currentIndex(), Qt.DisplayRole)
         text=unicode(text.toString())
         item=unicode(item.toString())
-        self.tablePathLabel.setText(text)
-        self.tablePathLabel.setToolTip(item)
+#        self.tablePathLabel.setText(text)
+#        self.tablePathLabel.setToolTip(item)
         if item:
             currentTable=item
             self.table=self.view_tables[currentTable]

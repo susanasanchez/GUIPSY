@@ -66,6 +66,7 @@ menuTips={
         "Insert":"Insert", 
         "Mean":"Mean/Sum", 
         "MinBox":"MinBox", 
+        "Mnmx":"mnmx", 
         "Regrid":"Regrid", 
         "Snapper":"Snapper", 
         "Transform":"Transform",
@@ -171,6 +172,7 @@ TASKS_CLASS={#Fclass, Fsubdim
              "INSPECTOR":(1, 2), 
              "MEAN":(2, 0), 
              "MINBOX":(1, 0), 
+             "MNMX":(-1, -1),# whole set 
              #"REGRID":(1, 0), 
              "REGRID":(-1, -1),
              "SNAPPER":(1, 2), 
@@ -192,7 +194,11 @@ TASKS_CLASS={#Fclass, Fsubdim
              "VELFI":(1, 2) , 
              "VTKVOLUME":(-1, -1),  # VTKVOLUME does not have classdim or class.
              "VISIONS":(-1,-1), 
-             "SKYCALQ":(-1, -1) # VTKVOLUME does not have classdim or class.
+             "SKYCALQ":(-1, -1),  # SKYCALQ does not have classdim or class.
+             "PYBLOT":(-1, -1), # PYBLOT does not have classdim or class.
+             "ROTMAS":(-1, -1),  # ROTMAS does not have classdim or class.
+             "XGAUFIT":(-1, -1),  # XGAUFIT does not have classdim or class.
+             "XGAUPROF":(-1, -1) # XGAUPROF does not have classdim or class.
              }
 ROTCURHEADER="!   radius    width systemic  error rotation  error expansion  error    pos.  error incli-  error x-pos.  error y-pos.  error npts   sigma\n\
 !                   velocity        velocity         velocity          angle        nation        centre        centre             velocity\n\

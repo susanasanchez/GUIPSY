@@ -22,22 +22,35 @@ class plot:
     This is a simple class which represents a plot. The attributes of this class are the same attributes of a plot plus the
     name of the table which contains the data of the plot.
 
-Attributes:
+    **Attributes**
 
-    - label of the plot
-    - xAxis, list of data got from the table to populate the X axis
-    - yAxis, list of data got from the table to populate the Y axis
-    - color, default color of the plot
-    - style, default style of the plot
-    - xError, list of data corresponding to the error in the axis X
-    - yError, list of data corresponding to the error in the axis Y
-    - tablename, name of the table which contains the data of the plot
-    - xcol, column name which contains the data of the X axis
-    - ycol, column name which contains the data of the Y axis
-    - currentX, since the user can interact with the data in the plot, deleting or adding points from/to the plot, 
-    this lista contains the current status of the data in the plot
-    - currentY, since the user can interact with the data in the plot, deleting or adding points from/to the plot, 
-    this lista contains the current status of the data in the plot
+    label : :class:`PyQt4.QtGui.QLabel`
+        Label/title identifying the plot
+    xAxis : List
+        list of data got from the table to populate the X axis
+    yAxis : List    
+        list of data got from the table to populate the Y axis
+    color : String
+        default color of the plot
+    style : String  
+        default style of the plot
+    xError : List
+        list of data corresponding to the error in the axis X
+    yError : List   
+        list of data corresponding to the error in the axis Y
+    tablename : String
+        name of the table which contains the data of the plot
+    xcol : String
+        column name which contains the data of the X axis
+    ycol : String
+        column name which contains the data of the Y axis
+    currentX : List
+        since the user can interact with the data in the plot, deleting or adding points from/to the plot, 
+        this list contains the current status of the data in the plot
+    currentY : List
+        since the user can interact with the data in the plot, deleting or adding points from/to the plot, 
+        this list contains the current status of the data in the plot
+        
     """
     
     def __init__(self, label, XAxis, YAxis, tablename, xcol, ycol, XError=None, YError=None, color=None, style=None):
@@ -57,17 +70,24 @@ Attributes:
 class plotTableWindow(QMainWindow,Ui_plotTableWindow):
     """
     This class provides the view to manage the plots of the tables. It inherits from the Ui_plotTableWindow which is 
-    a dialog class built by QTDesinger. This dialog contains two principal panel. The right panel is used to embed a Matplotlib figure canvas. 
+    a dialog class built by QTDesinger. This dialog contains two main panels. The right panel is used to embed a Matplotlib figure canvas. 
     The left panel shows a form where the user can select the data to plot, give a name for each plot, design the label, etc.
 
-    Attributes:
-    - fig, Matplotlib Figure
-    - canvas, Matplotlib FigureCanvas
-    - axes, Matplitlib axes
-    - plots, a dictionary of "plot" objects. When a new plot is added to the canvas, a new object containing its corresponding attributes 
-    will be added to this dictionary. The keys of this dictionary are the labels of the plots.
-    - view_tables, a dictionary with the widgets which contains a table (ascii table, votable or settable) in the main window. 
-    This dictionary will be helpful for populating the table and the column combo-boxes  and for accessing the table data.
+    **Attributes**
+    
+    fig : :class:`Matplotlib.Figure`
+        Matplotlib Figure
+    canvas : :class:`Matplotlib.Figure`
+        Matplotlib FigureCanvas
+    axes :  Matplitlib axes
+        Axes
+    plots : Dictionary
+        A dictionary of :class:`dialog.plotTableWindow.plot` objects. When a new plot is added to the canvas, a new object containing its
+        corresponding attributes will be added to this dictionary. The keys of this dictionary are the labels of the plots.
+    view_tables : Dictionary
+        A dictionary with the widgets which contains a table (ascii table, votable or settable) in the main window. 
+        This dictionary will be helpful for populating the table and the column combo-boxes  and for accessing the table data.
+        
     """
     def __init__(self, view_tables, currentTable, parent=None):
         super(plotTableWindow, self).__init__(parent)

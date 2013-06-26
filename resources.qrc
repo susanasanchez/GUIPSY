@@ -29,7 +29,27 @@
 <file alias="delete_icon.png">resources/images/delete_icon.png</file>
 <file alias="delete_icon.png">resources/images/delete_icon.png</file>
 <file alias="add_icon.png">resources/images/add_icon.png</file>
-<file >resources/python_templates/template_test.py</file>
-<file >resources/cola_templates/template_test.col</file>
+<file >resources/python_templates/batch1.py</file>
+<file >resources/python_templates/batch2.py</file>
+<file >resources/python_templates/boxtest.py</file>
+<file >resources/python_templates/cancelreject.py</file>
+<file >resources/python_templates/copyset.py</file>
+<file >resources/python_templates/cotrans.py</file>
+<file >resources/python_templates/createset.py</file>
+<file >resources/python_templates/except.py</file>
+<file >resources/python_templates/fitsviewxeq.py</file>
+<file >resources/python_templates/headerinfo.py</file>
+<file >resources/python_templates/hello1.py</file>
+<file >resources/python_templates/hello2.py</file>
+<file >resources/python_templates/meansubimages1.py</file>
+<file >resources/python_templates/meanwithoutsubsets.py</file>
+<file >resources/python_templates/setpropbonus.py</file>
+<file >resources/python_templates/setproperties.py</file>
+<file >resources/python_templates/think.py</file>
+<file >resources/python_templates/userinput.py</file>
+<file >resources/python_templates/writedatatoset.py</file>
+<file >resources/python_templates/xeq.py</file>
+<file >resources/cola_templates/cola_demo.col</file>
+<file >resources/cola_templates/gplot_recipes.col</file>
 </qresource>
 </RCC>

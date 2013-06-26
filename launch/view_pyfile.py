@@ -7,20 +7,32 @@ from PyQt4.QtGui import *
 
 
 class view_pyfile(QScrollArea,Ui_launch):
-    def __init__(self):
-        """
-        This class manage the creation, edition and execution of python scripts. This class inherits from Ui_launch, as well as view_cola class, which implements the graphical part.
-        The python script can be created from a blank document or from a template. A template is a python script provided by GUIpsy with an example of some specific analysis.
-        When the launch button is pressed the signal "launchTask" is emited, being the main class of GUIpsy responsible of launching the corresponding command 
-        to HERMES through the  gipsyDinamicalTask class
+    """
+        This class manage the creation, edition and execution of python scripts. This class inherits from Ui_launch, as well as view_cola class, 
+        which implements the graphical part.
+        The python script can be created from a blank document or from a template. A template is a python script provided by GUIpsy with an
+        example of some specific analysis.
+        When the launch button is pressed the signal "launchTask" is emited, being the main class of GUIpsy responsible of launching the
+        corresponding command to HERMES through the  gipsyDinamicalTask class
         
-        ATTRIBUTES:
-        - self.plainTextEdit is the edit area where the python script can be written. The text in this area is highlighted with the python format using the PythonHighlighter class from the syntax module
-        - self.launchButton is the button to launch the script to HERMES in order to be run inside of GIPSY environment.
-        - self.filename keeps the filepath of the script.
-        - self.template keeps the filepath of the template
-        - self.dirty is true when the script contains some unsaved changes.
-        """
+        **Attributes**
+        
+        plainTextEdit : :class:`PyQt4.QtGui.QPlainTextEdit`
+            It is inherit from Ui_launch, and it is the edit area where the python script can be written. The text in this area is highlighted 
+            with the python format using the 
+            :class:`launch.syntax.PythonHighlighter` class from the syntax module
+        launchButton :   :class:`PyQt4.QtGui.QPushButton`
+            It is the button to launch the script to HERMES in order to be run inside of GIPSY environment.
+        filename : String
+            It keeps the filepath of the script.
+        template: String
+            It keeps the filepath of the template
+        dirty : Boolean
+            It is true when the script contains some unsaved changes.
+    """
+        
+    def __init__(self):
+       
         super(view_pyfile, self).__init__()
         self.setupUi(self)
         

@@ -10,21 +10,33 @@ from new_exceptions import *
 
 
 class session(object):
-    def __init__(self, n_session):
-        """ 
-        This class represent the work session of a user. It stores the documents opened and the log gathered in the workflow area. It also represents the relationship between the opened sets.
-        A set B can be the result of an operation aplied to the set A, in this case the set A will be the parent of the set B. This relationship graph is implemented by the networkx library. 
-        The session is stored in a file using the pickle library. Before the user gives a pathfile to store the session, this class use the file  ./session<number>.ses.bkp, where number is got from a counter.
+    """This class represent the work session of a user. It stores the documents opened and the log gathered in the workflow area. 
+        It also represents the relationship between the opened sets.
+        A set B can be the result of an operation aplied to the set A, in this case the set A will be the parent of the set B. 
+        This relationship graph is implemented by the networkx library. 
+        The session is stored in a file using the pickle library. Before the user gives a pathfile to store the session,
+        this class use the file  ./session<number>.ses.bkp, where number is got from a counter.
         When the user gives a name for the file session, the bakcup session is renamed to <filesession>.bkp.
         Whenever an action modifies the session, the backup file session  is updated with the  current  status of the session
-        ATRIBUTES:
-        - self.setTree: Graph which keeps the pathfiles of the sets opened during the session and the relation between them
-        - self.workflow: Current text in the workflow area.
-        - self.sessionfile: Path of the file where the session will be stored.
-        - self.sessionfileBkp: Path of the file where the session is stored, until the user does not give a name for the session
-        - self.docFiles: Dictionary of lists. It contains 7 lists, one for each type of elements (TABLE, VOTABLE,IMAGE,PYFILE,TEXT,COLA,HELP). The list contains the pathfiles or names of the document.
+        
+         **Attributes**
+        
+        setTree : :class:`networkx.DiGraph`
+            Graph which keeps the pathfiles of the sets opened during the session and the relation between them
+        workflow : :class:`PyQt4.QtCore.QString`
+            Current text in the workflow area.
+        sessionfile :  String
+            Path of the file where the session will be stored.
+        sessionfileBkp : Stromg
+            Path of the file where the session is stored, until the user does not give a name for the session
+        docFiles : Dictionary
+            Dictionary of lists. It contains 7 lists, one for each type of elements (TABLE, VOTABLE,IMAGE,PYFILE,TEXT,COLA,HELP). 
+            The list contains the pathfiles or names of the document.
 
-        """
+    """
+        
+    def __init__(self, n_session):
+       
         self.setTree= networkx.DiGraph() #Directed graph
         self.workflow= QString()
         self.sessionfile= None

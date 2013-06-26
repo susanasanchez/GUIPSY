@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Thu Apr 25 13:33:36 2013
+# Created: Mon Apr 29 19:33:12 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -45,7 +45,7 @@ class Ui_aboutDlg(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtGui.QWidget(self.scrollArea)
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 498, 862))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -573, 638, 924))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -139,6 +139,12 @@ class Ui_aboutDlg(object):
         self.label_49 = QtGui.QLabel(self.scrollAreaWidgetContents)
         self.label_49.setObjectName("label_49")
         self.verticalLayout.addWidget(self.label_49)
+        self.label_2 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.label_2.setObjectName("label_2")
+        self.verticalLayout.addWidget(self.label_2)
+        self.label_3 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.label_3.setObjectName("label_3")
+        self.verticalLayout.addWidget(self.label_3)
         self.label_45 = QtGui.QLabel(self.scrollAreaWidgetContents)
         self.label_45.setObjectName("label_45")
         self.verticalLayout.addWidget(self.label_45)
@@ -211,7 +217,7 @@ class Ui_aboutDlg(object):
         self.verticalLayout_6.addWidget(self.buttonBox)
 
         self.retranslateUi(aboutDlg)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("accepted()"), aboutDlg.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL("rejected()"), aboutDlg.reject)
         QtCore.QMetaObject.connectSlotsByName(aboutDlg)
@@ -330,6 +336,13 @@ class Ui_aboutDlg(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:600;\">PIL</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_49.setText(QtGui.QApplication.translate("aboutDlg", "Copyright (c)  1997-2011 by Secret Labs AB \n"
 "Copyright (c) 1995-2011 by Fredrik Lundh ", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("aboutDlg", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:600;\">xreverse class</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("aboutDlg", "copyright 2004 Michael D. Stenner <mstenner@ece.arizona.edu>\n"
+"license: LGPL", None, QtGui.QApplication.UnicodeUTF8))
         self.label_45.setText(QtGui.QApplication.translate("aboutDlg", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

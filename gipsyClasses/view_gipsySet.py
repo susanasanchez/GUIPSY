@@ -13,36 +13,34 @@ from dialog.gipsyHeadersDlg import *
 
 class view_gipsySet(QScrollArea,Ui_setWidget):
     
-    """ This class is a subclass of Ui_gipsySet. The Ui_gipsySet class contains the graphical part
+    """ This class inherits from Ui_gipsySet. The Ui_gipsySet class contains the graphical part
     and view_gipsySet class contains the operational part. 
-    This class provides the view to show the information set and the methods for interacting with
-    the set.
+    This class provides the view to show the information of the set and the methods for interacting with it.
     
-    Parameters
-    -----------------
+    **Parameters**
+    
     setname: String
         The pathname of the set
     fitsname: String, Optional
         The pathname of the fits file containing the set. 
     
-    Attributes
-    ---------------
-    gSet: gipsySet
+    **Attributes**
+    
+    gSet: :class:`gipsyClasses.gipsySet.gipsySet`
         It is an instance of gipsySet class. This class implement the interaction 
         with gipsy software.
     setname: String
         Pathname of the set
     fitsname: String
         Pathname of the set
-        
-    commentsArea: MyEditArea(QTextEdit)
+    commentsArea: :class:`help.view_help.helpContainer`
         Inherited from UI_gipsySet class
-    PropertiesText: QTextEdit
-         Inherited from UI_gipsySet class
-    historyButton: QPushButton
-         Inherited from UI_gipsySet class
-    headerButton: QPushButton
-         Inherited from UI_gipsySet class
+    PropertiesText: :class:`PyQt4.QtGui.QTextEdi`
+        Inherited from UI_gipsySet class
+    historyButton: :class:`PyQt4.QtGui.QPushButton`
+        Inherited from UI_gipsySet class
+    headerButton: :class:`PyQt4.QtGui.QPushButton`
+        Inherited from UI_gipsySet class
     
     """
     #def __init__(self, setname,  fitsname=None):
@@ -58,13 +56,13 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
         Reads the properties and comments of the set and then it displays them in the 
         corresponding fields of the view
         
-        Returns
-        ------------
+        **Returns**
+
         output: String
             Return the log obtained from load the set
         
-        Raises
-        ---------
+        **Raises**
+        
         gipsyException
             Raise a gipsyException when gets some error accesing to the set
         """
@@ -92,6 +90,9 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
         self.connect(self.historyButton,  SIGNAL("clicked()"), self.emitShowHistory)
         self.connect(self.headerButton,  SIGNAL("clicked()"), self.showHeaders)
         self.connect(self.sampButton, SIGNAL("clicked()"), self.emitSendToSamp )
+        
+        if len(self.setname)>79:
+            self.sampButton.setEnabled(False)
         
         try:
             #self.PropertiesText.setText(unicode(self.gSet.getProperties()))
@@ -131,7 +132,10 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
         
     def emitCommentsChanged(self):
         """Update the comments when the editing finish in the comments text area.
-        Emit the corresponding signal with the log as parameter in order to update workflow text"""
+        Emit the corresponding signal with the log as parameter in order to update workflow text
+        
+        """
+        
         comments=self.commentsArea.toPlainText()
         log=self.gSet.updateComments(comments)
         self.emit(SIGNAL("commentsChanged"), log)
@@ -140,10 +144,10 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
     
     def emitShowHistory(self):
         """Show in a dialog the history text of the set
-        Raises
-        --------
+        **Raises**
+        
         gipsyException
-        Raise a gipsyException when gets some error accesing to the set
+            Raise a gipsyException when gets some error accesing to the set
          """
         try:
             history=self.gSet.getHistory()
@@ -160,12 +164,13 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
     def emitSendToSamp(self):
         self.emit(SIGNAL("settosamp"), self.setname)
     def showHeaders(self):
-        """Show in a dialg a form with the header items. This form allow edit/delete and add header items.
+        """Show in a dialog a form with the header items. This form allow edit/delete and add header items.
         When the dialog is closed, it updates the header items properly
-        Raises
-        ---------
+        
+        **Raises**
+        
         gipsyException
-        Raise a gipsyException when gets some error accesing to the set
+            Raise a gipsyException when gets some error accesing to the set
         """
         try:
             items=self.gSet.getHeaderItems()
@@ -229,11 +234,13 @@ class view_gipsySet(QScrollArea,Ui_setWidget):
     def getInfo(self):
         """Return some information about the set: the size in KB, the dimension and the axes
         
-        Returns
-        -----------
+        **Returns**
+        
         output: String
             The size in KB, the dimension and the axes of the set
+            
         """
+        
         #Get the size of the file
         try:
             size=os.path.getsize(self.setname+".image")

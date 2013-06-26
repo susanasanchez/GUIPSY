@@ -23,6 +23,7 @@ from Ui_galmod import *
 from Ui_insert import *
 from Ui_meanSum import *
 from Ui_minbox import *
+from Ui_mnmx import *
 from Ui_moments import *
 from Ui_potential import *
 from Ui_pplot import *
@@ -126,23 +127,43 @@ class QLineEditFocus(QLineEdit):
         
 class view_task(QDialog, Ui_viewtask):
     """
-    This class implements the common functionalities of all the dialog classes of the gipsy tasks. This class inherits from Ui_viewtask which implements the graphical part.
+    This class implements the common functionalities of all the dialog classes of the gipsy tasks. This class inherits from Ui_viewtask 
+    which implements the graphical part.
 
-    ATTRIBUTES:
+    **Attributes** 
 
-    * ClassDim represents the class input of the gipsy task. It is given by the source of the gipsy task, but in GUIpsy, this data have been hardcoded in general.py
-    * gdsClass also represents the kind of input of the gipsy task. Together with ClassDim, this parameter is needed to build a specific setbrowser, which support the specific needs of the gipsy task.
-    * special, as well as ClassDim and gdsClass, is needed to build a specific setbrowser, but unlike ClassDim and gdsClass, it is not given by the source of the gipsy task. We need to add an special value to indicate the COPY task needs a special behaviour of the setbrowser.
-    * fhd is the fits header dialog showed when the user clicks on "header button". This dialog shows the content of the header set.
-    * InsetAxesInfo: a list, where each item corresponds to one axis of the set, containing a tuple with the name and the range of the axes
-    * InsetAxesList: the list of the names of the set axes
-    * InsetPath: the absolute path of the set (without the .image extension)
-    * Keys: parameters needed by the gipsy task.
-    * outsetPath: the absolute path of the set (without the .image extension)
-    * qtlinks is a list of gipsy.qtlinks. These links are created when, for some reason, in execution time of the task, nhermes requires a new parameter for the running task. In this case, a new field is showed in the dialog. This field needs to be linked with the task parameters with a gipsy.qtlinks.
-    * replaceFlag: This flag is set to true when the user presses the replace button. By pressing this button, the path of the OUTSET will be setted with the path of the INSET. This flag is needed to avoid asking if the user wants to overwrite the set (because obviously, he/she wants)
-    * setBrowserDlg is an instance of the class setBrowser whose objective is to provide an interface to select the set and the box for the inset.
-    * taskname contains the string with the name of the gipsy task
+    ClassDim : Integer
+        Represents the class input of the gipsy task. It is given by the source of the gipsy task, but in GUIpsy, this data have been 
+        hardcoded in general.py
+    gdsClass : Integer
+        Represents the kind of input of the gipsy task. Together with ClassDim, this parameter is needed to build a specific setbrowser, 
+        which support the specific needs of the gipsy task.
+    special : Integer
+        As well as ClassDim and gdsClass, is needed to build a specific setbrowser, but unlike ClassDim and gdsClass, i
+        t is not given by the source of the gipsy task. We need to add an special value to indicate the COPY task needs a special behaviour of the setbrowser.
+    fhd : :class:`dialog.gipsyHeaderDlg`
+        It is the fits header dialog showed when the user clicks on "header button". This dialog shows the content of the header set.
+    InsetAxesInfo : List 
+        List, where each item corresponds to one axis of the set, containing a tuple with the name and the range of the axes
+    InsetAxesList : List    
+        List of the names of the set axes
+    InsetPath : String
+        Absolute path of the set (without the .image extension)
+    Keys : List
+        Parameters needed by the gipsy task.
+    outsetPath : String 
+        Absolute path of the set (without the .image extension)
+    qtlinks : List 
+        A list of gipsy.qtlinks. These links are created when, for some reason, in execution time of the task, nhermes requires a new 
+        parameter for the running task. In this case, a new field is showed in the dialog. This field needs to be linked with the task 
+        parameters with a gipsy.qtlinks.
+    replaceFlag : Boolean
+        This flag is set to true when the user presses the replace button. By pressing this button, the path of the OUTSET will be setted 
+        with the path of the INSET. This flag is needed to avoid asking if the user wants to overwrite the set (because obviously, he/she wants)
+    setBrowserDlg 
+        An instance of the class setBrowser whose objective is to provide an interface to select the set and the box for the inset.
+    taskname : String
+        Name of the gipsy task
     """
     def __init__(self, parent,  filename, taskname=None, gdsClass=1,  classDim=0, special=None,  defaultPath="./"):
         super(view_task, self).__init__(parent)
@@ -480,7 +501,10 @@ class view_rfits(view_task):
     def showStatus(self, status, wi=""):
         
         if "ABORT" not in status:
-            self.status.setText(status[:60])
+            status_inlines=re.sub("(.{64})", "\\1\n", status, re.DOTALL)
+            self.status.setText(status_inlines)
+            
+            #self.status.setText(status[:60])
            
             if ("File" in status) and ("into" in status): #Building the set takes a lot time, so showing a message is neccesary
                 self.errorMsg.setText("Building the set ...")
@@ -527,11 +551,20 @@ class view_rfits(view_task):
         role=self.buttonBox.buttonRole(button)
 
         if (role==QDialogButtonBox.ApplyRole):
+            
+            
             self.fitsPath=unicode(self.rfitsFrame.fitsPathLine.text())
             self.setPath=unicode(self.rfitsFrame.setPathLine.text())
-            if len(self.setPath)>79:
-                self.showStatus("The length of the setname must be less than 80 characteres ")
+            if len(self.setPath)>79 :
+                self.showStatus("In some operative systems, GIPSY experiences crash errors with long paths. So please, select a setname path shorter than 80 chars")
                 return
+            if  len(self.fitsPath) > 79:
+                self.showStatus("In some operative systems, GIPSY experiences crash errors with long paths. So please, select a fits file path shorter than 80 chars")
+                return
+            if len(self.setPath)+len(self.fitsPath) > 115:
+                self.showStatus("In some operative systems, GIPSY experiences crash errors with long paths. So please, select paths shorter. The longitude of the fits file plus set file should be shorter than 115 chars")
+                return
+                
             if os.path.exists(self.setPath+".image"):
                 reply=QMessageBox.question(self,  
                                                         "Overwrite file",  
@@ -1698,13 +1731,6 @@ class view_meanSum(view_task):
         self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
         #First the default params
         self.meanSumFrame.weightLine.setText("1.0")
-       #LOAD LAST VALUES?
-#        values=getTaskValues("mean")
-#        if values !=None:
-#            if values.has_key("WEIGHTS"):
-#                self.meanSumFrame.weightLine.setText(values["WEIGHTS"])
-#            else:
-#                self.meanSumFrame.weightLine.setText("1.0")
 
 
     def highlightError(self, status):
@@ -1842,7 +1868,8 @@ class view_minbox(view_task):
             self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
         else: #Emiting this signal we make sure the set is reloaded, so we can see the new mbox table 
             self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), self.insetPath)
-        
+            
+    
     def runtask(self,button):
 
         role=self.buttonBox.buttonRole(button)
@@ -1870,7 +1897,9 @@ class view_minbox(view_task):
                 self.clearError()
                 self.showStatus("Running")
                 self.gt.launchTask(self.taskcommand, self)
+                
     
+
 
     def showResults(self):
         #Clear previus results
@@ -1890,12 +1919,11 @@ class view_minbox(view_task):
                     w=item.widget()
                     if w:
                         w.deleteLater()
-        
+                        
         #Read the data from the table
         inset=gipsySet()
         inset.loadSetRO(self.insetPath)
         tablesInfo=inset.getTablesInfo()
-        
         row=None
         for info in tablesInfo:
             if info[1]=="MBOX":
@@ -1918,10 +1946,104 @@ class view_minbox(view_task):
             self.minboxFrame.resultLayout.addWidget(QLabel("All pixels in the input were blank"))
             self.minboxFrame.resultLayout.addWidget(QLabel("Could not find a box for COPY!"))
         
-#        if not os.path.exists(self.outsetPath+".image"):
-#            self.minboxFrame.resultLayout.addWidget(QLabel("All pixels in the input were blank"))
-#            self.minboxFrame.resultLayout.addWidget(QLabel("Could not find a box for COPY!"))
+        
+        
+        
             
+        
+       
+            
+
+class view_mnmx(view_task):
+    def __init__(self,parent, filename, defaultPath="./"):
+        super(view_mnmx, self).__init__(parent, filename,"mnmx",    *TASKS_CLASS["MNMX"], defaultPath=defaultPath)
+        super(view_mnmx, self).setAttribute(Qt.WA_DeleteOnClose)
+        self.keys=["INSET=", "BOX="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.gt=gipsyTask()
+        
+        
+        #Adding the clip frame
+        frame = QtGui.QFrame()
+        self.mnmxFrame = Ui_mnmx()
+        self.mnmxFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        self.outsetFrame.hide()
+        
+        self.setWindowTitle("MNMX")
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "subset(s))" in status:
+            p.setColor(QPalette.WindowText, QColor(255, 0,0))
+            self.insetLabel.setPalette(p)
+            self.boxLabel.setPalette(p)
+ 
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        self.insetLabel.setPalette(p)
+        self.boxLabel.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self, log):
+        self.emit(SIGNAL("taskExecuted"), log)
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        self.showResults()
+        outsetPath=unicode(self.insetLabel.toolTip())
+        self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
+        
+        
+        
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            if self.insetPath == None:
+                self.showStatus("Give set (,subsets)")
+                return
+           
+            inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+            self.taskcommand='MNMX INSET=%s'%(inset)
+
+            self.clearError()
+            self.showStatus("Running")
+            self.gt.launchTask(self.taskcommand, self)
+    
+
+    def showResults(self):
+        #Clear previous results
+        self.mnmxFrame.resultLabel.setText("")
+        #Read the data from the table
+        inset=gipsySet()
+        inset.loadSetRO(self.insetPath)
+        try:
+            datamin=inset.getHeaderValue("DATAMIN")
+        except:
+            datamin=""
+        try:
+            datamax=inset.getHeaderValue("DATAMAX")
+        except:
+            datamax=""
+        try:
+            nblank=inset.getHeaderValue("NBLANK")
+        except:
+            nblank=""
+        #del inset
+        inset.closeSet()
+        self.mnmxFrame.resultLabel.setText("DATAMIN: %s, DATAMAX:%s, NBLANK: %s"%(datamin, datamax, nblank))
 
 class view_regrid(view_task):
     def __init__(self,parent, filename, defaultPath="./"):
@@ -3213,10 +3335,7 @@ class view_reswri(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 
-class view_rotcur(view_task):
-    
-    
-        
+class view_rotcur(view_task):        
     def __init__(self,parent, filename, defaultPath="./"):
         super(view_rotcur, self).__init__(parent,  filename,  "rotcur", *TASKS_CLASS["ROTCUR"], defaultPath=defaultPath)
         
@@ -3492,29 +3611,6 @@ class view_rotcur(view_task):
             else:
                 self.rotcurFrame.bunitLine.setText(unicode(value))
                 self.rotcurFrame.bunitLine.setReadOnly(True)
-            
-            #Extract the next name of ROTCUR Tab
-            tablesInfo=set.getTablesInfo()
-            tmp=[]
-            for table in tablesInfo:
-                if "ROTCUR" in table[1]:
-                    tuple=table[1].split("ROTCUR")
-                    if len(tuple)==2:
-                        try:
-                            tmp.append(int(tuple[1]))
-                        except:
-                           pass
-            if len(tmp)>0:
-                tmp.sort()
-                ntable=tmp.pop()+1
-            else:
-                ntable=0
-            if len(str(ntable))==1:
-                sufix="0"+str(ntable)
-            else:
-                sufix=str(ntable)
-            self.tabname="ROTCUR"+sufix
-            #del set
             set.closeSet()
             
 
@@ -3570,11 +3666,37 @@ class view_rotcur(view_task):
         self.errorMsg.setText("")
     
     def finished(self, log):
+        #Extract the name of ROTCUR Tab (higher number, but problems with 99 -> 00)
+        set=gipsySet()
+        set.loadSetRO(self.insetPath)
+        tablesInfo=set.getTablesInfo()
+        tmp=[]
+        for table in tablesInfo:
+            if "ROTCUR" in table[1]:
+                tuple=table[1].split("ROTCUR")
+                if len(tuple)==2:
+                    try:
+                        tmp.append(int(tuple[1]))
+                    except:
+                       pass
+        if len(tmp)>0:
+            tmp.sort()
+            ntable=tmp.pop()
+        
+            if len(str(ntable))==1:
+                sufix="0"+str(ntable)
+            else:
+                sufix=str(ntable)
+            tabname="ROTCUR"+sufix
+        else:
+            tabname=None
+        set.closeSet()
+            
         self.emit(SIGNAL("taskExecuted"), log)
         saveTaskValues(self.taskcommand)
         self.clearExtraLayout()
         setpath=unicode(self.insetLabel.toolTip())
-        self.emit(SIGNAL("newSet"),setpath, setpath, self.tabname)
+        self.emit(SIGNAL("newSet"),setpath, setpath, tabname)
         
         
     def buildCommand(self):
@@ -3619,8 +3741,8 @@ class view_rotcur(view_task):
        
        
         
-        taskcommand='ROTCUR INSET=%s BOX=%s WEIGHT=%s BUNIT=%s RADII=%s WIDTHS=%s VSYS=%s VROT=%s VEXP=%s PA=%s INCL=%s CENTRE=%s FREEANGLE=%s SIDE=%s FIXED=%s TOLERANCE=%s FILENAME= TABNAME=%s OKAY=Y'\
-                                    %(inset, box, weight, bunit, radii,widths, vsys, vrot, vexp, pa, incl, centre,  freeangle, side, fixed, fittolerance ,  self.tabname)
+        taskcommand='ROTCUR INSET=%s BOX=%s WEIGHT=%s BUNIT=%s RADII=%s WIDTHS=%s VSYS=%s VROT=%s VEXP=%s PA=%s INCL=%s CENTRE=%s FREEANGLE=%s SIDE=%s FIXED=%s TOLERANCE=%s FILENAME= OKAY=Y'\
+                                    %(inset, box, weight, bunit, radii,widths, vsys, vrot, vexp, pa, incl, centre,  freeangle, side, fixed, fittolerance )
         return taskcommand
             
     def runtask(self,button):
@@ -4092,8 +4214,6 @@ class view_ellint(view_task):
         self.log=""
         self.hiSetPath=None
         self.gt=gipsyTask()
-        #This task needs to execute the task MNMX, so we need to keep the log of MNMX
-        self.output=""
         self.tabname="ELLINT"
         #Get the opened tables
         self.loadTables()
@@ -4193,7 +4313,6 @@ class view_ellint(view_task):
                 self.ellintFrame.checkSampRadii.setEnabled(True)
                 
                 self.clearRelatedData()
-                self.output=calculateMNMX(self.insetPath)
                 set=gipsySet()
                 try:
                     set.loadSetRO(self.insetPath)
@@ -4964,7 +5083,10 @@ class view_pplot(view_task):
         saveTaskValues(self.taskcommand)
         self.clearExtraLayout()
         filename=unicode(self.pplotFrame.filenameLine.text())
-        self.emit(SIGNAL("newTable"),filename, 0)
+        if os.path.exists(filename):
+            self.emit(SIGNAL("newTable"),filename, 0)
+        else:
+            self.errorMsg.setText("No file created. Probably profile out of range")
         
     def runtask(self,button):
 
@@ -4979,9 +5101,10 @@ class view_pplot(view_task):
                 self.showStatus("Insert a filename")
                 return
             if os.path.exists(filename):
+              
                 reply=QMessageBox.question(self,  
                                                         "Overwrite file",  
-                                                        "The file already exists. Do you want overwrite it?",  
+                                                        "The file already exists.\nIf you select overwrite it, in case PPLOT does not create a new file due to a profile out of range, you will see the old file\nDo you want overwrite it?",  
                                                         QMessageBox.Yes|QMessageBox.No)
                 if reply==QMessageBox.No:
                     return
@@ -5518,10 +5641,12 @@ class view_shuffle(view_task):
                     self.outsetPathLabel.setPalette(p)
                     self.outsetNameLine.setPalette(p)
                     return
-                    
-                self.taskcommand=self.buildCommand()
-                
-                self.clearError()
-                self.showStatus("Running")
-                saveTaskValues(self.taskcommand)
-                self.gt.launchTask(self.taskcommand, self)
+            if unicode(self.shuffleFrame.maskSetLabel.toolTip())=="":
+                self.showStatus("Error: Maskset is required")
+                return
+            self.taskcommand=self.buildCommand()
+            
+            self.clearError()
+            self.showStatus("Running")
+            saveTaskValues(self.taskcommand)
+            self.gt.launchTask(self.taskcommand, self)

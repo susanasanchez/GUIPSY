@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'minbox.ui'
 #
-# Created: Thu Nov 10 11:51:06 2011
+# Created: Mon Jun 17 10:01:43 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -41,8 +41,9 @@ class Ui_minbox(object):
         font.setBold(False)
         self.label_2.setFont(font)
         self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_2.setMargin(0)
         self.label_2.setObjectName("label_2")
-        self.gridLayout.addWidget(self.label_2, 4, 0, 1, 2)
+        self.gridLayout.addWidget(self.label_2, 4, 0, 1, 3)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem1, 0, 2, 1, 1)
         self.frame = QtGui.QFrame(minbox)
@@ -65,6 +66,10 @@ class Ui_minbox(object):
         minbox.setWindowTitle(QtGui.QApplication.translate("minbox", "Frame", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("minbox", "Margin", None, QtGui.QApplication.UnicodeUTF8))
         self.resultGroup.setTitle(QtGui.QApplication.translate("minbox", "Results", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("minbox", "The outset is not mandatory", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("minbox", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:10pt; font-weight:400; font-style:normal;\">\n"
+"<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-style:italic;\">The outset is not mandatory</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.squareCheck.setText(QtGui.QApplication.translate("minbox", "Adjust box sizes to form a squaress", None, QtGui.QApplication.UnicodeUTF8))
 

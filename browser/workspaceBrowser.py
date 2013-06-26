@@ -5,13 +5,18 @@ from Ui_workspaceBrowser import *
 
 
 class workspaceBrowser(QWidget,Ui_workspaceBrowser):
-    """
-    This class represent the area in the left part of the main window, where all the elements opened in the session are showed in a tree.
+    """This class represent the area in the left part of the main window, where all the elements opened in the session are showed in a tree.
     This class inherits from the Ui_workspaceBrowser class which has been implemeted using Qt Desinger.
-    Attributes:
-    - self.workspaceTree: Inherited from Ui_workspaceBrowser. It is the widget that show the elements in a tree way.
-    - self.ICON_<doc>: Each kind of document has its own icon represented by this attribute.
-    - self.item<doc>: Each time a new document is opened (or created) a new item of the workspaceTree is created.
+    
+    **Attributes**
+    
+    self.workspaceTree : :class:`PyQt4.QtGui.QTreeWidge`
+        Inherited from Ui_workspaceBrowser. It is the widget that show the elements in a tree way.
+    self.ICON_<doc> : :class:`PyQt4.QtGui.QIcon`
+        Each kind of document has its own icon represented by this attribute.
+    self.item<doc> : :class:`PyQt4.QtGui.QTreeWidgetItem`
+        Each time a new document is opened (or created) a new item of the workspaceTree is created.
+    
     """
     def __init__(self,  sessionName=None):
         super(workspaceBrowser, self).__init__()

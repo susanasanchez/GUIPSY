@@ -16,6 +16,41 @@ from new_exceptions import *
 
 
 class setbrowser(QDialog, Ui_setbrowser):
+    """
+        This class is the dialog where the user can choose a set for a specific gipsy task. Depending on the kind of task, the default seletected
+        axis will change. The kind of task is determined by gdsClass and classDim, which are two properties extrated from the source of the 
+        programs, and hard-coded in general.py. In the gdsClass is 1, the user select the axes as "box axis" or as "repeated axis". 
+        In case gdsClass is 2 the user will select the axes as ""operation axis" or "box axis"
+        
+        **Attributes**
+        RangeListEdit : Dictionary
+            A dictionary which contains the limits of each axis
+        axesInfo : String 
+            The name and the limits of the axes
+        axesList : List 
+            List of the axis names
+        classDim : Integer
+            One of the two properties which determines the kind of task
+        gdsClass : Integer
+            One of the two properties which determines the kind of task
+        defalutPath : String
+            Path selected last time by the user
+        fhd : :class:`dialog.fitsHeaderDlg`
+            Dialog to show the header of the fits
+        groupCheckBox : Dictionary
+            A dictionary of check button groups, one group for each axis
+        limitLabel : Dictionary
+            Dictionary of labels, one label for each axes. This label shows in the "Default" column of the setbrowser the range choosen
+        parent : Dialog
+            It is the task dialog from which the setbrowser was called.
+        setpath : String
+            Path of the set choosen by the user
+        special : boolean
+            It is a flag to chech if the setbrowser was called from the COPY task dialgo. In thid case, 
+            he behavior of this setbrowser will be slightly different
+        
+        
+    """
     def __init__(self, parent, filename, subset,  box, gdsClass=1,  classDim=0,  special=None, defaultPath="./"): #The special is due to allow COPY insert axes
         super(setbrowser, self).__init__(parent)
         self.setPath=None
@@ -25,8 +60,8 @@ class setbrowser(QDialog, Ui_setbrowser):
         self.classDim=classDim
         self.special=special
         self.setupUi(self)
-        self.subButtons={}
-        self.boxButtons={}
+        #self.subButtons={}
+        #self.boxButtons={}
         self.groupCheckBox={}
         self.limitLabel={}
         self.RangeListEdit={}

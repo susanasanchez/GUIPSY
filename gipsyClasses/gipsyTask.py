@@ -13,6 +13,10 @@ from general import *
 
 
 class dynamicalForm(QDialog):
+    """
+    This is a dialog which is showed when a task is launched to HERMES. This dialog allow the user insert 
+    the values for the parameters task. The dialog grows dinamically, adding a new field for each required parameter
+    """
     def __init__(self, taskname,parent=None):
         super(dynamicalForm,self).__init__(parent)
        
@@ -74,19 +78,28 @@ class dynamicalForm(QDialog):
         
 class gipsyDynamicalTask(QObject):
     """
-    This class implements the interaction between GUIpsy and HERMES in a more dynamical way. The differences between the custom interface (see gipsyTask class) 
-    and this dynamical interface, is that the former try to gather all the parameters needed to run a task in HERMES and if an error value is inserted, the task is aborted 
-    and the user is warning about the error and asked to solve it. 
-    The dynamical interface imitates the interactivity of HERMES: it gets all the messages and requests of HERMES and show them in a dynamical form. 
+    This class implements the interaction between GUIpsy and HERMES in a more dynamical way. The differences between the custom 
+    interface (see gipsyTask class) and this dynamical interface, is that the former try to gather all the parameters needed to run a task
+    in HERMES and if an error value is inserted, the task is aborted and the user is warning about the error and asked to solve it. 
+    The dynamical interface imitates the interactivity of HERMES: it gets all the messages and requests of HERMES and show them in a 
+    dynamical form. 
     In this way, for example, if the user inserts a wrong value, the task is not aborted, the dynamical form will show the message of HERMES and the user can correct t
     he value in order to continue with inserting values of parameters.
 
-    ATTRIBUTES:
+    **Attributes**
 
-    - flagFinished, This flag is on when the task has finished. If the user close the dynamical form, and this flag is off, the task running on HERMES will be aborted.
-    - form: It is an instance of the dynamicalForm class, which implements a QDialog. This instance is the dynamical dialog form to gather the parameters and show the messages from HERMES.
-    - log: It contain the messages of log indicating the actions performed.
-    - taskname: It is the whole command which is launched/is going to be launched to HERMES. It could be a string containing a gipsy task, or the path of a python or cola script. 
+    flagFinished : Boolean
+        This flag is on when the task has finished. If the user close the dynamical form, and this flag is off, the task running on HERMES 
+        will be aborted.
+    form : :class:`gipsyClasses.gipsyTask.dinamicalForm`
+        It is an instance of the dynamicalForm class, which implements a QDialog. This instance is the dynamical dialog form 
+        to gather the parameters and show the messages from HERMES.
+    log : String
+        It contains the messages of log indicating the actions performed.
+    taskname : String
+        It is the whole command which is launched/is going to be launched to HERMES. It could be a string containing a gipsy task, 
+        or the path of a python or cola script. 
+        
     """
   #This class is used to launch COLA files and PYTHON files
     
@@ -134,7 +147,7 @@ class gipsyDynamicalTask(QObject):
             return                                                 # ignore
         notifykey = 'TASKCOM='
         
-        self.log="xeq(\"%s\",\"%s\")\n"%(self.taskname, notifykey)
+        self.log="#The next task might have been executed from two places: \n#1)From the task help tab, in this case the keywords used have not been recovered in this log\n#2)From python/cola tab\n gipsy.xeq(\"%s\",\"%s\")\n"%(self.taskname, notifykey)
         
         try:
             gipsy.xeq(self.taskname, notifykey)                         # start task
@@ -158,14 +171,20 @@ class gipsyDynamicalTask(QObject):
 
             
 class gipsyDirectTask(object):
-    """
-  This class is used to open those GIPSY task which have their own graphical interface. The method sendTask, gathers the information about
-  the set needed for the task, in case there was a default set, and launches the corresponding task to HERMES, which will open the corresponding task interface.
-  
-    ATTRIBUTES
-    - InsetAxesInfo is a list, where, in case it exists a default set,  each item will correspond to one axis of the set, containing a tuple with the name and the range of the axes
-    - InsetAxesList: is a list which, in case it exists a default set, will contain the names of the set axes
-    - newTaskId is the identifier of the task.
+    """This class is used to open those GIPSY task which have their own graphical interface. The method sendTask, 
+    gathers the information about the set needed for the task, in case there was a default set, and launches the corresponding 
+    task to HERMES, which will open the corresponding task interface.
+    
+    **Attributes**
+    
+    InsetAxesInfo : List
+        A list, where, in case it exists a default set,  each item will correspond to one axis of the set, containing a 
+        tuple with the name and the range of the axes
+    InsetAxesList : List 
+        A list which, in case it exists a default set, will contain the names of the set axes
+    newTaskId : Integer
+        The identifier of the task.
+        
     """
     
     def __init__(self):
@@ -196,34 +215,42 @@ class gipsyDirectTask(object):
 
 class gipsyTask(QObject):
     """
-    This class implements the relation between Hermes and the static task views/forms which build a task command 
-    with the values for all the parameters of the task (the views implemented in view_task.py). This class has methods for
+        This class implements the relation between Hermes and the static task views/forms which build a task command 
+        with the values for all the parameters of the task (the views implemented in view_task.py). 
+        
+        This class has methods for:
+            - launching task commands to HERMES,
+            - receiving the status/error messages from HERMES and communicating these messages to the corresponding view/form, 
+            - aborting a task running in HERMES. If the user close the view of the task, before the task finishes, gipsyTask will execute 
+              the gipsy.abort method to abort the task.
+            - receiving request parameter messages from HERMES. This is a special case. It could happen the source of a task changed, 
+              and requested as obligatory one of the parameters. If the form/view, does not gather the value of this parameter, HERMES will request it. 
+              This class will communicate this request to the form, and the form, dynamically will build a new field (QtextField) to gather the value from 
+              the user and give it back to HERMES through gipsyTask class. The RFITS view uses this functionality a lot. When a fits file are being 
+              converted to a gipsy SET with the RFITS, it is common RFITS request the value for some header parameters "on-the-fly", so in this case, 
+              the RFITS form builds dynamically the text field to gather the value.
+            
+        Indeed, the communication gipsyTask-Form/View is stronger, since the gipsyTask class receive the form itself as a parameter, and stores it in
+        one of its attributes, so on, the gipsyClass can use the form methods through this attribute.
+        The communication between gipsyTask and HERMES through the xeq and KeyCallback methods needs a "notifykey" parameter. This notifykey
+        has to be unique. In GUIpsy, an user could launch several tasks at the same time (through several views), so it is necessary to assure the 
+        notifikey is unique. A list of 4 string is used to assure this. There are 4 strings because the default number of simultaneously tasks is 4 
+        for the terminal hermes, thermes, and 8 and for the non-interactive hermes, nhermes. This number can be changed in the Hermes 
+        defaults file, see http://www.astro.rug.nl/~gipsy/hermes/hermesdef.html.  If the user try to run too many tasks, xeq() will raise 
+        an XeqError exception "Cannot execute".
 
-    - launching task commands to HERMES,
-    - receiving the status/error messages from HERMES and communicating these messages to the corresponding view/form, 
-    - aborting a task running in HERMES. If the user close the view of the task, before the task finishes, gipsyTask will execute 
-    the gipsy.abort method to abort the task.
-    - receiving request parameter messages from HERMES. This is a special case. It could happen the source of a task changed, 
-    and requested as obligatory one of the parameters. If the form/view, does not gather the value of this parameter, HERMES will request it. 
-    The gipsyTask class will communicate this request to the form, and the form, dynamically will build a new field (QtextField) to gather 
-    the value from the user and give it back to HERMES through gipsyTask class. The RFITS view uses this functionality a lot. When a fits file a
-    re being converted to a gipsy SET with the RFITS, it is common RFITS request the value for some header parameters "on-the-fly", so in this case, 
-    the RFITS form builds dynamically the text field to gather the value.
-    Indeed, the communication gipsyTask-Form/View is stronger, since the gipsyTask class receive the form itself as a parameter, and stores it in
-    one of its attributes, so on, the gipsyClass can use the form methods through this attribute.
-    The communication between gipsyTask and HERMES through the xeq and KeyCallback methods needs a "notifykey" parameter. This notifykey
-    has to be unique. In GUIpsy, an user could launch several tasks at the same time (through several views), so it is necessary to assure the notifikey    
-    is unique. A list of 4 string is used to assure this. There are 4 strings because the default number of simultaneously tasks is 4 for the terminal hermes, 
-    thermes, and 8 and for the non-interactive hermes, nhermes. This number can be changed in the Hermes defaults file, see http://www.astro.rug.nl/~gipsy/hermes/hermesdef.html. 
-    If the user try to run too many tasks, xeq() will raise an XeqError exception "Cannot execute".
+        **Attributes**
 
-    ATTRIBUTES:
-
-    - flagFinished. It is a flag to avoid send an abort signal to a task which is already finished.
-    - form. This attribute is set with the form/view which is using the gipsyTask class. Through this attribute, methods of the form can be used. 
-    The methods of the form used are related to show messages from HERMES in the form, or to create a new field dynamically to gather the value of a new parameter
-    - log. It is used to store the logs which have to be in the workflow log of GUIpsy.
-    - task. It stores the task name (just the name) of the task command which is going to be launched to HERMES
+        flagFinished : Boolean
+            It is a flag to avoid send an abort signal to a task which is already finished.
+        form : view
+            This attribute is set with the form/view which is using the gipsyTask class. Through this attribute, methods of the form can be used. 
+            The methods of the form used are related to show messages from HERMES in the form, or to create a new field dynamically to gather 
+            the value of a new parameter
+        log : String
+            It is used to store the logs which have to be in the workflow log of GUIpsy.
+        task :  String
+            Task name (just the name) of the task command which is going to be launched to HERMES
     
     """
     

@@ -20,6 +20,10 @@ from new_exceptions import *
 
 
 class tablePreview(QDialog, Ui_tablePreview):
+    """
+    This class implements the dialgo showed to the user to ask for the line in which the data starts
+    
+    """
     def __init__(self, lines, parent=None):
         super(tablePreview, self).__init__()
         self.setupUi(self)
@@ -59,35 +63,43 @@ class tablePreview(QDialog, Ui_tablePreview):
 
     
 class view_table(QScrollArea,Ui_table):
-    """ This class provides the view to show the data table and the statistic table, as well as the functionalities to modify the data table, 
+    """ This class provides the view to show both data table and  statistic table, as well as the functionalities to modify the data table, 
     plot it or show its header. It is a subclass of Ui_table which contains the graphical part, so view_table class contains the operational part. 
     This class follows the model-view architecture provied by PyQt. In this architecture the Model is the application object, the View 
     is its screen presentation, and the Controller defines the way the user interface reacts to user input. This allows to separate graphic 
-    representation from the date representation. This class manages two tables: the data table and the statistics table. Both are 
-    implemented with two object: one for the model and other for the view
+    representation from the date representation. Both data table and statistic table are implemented with two object: one for the model and other for the view
 
- Attributes:
+    **Attributes**
 
-    - HBAData: The horizontal scroll bar of the data table. It is needed to allow the horizontal scroll bars of the both tables 
-    (data table and statistical table) move at same time
+    HBAData :  
+        The horizontal scroll bar of the data table. It is needed to allow the horizontal scroll bars of the both tables 
+        (data table and statistical table) move at same time
     
-    - HBAStat: The horizontal scroll bar of the statistical table. It is needed to allow the horizontal scroll bars of the both tables 
-     (data table and statistical table) move at same time
+    HBAStat : 
+        The horizontal scroll bar of the statistical table. It is needed to allow the horizontal scroll bars of the both tables 
+        (data table and statistical table) move at same time
      
-    - filename: Path of the file which contain the table. In case of a settable is the name of the set plus the name of the table.
+    filename : String
+        Path of the file containing the table. In case of a settable is the name of the set plus the name of the table.
     
-    - loadedType: The type of the table. It could be "TABLE" to represent a ASCII table, "VOTABLE" for a VOTable or
-    "SETTABLE" for a settable. When a non settable is loaded, it is the load method which discovers the kind of table (ascii or votable).
+    loadedType : 
+        The type of the table. It could be "TABLE" to represent a ASCII table, "VOTABLE" for a VOTable or
+        "SETTABLE" for a settable. When a non settable is loaded, it is the load method which discovers the kind of table (ascii or votable).
     
-    - modelData: An object of the class DataTableModel to implement the model of the data table.
+    modelData : :class:`view_table.DataTableModel`
+        An object of the class DataTableModel to implement the model of the data table.
     
-    - tableData: it is an attributed inherited from the Ui_table class. Implement the view of the data table.
+    tableData : :class:`PyQt4.QtGui.QTableView`
+        it is an attributed inherited from the Ui_table class. Implement the view of the data table.
     
-    - modelStat: An object of the class DataTableModel to implement the model of the statistics table.
+    modelStat : :class:`view_table.StatTableModel`
+        An object of the class StatTableModel to implement the model of the statistics table.
     
-    - tableStat: it is an attributed inherited from the Ui_table class. Implement the view of the statistics table.
+    tableStat : :class:`PyQt4.QtGui.QTableView`
+        it is an attributed inherited from the Ui_table class. Implement the view of the statistics table.
     
-    - parent: Parent of the class.
+    parent : 
+        Parent of the class.
     
     """
     def __init__(self, parent, filename=""):
@@ -344,6 +356,12 @@ class view_table(QScrollArea,Ui_table):
     
    
 class StatTableModel(QAbstractTableModel):
+    """
+    The model-view architecture provied by PyQt is implemented for managing the tables . 
+    In this architecture the Model is the application object, the View is its screen presentation, 
+    and the Controller defines the way the user interface reacts to user input. This class is the model of the statistic table
+    
+    """
     def __init__(self):
         super(StatTableModel , self).__init__()
         self.dirty = False
@@ -419,6 +437,13 @@ class StatTableModel(QAbstractTableModel):
 
  
 class DataTableModel(QAbstractTableModel): 
+    """
+    The model-view architecture provied by PyQt is implemented for managing the tables . 
+    In this architecture the Model is the application object, the View is its screen presentation, 
+    and the Controller defines the way the user interface reacts to user input. This class is the model of the data table
+    
+    """
+    
     def __init__(self, filename=""):
         super(DataTableModel , self).__init__()
         self.filename = filename

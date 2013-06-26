@@ -16,42 +16,44 @@ HEADER_TMP="./header.tmp"
 
 
 
-def calculateMNMX(setname):
-    command="MNMX INSET=%s;"%(setname)
-    id=newId()
-    #notifykey = 'TASKCOMX'+unicode(id)+'='
-    try:
-        xeq(command) 
-    except XeqError:
-        raise gipsyException("%s \n Gets an error "%(command))
-        return
-    else:
-        #output="gipsy.xeq(\""+command+"\",\""+notifykey+"\")\n"
-        output="gipsy.xeq(\""+command+"\")"
-        
-    return output
+#def calculateMNMX(setname):
+#    command="MNMX INSET=%s;"%(setname)
+#    id=newId()
+#    #notifykey = 'TASKCOMX'+unicode(id)+'='
+#    try:
+#        xeq(command) 
+#    except XeqError:
+#        raise gipsyException("%s \n Gets an error "%(command))
+#        return
+#    else:
+#        #output="gipsy.xeq(\""+command+"\",\""+notifykey+"\")\n"
+#        output="gipsy.xeq(\""+command+"\")"
+#        
+#    return output
     
 class gipsySet(object):
-    """ This class implements the interface between gipsy software and the application.
-    Attributes
-    ---------------
-    fitsname: String
+    ''' This class implements the interface between gipsy software and the application.
+    
+    **Attributes**
+    
+    
+    fitsname : String
         The pathname of the fits file, if the set is builded from a fits file
-    setname: String
+    setname : String
         The pathname of the set without the extension .image or .descr
-    filename: String
+    filename : String
         The pathname of the set with the extension .image
-    varname: String
+    varname : String
         The pathname of the set used in the log sentence. It is composed by setname and a counter in order
         to avoid repetitions of setname in the workflow text.
-    history: String
+    history : String
         History text of the set
-    properties: String
+    properties : String
         Properties text of the set
-    __S: gipsySet
+    __S : gipsySet
         An instance of Set class of gipsy package
     
-    """
+    '''
 
     
         
@@ -71,25 +73,22 @@ class gipsySet(object):
 
 #    def loadSet(self,setname,fitsname=None):
     def loadSet(self,setname):
-        """Read the set. If the set is in a fits file, build the corresponding set.
-    
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
-        
-        Raises
-        ---------
-        gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+        """Read the set. If the set is in a fits file, build the corresponding set.When it gets a XeqError exception raises a gipsyException with a
             properly message
+    
+        **Returns:**
+            output (str) Python sentences with the executed task
+        
+        **Raises:**
+            gipsyException
+            
         """
        
         output=""   
         self.setname=unicode(setname)
         self.filename=self.setname
   
-        output=output+calculateMNMX(setname)
+        #output=output+calculateMNMX(setname)
         try:
             self.__S=Set(self.setname, create=False, write=True, gethdu=None, getalt=None)
         except GdsError as g:
@@ -143,17 +142,15 @@ class gipsySet(object):
         self.tables=tablist
         
     def deleteSet(self):
-        """Delete the set.
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
-        
-        Raises
-        ---------
-        gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+        """Delete the set. If it gets a XeqError exception raises a gipsyException with a
             properly message
+        
+        **Returns:**
+            output (str) :  Python sentences with the executed task
+        
+        **Raises:**
+            gipsyException
+            
         
         """
         
@@ -185,13 +182,12 @@ class gipsySet(object):
             
             
     def getProperties(self):
-        """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task
-        
-        Raises
-        ---------
-        gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+        """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task. If it gets a XeqError exception raises a gipsyException with a
             properly message
+        
+        **Raises:**
+            gipsyException
+           
         
         """
         if(self.properties!=""):
@@ -220,13 +216,12 @@ class gipsySet(object):
 
             
     def getPropertiesModeG(self):
-        """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task
-        
-        Raises
-        ---------
-        gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+        """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task. If it gets a XeqError exception raises a gipsyException with a
             properly message
+        
+        **Raises:**
+            gipsyException
+           
         
         """
         if(self.properties!=""):
@@ -254,13 +249,12 @@ class gipsySet(object):
         return self.properties            
             
     def getHistory(self):
-         """Get the history text of the set reading and parsing the gipsy log file, just after run HEADER task
-        
-         Raises
-         ---------
-         gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+         """Get the history text of the set reading and parsing the gipsy log file, just after run HEADER task. When it gets a XeqError exception raises a gipsyException with a
             properly message
+        
+         **Raises:**
+            gipsyException
+            
         
          """
          if(self.history!=""):
@@ -286,13 +280,12 @@ class gipsySet(object):
             f.close()
 
     def getComments(self):
-         """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task
-        
-         Raises
-         ---------
-         gipsyException
-            When it gets a XeqError exception raises a gipsyException with a
+         """Get the properties text of the set reading and parsing the gipsy log file, just after run HEADER task. When it gets a XeqError exception raises a gipsyException with a
             properly message
+        
+         **Raises:**
+            gipsyException
+            
          
          """
         
@@ -319,16 +312,12 @@ class gipsySet(object):
     def updateComments(self, comments):
         """Update the comments of the set.
         
-        Parameters
-        -----------------
-        comments : String
-            All the comments inserted by the user
-        
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
-        
+        **Parameters:**
+            comments (str):  All the comments inserted by the user
+            
+        **Returns:**
+            output (str): Python sentences with the executed task
+            
         """
         
         output=""
@@ -351,9 +340,8 @@ class gipsySet(object):
     def getHeaderItems(self):
         """Returns the list of header items of the set
         
-        Returns
-        ------------
-        __S.items: list
+        **Returns:**
+            __S.items: list
         
         """
         return self.__S.items(0)
@@ -361,17 +349,17 @@ class gipsySet(object):
     def getFilename(self):
         """Returns the pathname of the set with the extension .image
         
-        Returns
-        -----------
-        filename: String
+        **Returns:**
+            filename (str)
+            
         """
         return self.filename
     def getSetname(self):
         """Returns the pathname of the set without the extension .image
         
-        Returns
-        -----------
-        setname: String
+        **Returns:**
+            setname (str)
+            
         """
         return self.setname
     
@@ -379,9 +367,9 @@ class gipsySet(object):
         """In case the set is a image (2D) returns the value corresponding to the given coordinate
         In other case it returns None
         
-        Returns
-        -----------
-        value: Double
+        **Returns:** 
+            value (double)
+            
         """
         lower=self.__S.slo
         sum_x=abs(lower[0])
@@ -405,9 +393,9 @@ class gipsySet(object):
     def getDistanceToCenter(self, ra, dec):
         """In case the set is a image (2D) returns the distance of the point to the center
         
-        Returns
-        -----------
-        value: Double
+        **Returns:** 
+            value (double)
+            
         """
         
         shape=self.__S.image.shape
@@ -423,17 +411,13 @@ class gipsySet(object):
     def updateHeaderKey(self, key, val):
         """Update a header item
         
-        Parameters
-        ----------------
-        key: String
-            Name of the header item
-        val: String
-            New value for the header item
+        **Parameters:**
+        
+            key (str): Name of the header item
+            val (str): New value for the header item
             
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
+        **Returns:**
+            output (str): Python sentences with the executed task
   
         """
         output="val=\"%s\"\n"%val
@@ -467,23 +451,18 @@ class gipsySet(object):
         return output
         
     def deleteHeaderKey(self, key):
-        """Delete a header item
-        
-        Parameters
-        ----------------
-        key: String
-            Name of the header item
-            
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
-        
-        Raises
-         ---------
-         gipsyException
-            When it gets a GDsError exception raises a gipsyException with a
+        """Delete a header item. When it gets a GDsError exception raises a gipsyException with a
             properly message
+        
+        **Parameters:**
+            key (str): Name of the header item
+            
+        **Returns:** 
+            output (str): Python sentences with the executed task
+        
+        **Raises:** 
+            gipsyException
+            
   
         """
         try:
@@ -498,17 +477,13 @@ class gipsySet(object):
     def newHeaderKey(self, key, val):
         """Add a new header item
         
-        Parameters
-        ----------------
-        key: String
-            Name of the new header item
-        val: String
-            Value for the new header item
+        **Parameters:**
+            key (str): Name of the new header item
+            val (str): Value for the new header item
             
-        Returns
-        ------------
-        output: String
-           Python sentences with the executed task
+        **Returns:**
+            output (str): Python sentences with the executed task
+            
         """
         try:
             key=str(key)
@@ -518,15 +493,14 @@ class gipsySet(object):
         else:
             self.__S[ 0, key]=val
             self.__S.update()
-            output="%s[0,\'%s\']=%s"%(self.varname, key, val)+"\n"+"%s.update"%(self.varname)
+            output="%s[0,\'%s\']=%s"%(self.varname, key, val)+"\n"+"%s.update()"%(self.varname)
             return output
 
     def getInfo(self):
         """Returns information about dimensions and axes of the set.
         
         Returns
-        -----------
-        output : String
+            output (str)
      
         """
         dim = self.__S.naxis

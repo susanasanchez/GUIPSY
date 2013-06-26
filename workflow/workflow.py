@@ -6,13 +6,28 @@ from dialog.myeditarea import MyEditArea
 
 
 class workflow(QWidget,Ui_workflow):
+    """This class keeps the logs of the performed actions in GUIpsy.
+    Most of these log lines will be python sentences, but sometimes the log time will be a commented line with the info of the action performed.
+        
+    Logged actions:
+        - Every task of gipsy returns a log with the gipsy xeq command reproducing the task. 
+          Some gipsy tasks create a new set from other set, and this second set inherits the settables of the first. 
+          The settables in the second set could not represent the data of the new set, so it could be confusing. 
+          This behaviour has been improved, and the settables inherited are deleted in the new set. Also the commands corresponding to delete these tables are returned as logs.
+        - When a cola or python script is launched to HERMES, a log is returned with the gipsy xeq command which execute the script.
+        - When headers / comments set are edited.
+        
+    **Attributes**
+    
+    log : String
+        it contains the plain text with every log lines 
+    workflowArea :  :class:`dialog.myeditarea.MyEditArea`
+        The area which shows the logs.
+            
+    """
+    
     def __init__(self):
-        """
-        This class keeps the logs from the execution of gipsy task. This logs are python sentences which, in case to be executed, they  will reproduce the gipsy task action
-        ATTRIBUTES:
-        - self.log: it contains the plain text with the logs and other python sentences which build a python script that can be executed in HERMES command line.
-        - self.workflowArea: The area which shows the logs.
-        """
+        
         super(workflow, self).__init__()
         self.setupUi(self)
 

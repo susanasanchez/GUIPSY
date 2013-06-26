@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'setbrowser.ui'
 #
-# Created: Wed Nov  9 09:41:53 2011
+# Created: Mon Jun 17 11:13:30 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -73,6 +73,7 @@ class Ui_setbrowser(object):
         self.editEnableButton.setObjectName("editEnableButton")
         self.gridLayout.addWidget(self.editEnableButton, 4, 0, 1, 1)
         self.setnameLine = QtGui.QLineEdit(setbrowser)
+        self.setnameLine.setReadOnly(True)
         self.setnameLine.setObjectName("setnameLine")
         self.gridLayout.addWidget(self.setnameLine, 1, 1, 1, 1)
         self.headerButton = QtGui.QPushButton(setbrowser)

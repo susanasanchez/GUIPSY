@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'tablebrowser.ui'
 #
-# Created: Tue Aug  9 10:54:25 2011
+# Created: Mon Apr 29 19:46:28 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_tablebrowser(object):
     def setupUi(self, tablebrowser):
         tablebrowser.setObjectName("tablebrowser")
-        tablebrowser.resize(438, 265)
+        tablebrowser.resize(281, 164)
         self.gridLayout = QtGui.QGridLayout(tablebrowser)
         self.gridLayout.setObjectName("gridLayout")
         self.buttonBox = QtGui.QDialogButtonBox(tablebrowser)
@@ -37,6 +37,13 @@ class Ui_tablebrowser(object):
         self.columnsBox.setObjectName("columnsBox")
         self.gridLayout.addWidget(self.columnsBox, 3, 1, 1, 1)
         self.tableBox = QtGui.QComboBox(tablebrowser)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tableBox.sizePolicy().hasHeightForWidth())
+        self.tableBox.setSizePolicy(sizePolicy)
+        self.tableBox.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.tableBox.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToMinimumContentsLength)
         self.tableBox.setObjectName("tableBox")
         self.gridLayout.addWidget(self.tableBox, 1, 0, 1, 3)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)

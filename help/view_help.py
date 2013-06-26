@@ -6,16 +6,24 @@ from PyQt4.QtGui import *
 
 
 class view_help(QWidget,Ui_help):
+    """This class implements the right panel of the principal window of GUIpsy. It inherits from Ui_help class which 
+    implements the graphical part.
+    
+    **Attributes**
+    
+    listWidget : :class:`PyQt4.QtGui.QListWidget`
+        It is inherited from Ui_help class. It is the container widget for the list of gipsy tasks names
+    lineEdit : :class:`PyQt4.QtGui.QLineEdit`
+        It is the field on the top of the panel, where the user can type the name of the task to be searched in the list.
+    helpArea :  :class:`help.view_help.helpContainer`
+        It is an object of the class helpContainer. In this object are stored the information about each gipsy task, 
+        in order to show it when it is required.
+        """
+        
     def __init__(self):
         super(view_help, self).__init__()
         self.setupUi(self)
-        """
-        This class implements the right panel of the principal window of GUIpsy. It inherits from Ui_help class which implements the graphical part.
-        ATTRIBUTES:
-        - self.listWidget: It is inherited from Ui_help class. It is the container widget for the list of gipsy tasks names
-        - self.lineEdit: It is the field on the top of the panel, where the user can type the name of the task to be searched in the list.
-        - self.helpArea: It is an object of the class helpContainer. In this object are stored the information about each gipsy task, in order to show it when it is required.
-        """
+        
 
 
 #DATA elements:
@@ -77,6 +85,11 @@ class view_help(QWidget,Ui_help):
 
 
 class itemHelp(object):
+    """An itemHelp is an object which contains three attributes: 
+        - the name of the task, 
+        - a brief summary of the purpose of the task (smartHelp) and 
+        - the path of the file with the whole documentation of the task. 
+    """
     def __init__(self,name, smartHelp, filedc1):
         self.name=name
         self.smartHelp=smartHelp
@@ -87,18 +100,15 @@ class itemHelp(object):
 
 
 class helpContainer(object):
+    """This is an auxiliary class used to store the information about each gipsy task. 
+    Its unique attribute is a dictionary of  :class:`help.view_help.itemHelp` objects. 
+    The dictionary is populated with the method load. 
+    This method iterate for each file with extension ".dc1", in the folder whose path it is indicated by the environmental variable "gip_tsk". 
+    In this loop it gets the name of the task, the path file with the documentation of the task, and from this file extracts 
+    the "Purpose" section to build the brief summary of the task (smartHelp). With this three elements it builds an itemHelp object and stores it into the dictionary.
+    """
+        
     def __init__(self):
-        """
-        This is an auxiliary class used to store the information about each gipsy task. 
-        Its unique attribute is a dictionary of the "itemHelp" objects. An itemHelp Object is an object which contains three attributes: 
-        - the name of the task, 
-        - a brief summary of the purpose of the task (smartHelp) and 
-        - the path of the file with the whole documentation of the task. 
-        The dictionary is populated with the method load. 
-        This method iterate for each file with extension ".dc1", in the folder whose path it is indicated by the environmental variable "gip_tsk". 
-        In this loop it gets the name of the task, the path file with the documentation of the task, and from this file extracts 
-        the "Purpose" section to build the brief summary of the task (smartHelp). With this three elements it builds an itemHelp object and stores it into the dictionary.
-        """
         
         self.itemsHelp = {}
 

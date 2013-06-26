@@ -6,19 +6,27 @@ from PyQt4.QtGui import *
 
 
 class view_helpFile(QWidget,Ui_helpFile):
-    def __init__(self):
-        """
+    """
         This class implements the panel showed in a tab in the principal window of GUIpsy, 
         containing the documentation about a gipsy task. This class inherits from the Ui_helpFile which 
         implements the graphical part of this panel.This panel has a button titled "Launch". By pressing this button 
         the task is launched to HERMES and a dynamical dialogue is opened to gather the keywords required by HERMES to execute this task.
-
-        ATTRIBUTES:
-        - self.textBrowser: it is inherited from Ui_helpfile. It is the QTextBrowser widget where the information about the task is displayed.
-        - self.launchButton: it is inherited from Ui_helpfile.
-        - self.filename: It contains a string with the path to the .dc1 file with the documentation about the task.
-        - self.taskname: It contains a string with the name of the task.
-        """
+        
+    **Attributes**
+        
+        textBrowser : :class:`PyQt4.QtGui.QTextBrowser`
+            Inherited from Ui_helpfile. It is the QTextBrowser widget where the information about the task is displayed.
+        launchButton :  class:`PyQt4.QtGui.QPushButton`
+            Inherited from Ui_helpfile.
+        filename : String
+            Path to the .dc1 file with the documentation about the task.
+        taskname : String
+            Name of the task.
+    
+    """
+        
+    def __init__(self):
+        
         super(view_helpFile, self).__init__()
         self.setupUi(self)
         #INTERESTING INHERITED ATRIBUTES

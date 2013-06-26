@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
-    <height>265</height>
+    <width>281</width>
+    <height>164</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,23 @@
     <widget class="QComboBox" name="columnsBox"/>
    </item>
    <item row="1" column="0" colspan="3">
-    <widget class="QComboBox" name="tableBox"/>
+    <widget class="QComboBox" name="tableBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+     </property>
+    </widget>
    </item>
    <item row="3" column="2">
     <spacer name="horizontalSpacer">

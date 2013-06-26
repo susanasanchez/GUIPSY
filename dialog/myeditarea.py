@@ -1,9 +1,12 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-#The SIGNAL editingFinished doesn't exist in QTextEdit class
-#A new class has to be built, this class has to inherit from QTextEdit and reimplements the FocusOut event
+
 class MyEditArea(QTextEdit):
+    """
+    The SIGNAL editingFinished doesn't exist in QTextEdit class. This class has been implemented
+    to get this signal. It inherits from QTextEdit and reimplements the FocusOut event
+    """
     def __init__(self, *args):
         QTextEdit.__init__(self, *args)
   
