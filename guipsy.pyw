@@ -12,6 +12,7 @@ import functools
 import os
 import pickle
 import webbrowser
+import urllib
 
 
 #Import modules needed
@@ -217,6 +218,7 @@ class MainWindow(QMainWindow):
             #If it is recieved a LoadFits, a function to load the fits will be executed
             self.sampClient.bindReceiveNotification("image.load.fits", self.emit_imageloadfits)
             self.sampClient.bindReceiveNotification("table.load.votable", self.emit_loadvotable) 
+            self.sampClient.bindReceiveCall("table.load.votable", self.emit_loadvotable_call) 
             
     
    #Creating icons
@@ -1818,14 +1820,9 @@ class MainWindow(QMainWindow):
             return
         tabledata=tmp.getTableData(numTable)
         tmp.closeSet()
+        
+        headers=" ".join(tabledata.keys())
 
-        #Creating the new table view
-        if "ROTCUR" in nameTable:
-            headers=ROTCURHEADER
-        elif "ELLINT" in nameTable:
-            headers=ELLINTHEADER
-        else:
-            headers=None
         self.allWidgets[filename]=view_table(self, filename)
         self.allWidgets[filename].loadSetTable(tabledata, headers)
         
@@ -2041,7 +2038,12 @@ class MainWindow(QMainWindow):
             
             
     def newTable(self, fName, line_headers):
-            
+        
+        #Check if it is already open
+        indexOpen=self.isDocumentOpen(fName)
+        if  indexOpen >= 0:#The set is opened
+            self.closeTab(indexOpen)
+                
         try:
             output=self.openTable(fName, line_headers)
         except tableException as t:
@@ -2104,9 +2106,12 @@ class MainWindow(QMainWindow):
                 curried=functools.partial(self.deleteSetTable, filename)
                 deleteSetTableAction=self.createAction("&Delete table from SET", curried,  tip=menuTips['delete_settable'])
                 contextMenu.addAction(deleteSetTableAction)
-               
+            if type=="TABLE" or type=="VOTABLE":
+                curried=functools.partial(self.removeFileFromSession, filename, type)
+                removeFileFromSessionAction=self.createAction("&Remove from Session", curried,  tip=menuTips['remove'])
+                contextMenu.addAction(removeFileFromSessionAction)
         else:
-            if type== "PYTEMP" or type=="COLATEMP" or type=="HELP":
+            if type== "PYTEMP" or type=="COLATEMP" or type=="HELP" :
                 curried=functools.partial(self.removeFileFromSession, filename, type)
                 removeFileFromSessionAction=self.createAction("&Remove from Session", curried,  tip=menuTips['remove'])
                 contextMenu.addAction(removeFileFromSessionAction)
@@ -2197,7 +2202,7 @@ class MainWindow(QMainWindow):
     def interfaceTask(self, view, taskmenu=None,  input=None):
         
         #input=None
-        if input==None:
+        if input==None and view!=view_rfits:
             i=self.documents.currentIndex()
             if (i>=0):
                 if(self.allDocuments[i].getType()=="SET"):
@@ -2225,26 +2230,43 @@ class MainWindow(QMainWindow):
             self.taskMenuActions[taskmenu].setEnabled(True)
 
     def emit_sampcoord (self, private_key, sender_id, mtype, params, extra):
-        #print "Notification:", private_key, sender_id, mtype, params, extra
         self.emit(SIGNAL("sampcoord"), params['ra'], params['dec'])
     
     def emit_imageloadfits(self, private_key, sender_id, mtype, params, extra):
         #When a imageloadfits messages is received, the RFITS task dialog is opened
-        pathSAMP=params['url'].split("file://localhost")        
-        if len(pathSAMP)==2:
-            
-            if os.path.exists(pathSAMP[1]):
-                #The dialog should be opened through a SIGNAL to avoid opening another GUI thread
-                self.emit(SIGNAL("imageloadfits"), pathSAMP[1])
-    
-    def emit_loadvotable(self, private_key, sender_id, mtype, params, extra):
-        print "loadSampVOtable ", params['url']
+        try:
+            (filename, headers)=urllib.urlretrieve(params['url'])
+        except:
+            pass
+        else:
+            bname=os.path.basename(filename)
+            try:
+                os.symlink(filename, GUIPSYDIR+"/"+bname)
+            except:
+                QMessageBox.warning(self, "Link to fits file failed", QString("Unable to link the fits file received from SAMP to $HOME/.gipsy directory."))
+            else:
+                self.emit(SIGNAL("imageloadfits"), GUIPSYDIR+"/"+bname)
         
-        pathSAMP=params['url'].split("file://localhost")        
-        if len(pathSAMP)==2:
-            if os.path.exists(pathSAMP[1]):
-                #The dialog should be opened through a SIGNAL to avoid opening another GUI thread
-                self.emit(SIGNAL("loadvotable"), pathSAMP[1])
+    
+    def emit_loadvotable(self, private_key, sender_id, mtype, params, extra):        
+        try:
+            (filename, headers)=urllib.urlretrieve(params['url'])
+        except:
+            pass
+        else:
+            self.emit(SIGNAL("loadvotable"), filename)
+            
+    
+    def emit_loadvotable_call(self, private_key, sender_id, msg_id, mtype, params, extra):
+        
+        try:
+            (filename, headers)=urllib.urlretrieve(params['url'])
+        except:
+            self.sampClient.ereply(msg_id, sampy.SAMP_STATUS_OK, result = "File not found")
+        else:
+            self.emit(SIGNAL("loadvotable"), filename)          
+            self.sampClient.ereply(msg_id, sampy.SAMP_STATUS_OK, result = "")
+                
             
     def openVotableFromSamp(self, fName):
         try:
@@ -2273,9 +2295,6 @@ class MainWindow(QMainWindow):
         self.session.updateWorkflowText(self.workflow.getWorkflowText())
        #Adding the doc to the tab
         self.showDocument(fName, shortname, type )
-#  
-#               #Emit open Document SIGNAL
-#                self.emit(SIGNAL("open"+type))
             
             
     

@@ -437,6 +437,7 @@ class view_rfits(view_task):
         
         
         self.setWindowTitle("OPEN FITS - RFITS")
+        self.rfitsFrame.labelMessage.setText("")
         self.insetFrame.hide()
         self.outsetFrame.hide()
 
@@ -3666,6 +3667,7 @@ class view_rotcur(view_task):
         self.errorMsg.setText("")
     
     def finished(self, log):
+        
         #Extract the name of ROTCUR Tab (higher number, but problems with 99 -> 00)
         set=gipsySet()
         set.loadSetRO(self.insetPath)
@@ -3691,12 +3693,13 @@ class view_rotcur(view_task):
         else:
             tabname=None
         set.closeSet()
-            
+
         self.emit(SIGNAL("taskExecuted"), log)
         saveTaskValues(self.taskcommand)
         self.clearExtraLayout()
         setpath=unicode(self.insetLabel.toolTip())
         self.emit(SIGNAL("newSet"),setpath, setpath, tabname)
+        
         
         
     def buildCommand(self):
@@ -3737,9 +3740,6 @@ class view_rotcur(view_task):
         if self.rotcurFrame.inclCheck.isChecked():
             fixed=fixed+"incl "
         weight=unicode(self.rotcurFrame.weightBox.currentText())
-            
-       
-       
         
         taskcommand='ROTCUR INSET=%s BOX=%s WEIGHT=%s BUNIT=%s RADII=%s WIDTHS=%s VSYS=%s VROT=%s VEXP=%s PA=%s INCL=%s CENTRE=%s FREEANGLE=%s SIDE=%s FIXED=%s TOLERANCE=%s FILENAME= OKAY=Y'\
                                     %(inset, box, weight, bunit, radii,widths, vsys, vrot, vexp, pa, incl, centre,  freeangle, side, fixed, fittolerance )
@@ -5071,6 +5071,9 @@ class view_pplot(view_task):
         p.setColor(QPalette.WindowText, QColor(64, 64,64))
   
         self.pplotFrame.filenameLine.setPalette(p)
+        self.pplotFrame.profileLine.setPalette(p)
+        self.insetLabel.setPalette(p)
+        self.boxLabel.setPalette(p)
         
         self.status.setText("")
         self.errorMsg.setText("")
@@ -5093,6 +5096,7 @@ class view_pplot(view_task):
         role=self.buttonBox.buttonRole(button)
 
         if (role==QDialogButtonBox.ApplyRole):
+           
             if self.insetPath == None:
                 self.showStatus("Give set (,subsets)")
                 return
@@ -5104,10 +5108,12 @@ class view_pplot(view_task):
               
                 reply=QMessageBox.question(self,  
                                                         "Overwrite file",  
-                                                        "The file already exists.\nIf you select overwrite it, in case PPLOT does not create a new file due to a profile out of range, you will see the old file\nDo you want overwrite it?",  
+                                                        "The file already exists.\nIf you select overwrite it, it will be deleted before PPLOT creates the new file \nDo you want overwrite it?",  
                                                         QMessageBox.Yes|QMessageBox.No)
                 if reply==QMessageBox.No:
                     return
+                os.remove(filename)
+                
             profile=unicode(self.pplotFrame.profileLine.text())
             if profile=="":
                 self.showStatus("Insert a profile")

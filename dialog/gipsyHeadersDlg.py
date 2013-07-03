@@ -20,7 +20,6 @@ class gipsyHeadersDlg(QDialog,Ui_gipsyHeaderDlg):
         #The list of items is going to be a dictionary
         self.items={}
         for key,  value in items:
-            print "TIPO ", type(value)
             self.items[key]=value
         
     

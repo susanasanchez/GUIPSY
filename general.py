@@ -200,12 +200,7 @@ TASKS_CLASS={#Fclass, Fsubdim
              "XGAUFIT":(-1, -1),  # XGAUFIT does not have classdim or class.
              "XGAUPROF":(-1, -1) # XGAUPROF does not have classdim or class.
              }
-ROTCURHEADER="!   radius    width systemic  error rotation  error expansion  error    pos.  error incli-  error x-pos.  error y-pos.  error npts   sigma\n\
-!                   velocity        velocity         velocity          angle        nation        centre        centre             velocity\n\
-! (arcsec) (arcsec)   (km/s) (km/s)   (km/s) (km/s)    (km/s) (km/s)  (deg.) (deg.) (deg.) (deg.) (grid) (grid) (grid) (grid)        (km/s)\n"
-ELLINTHEADER="! radius radius    Msd-t   Mass-t Cum.Mass      Msd     Mass Cum.Mass      sum subpix     area  area-bl  segLO  segHI  width     pa   incl\n\
-! arcsec    Kpc  Mo/pc^2  10^9 M0  10^9 M0  Mo/pc^2  10^9 M0  10^9 M0        ?      #   pixels   pixels   deg.   deg. arcsec   deg.   deg.\n\
-"
+
 
 DIRPYTHONTEMPLATE=":resources/python_templates/"
 DIRCOLATEMPLATE=":resources/cola_templates/"
