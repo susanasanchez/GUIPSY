@@ -343,7 +343,7 @@
    <item row="1" column="1">
     <widget class="QLineEdit" name="xrangeLine">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="minimumSize">
       <size>
@@ -382,7 +382,7 @@
    <item row="1" column="2">
     <widget class="QLineEdit" name="yrangeLine">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="minimumSize">
       <size>

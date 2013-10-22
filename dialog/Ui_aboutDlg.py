@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Mon Apr 29 19:33:12 2013
+# Created: Tue Oct 22 10:04:19 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -45,7 +45,7 @@ class Ui_aboutDlg(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtGui.QWidget(self.scrollArea)
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -573, 638, 924))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -635, 638, 1016))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -145,6 +145,22 @@ class Ui_aboutDlg(object):
         self.label_3 = QtGui.QLabel(self.scrollAreaWidgetContents)
         self.label_3.setObjectName("label_3")
         self.verticalLayout.addWidget(self.label_3)
+        self.label_4 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.label_4.setFont(font)
+        self.label_4.setObjectName("label_4")
+        self.verticalLayout.addWidget(self.label_4)
+        self.label_5 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.label_5.setObjectName("label_5")
+        self.verticalLayout.addWidget(self.label_5)
+        self.label_7 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.label_7.setObjectName("label_7")
+        self.verticalLayout.addWidget(self.label_7)
+        self.label_6 = QtGui.QLabel(self.scrollAreaWidgetContents)
+        self.label_6.setObjectName("label_6")
+        self.verticalLayout.addWidget(self.label_6)
         self.label_45 = QtGui.QLabel(self.scrollAreaWidgetContents)
         self.label_45.setObjectName("label_45")
         self.verticalLayout.addWidget(self.label_45)
@@ -343,6 +359,10 @@ class Ui_aboutDlg(object):
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:600;\">xreverse class</span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("aboutDlg", "copyright 2004 Michael D. Stenner <mstenner@ece.arizona.edu>\n"
 "license: LGPL", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("aboutDlg", "PythonHighlighter class", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(QtGui.QApplication.translate("aboutDlg", "Copyright (C) 2011-2012, Paul D. Nation & Robert J. Johansson", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(QtGui.QApplication.translate("aboutDlg", "https://code.google.com/p/qutip/", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(QtGui.QApplication.translate("aboutDlg", "license: GNU GPL", None, QtGui.QApplication.UnicodeUTF8))
         self.label_45.setText(QtGui.QApplication.translate("aboutDlg", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

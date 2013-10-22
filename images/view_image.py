@@ -7,7 +7,8 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 #from PIL import Image
-from PIL.ImageQt import ImageQt
+#from PIL.ImageQt import ImageQt
+import PIL
 
 
 
@@ -25,7 +26,7 @@ class view_image(QScrollArea,Ui_images):
     def loadImage(self,  filename):
         self.filename=filename
 
-        imageq = ImageQt(filename) #convert PIL image to a PIL.ImageQt object
+        imageq = PIL.ImageQt.ImageQt(filename) #convert PIL image to a PIL.ImageQt object
         qimage = QImage(imageq) #cast PIL.ImageQt object to QImage object 
         pm = QPixmap(qimage)
 

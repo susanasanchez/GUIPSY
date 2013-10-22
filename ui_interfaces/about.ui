@@ -104,9 +104,9 @@ p, li { white-space: pre-wrap; }
           <property name="geometry">
            <rect>
             <x>0</x>
-            <y>-573</y>
+            <y>-635</y>
             <width>638</width>
-            <height>924</height>
+            <height>1016</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
@@ -369,6 +369,40 @@ p, li { white-space: pre-wrap; }
              <property name="text">
               <string>copyright 2004 Michael D. Stenner &lt;mstenner@ece.arizona.edu&gt;
 license: LGPL</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>PythonHighlighter class</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Copyright (C) 2011-2012, Paul D. Nation &amp; Robert J. Johansson</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_7">
+             <property name="text">
+              <string>https://code.google.com/p/qutip/</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>license: GNU GPL</string>
              </property>
             </widget>
            </item>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ellint.ui'
 #
-# Created: Thu Apr 25 10:58:18 2013
+# Created: Thu Aug  8 09:51:25 2013
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -152,7 +152,7 @@ class Ui_ellint(object):
         self.rangeLabel.setObjectName("rangeLabel")
         self.gridLayout.addWidget(self.rangeLabel, 1, 3, 1, 1)
         self.xrangeLine = QtGui.QLineEdit(ellint)
-        self.xrangeLine.setEnabled(False)
+        self.xrangeLine.setEnabled(True)
         self.xrangeLine.setMinimumSize(QtCore.QSize(125, 0))
         self.xrangeLine.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.xrangeLine.setObjectName("xrangeLine")
@@ -166,7 +166,7 @@ class Ui_ellint(object):
         self.ycentreLine.setObjectName("ycentreLine")
         self.gridLayout.addWidget(self.ycentreLine, 0, 2, 1, 1)
         self.yrangeLine = QtGui.QLineEdit(ellint)
-        self.yrangeLine.setEnabled(False)
+        self.yrangeLine.setEnabled(True)
         self.yrangeLine.setMinimumSize(QtCore.QSize(125, 0))
         self.yrangeLine.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.yrangeLine.setObjectName("yrangeLine")

@@ -4243,6 +4243,9 @@ class view_ellint(view_task):
         self.ellintFrame.loadParamsButton.setAutoDefault(False)
         self.ellintFrame.loadParamsButton.setDefault(False)
         
+#        self.ellintFrame.xrangeLine.setEnabled(True)
+#        self.ellintFrame.yrangeLine.setEnabled(True)
+        
         self.showRelatedData()
         
         self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
@@ -4344,8 +4347,7 @@ class view_ellint(view_task):
                 except gipsyException as g:
                     QMessageBox.warning(self, "Reading SET HEADER Failed", QString(g.msj+self.insetPath))
                     set.closeSet()
-                    self.ellintFrame.xrangeLine.setEnabled(True)
-                    self.ellintFrame.yrangeLine.setEnabled(True)
+                    
                 else:
                     set.closeSet()
                     self.ellintFrame.xrangeLine.setText(datamin)
@@ -4358,8 +4360,8 @@ class view_ellint(view_task):
         self.ellintFrame.xrangeLine.setText("")
         self.ellintFrame.xrangeLine.setText("")
         self.ellintFrame.rangeLabel.setText("")
-        self.ellintFrame.xrangeLine.setEnabled(False)
-        self.ellintFrame.yrangeLine.setEnabled(False)
+        #self.ellintFrame.xrangeLine.setEnabled(False)
+        #self.ellintFrame.yrangeLine.setEnabled(False)
                 
     def loadTables(self):
         self.view_tables={}
@@ -4775,6 +4777,8 @@ class view_galmod(view_task):
                 self.galmodFrame.paLine.setText(values["PA"])
             if values.has_key("INCL"):
                 self.galmodFrame.inclLine.setText(values["INCL"])
+            if values.has_key("DRVAL3"):
+                self.galmodFrame.drvalLine.setText(values["DRVAL3"])
             if values.has_key("POS"):
                 if len(values["POS"].split())==2:
                     x, y=values["POS"].split()
