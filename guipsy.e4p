@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project guipsy -->
-<!-- Saved: 2013-06-17, 13:43:49 -->
-<!-- Copyright (C) 2013 ,  -->
+<!-- Saved: 2014-10-30, 09:17:31 -->
+<!-- Copyright (C) 2014 ,  -->
 <Project version="4.6">
   <Language></Language>
   <ProgLanguage mixed="0">Python</ProgLanguage>
@@ -89,6 +89,8 @@
     <Source>dialog/Ui_aboutDlg.py</Source>
     <Source>dialog/aboutDlg.py</Source>
     <Source>gipsyClasses/Ui_mnmx.py</Source>
+    <Source>help/view_recipeFile.py</Source>
+    <Source>help/Ui_recipeFile.py</Source>
   </Sources>
   <Forms>
     <Form>ui_interfaces/clip.ui</Form>

@@ -1,3 +1,4 @@
+import os
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from Ui_workflow import *
@@ -83,6 +84,9 @@ class workflow(QWidget,Ui_workflow):
         except UnicodeEncodeError as e:
             fh.close()
             raise e
+        else:
+            fh.close
+            os.chmod(newFile, 0744)
             return
         
 

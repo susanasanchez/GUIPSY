@@ -775,8 +775,16 @@ class DataTableModel(QAbstractTableModel):
 
     def saveAsVOtable(self, filename):
         if filename!=None:
-            dat_np = numpy.rec.fromrecords(self.dataValues,  names=self.columnTitles)  
-            dat =  astropy.table.Table(dat_np)
+            
+            #Calculate a mask for those values that are NotANumber and empty strings
+            #This resolve the problem when points are deleted from the table
+            #However, it will replace the empty strings by NAN and in some cases it could seem weird 
+            to_nan=[]
+            for r in self.dataValues:
+                to_nan.append([float('nan') if (str(x).upper()=="NAN" or x=="") else x for x in r])
+            #dat_np = numpy.rec.fromrecords(to_nan,  names=self.columnTitles)
+            #dat =  astropy.table.Table(dat_np)
+            dat=astropy.table.Table(rows=to_nan, names=self.columnTitles)
             votable=astropy.io.votable.tree.VOTableFile()
             votable=votable.from_table(dat)
             for f in votable.iter_fields_and_params():
@@ -797,7 +805,9 @@ class DataTableModel(QAbstractTableModel):
                 
         for key,  value in enumerate(self.dataValues):
             if (len(value)>n_col):
-                self.dataValues[key][n_col]=str(data[key])
+                #self.dataValues[key][n_col]=str(data[key])
+                self.dataValues[key][n_col]=data[key]
+                
                
         
         self.calculateArrayColumns()

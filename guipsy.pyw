@@ -30,6 +30,10 @@ from dialog.aboutDlg import *
 from table.view_table import *
 from images.view_image import *
 from help.view_help import *
+#
+#from help.view_recipes import *
+from help.view_recipeFile import *
+#
 from help.view_helpFile import *
 from launch.view_cola import *
 from launch.view_pyfile import *
@@ -117,6 +121,8 @@ class MainWindow(QMainWindow):
     self.allWidgets : Dictionary 
         A dictionary which stores the widgets of the different documents opened. 
         Each kind of document has its own widget to be showed, e.g. the widget for the tables contains a view to show the tabular data. The keys of this dictionary is the whole path of the document showed in this widget.
+    self.votables_id : Dictionary
+        A dictionary which stores the vo identification of the table received by samp.  
     self.recentDocuments : List 
         A list of the documents paths recently opened
     self.recentTypes : List 
@@ -172,21 +178,29 @@ class MainWindow(QMainWindow):
 #UI ATRIBUTES
   #browser area
         browserDockWidget = QDockWidget( self)
+        browserDockWidget.DockWidgetFeatures=QDockWidget.NoDockWidgetFeatures
         browserDockWidget.setObjectName("browserDockWidget")
         browserDockWidget.setAllowedAreas(Qt.LeftDockWidgetArea)
+        browserDockWidget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.browser = QTabWidget()
         browserDockWidget.setWidget(self.browser)
         self.addDockWidget(Qt.LeftDockWidgetArea, browserDockWidget)
+        
   #info area
         infoDockWidget = QDockWidget( self)
         infoDockWidget.setObjectName("infoDockWidget")
         infoDockWidget.setAllowedAreas(Qt.RightDockWidgetArea)
+        infoDockWidget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.info=QTabWidget()
         infoDockWidget.setWidget(self.info)
         self.addDockWidget(Qt.RightDockWidgetArea, infoDockWidget)
    # info area for task help
         self.infoTask=view_help()
+        self.infoTask.loadHelp()
         self.info.addTab(self.infoTask, "Tasks")
+        self.infoRecipes=view_recipes()
+        self.infoRecipes.loadRecipes()
+        self.info.addTab(self.infoRecipes,  "Recipes")
    # documents area and workflow area
         self.documents = QTabWidget()
         self.documents.setTabsClosable(True)
@@ -215,11 +229,13 @@ class MainWindow(QMainWindow):
             self.sampClient.connect()
             #If it is received a notification with the messages coord.pointAt, a SIGNAL will be emitted to transmit the coordinates.
             self.sampClient.bindReceiveNotification("coord.pointAt.sky",self.emit_sampcoord)
+            self.sampClient.bindReceiveNotification("table.select.rowList", self.emit_rowList)
             #If it is recieved a LoadFits, a function to load the fits will be executed
             self.sampClient.bindReceiveNotification("image.load.fits", self.emit_imageloadfits)
             self.sampClient.bindReceiveNotification("table.load.votable", self.emit_loadvotable) 
             self.sampClient.bindReceiveCall("table.load.votable", self.emit_loadvotable_call) 
-            
+    # Create the dictionary to keep the votable id sent by SAMP
+        self.votables_id={}
     
    #Creating icons
         self.iconDict={}
@@ -260,6 +276,7 @@ class MainWindow(QMainWindow):
         self.icon_help=QIcon()
         self.icon_help.addPixmap(QPixmap(":/help.png"), QIcon.Normal, QIcon.Off)
         self.iconDict["HELP"]=self.icon_help
+        self.iconDict["RECIPE"]=self.icon_help
         self.icon_cola=QIcon()
         self.icon_cola.addPixmap(QPixmap(":/cola.png"), QIcon.Normal, QIcon.Off)
         self.iconDict["COLA"]=self.icon_cola
@@ -384,8 +401,11 @@ class MainWindow(QMainWindow):
       
         fileQuitAction = self.createAction("&Quit", self.close,
                 "Ctrl+Q", tip=menuTips['quit'], icon=self.iconDict["QUIT"])
+                
+        fileDeleteFromDiskAction=self.createAction("Delete from disk", self.deleteFileFromDisk, tip=menuTips['deletefromdisk'])
+        fileDeleteFromSessionAction=self.createAction("Remove file from session", self.removeFileFromSession, tip=menuTips['remove'])
         self.fileMenuActions = ( fileCloseAction, fileCloseSessionAction, fileCloseAllAction, None,
-                fileSaveSessionAction, fileSaveAction, fileSaveAsAction, fileSaveAsVOTAction, fileSaveAsASCIITAction,  fileSaveSetAsAction, None, fileQuitAction)
+                fileSaveSessionAction, fileSaveAction, fileSaveAsAction, fileSaveAsVOTAction, fileSaveAsASCIITAction,  fileSaveSetAsAction, None, fileDeleteFromDiskAction, fileDeleteFromSessionAction, None, fileQuitAction)
 
         newMenu = fileMenu.addMenu(self.iconDict["FILENEW"],"&New")
         colaMenu = newMenu.addMenu("&Cola")
@@ -408,7 +428,7 @@ class MainWindow(QMainWindow):
         
         self.addActions(fileMenu,(
                 fileCloseAction, fileCloseSessionAction, fileCloseAllAction, None,
-                fileSaveSessionAction, fileSaveAction, fileSaveAsAction, fileSaveAsVOTAction, fileSaveAsASCIITAction, fileSaveSetAsAction, None,  fileQuitAction))
+                fileSaveSessionAction, fileSaveAction, fileSaveAsAction, fileSaveAsVOTAction, fileSaveAsASCIITAction, fileSaveSetAsAction, None,  fileDeleteFromDiskAction, fileDeleteFromSessionAction, None, fileQuitAction))
                  
 
         self.fileMenuActions[0].setEnabled(False)
@@ -418,6 +438,8 @@ class MainWindow(QMainWindow):
         self.fileMenuActions[7].setEnabled(False)
         self.fileMenuActions[8].setEnabled(False)
         self.fileMenuActions[9].setEnabled(False)
+        self.fileMenuActions[11].setEnabled(False)
+        self.fileMenuActions[12].setEnabled(False)
         
         
 
@@ -466,6 +488,9 @@ class MainWindow(QMainWindow):
 
         curried = functools.partial(self.interfaceTask,view_regrid)
         Regrid=self.createAction("Regrid",curried, icon=self.icon_task, tip=menuTips['Regrid'])
+        
+        curried = functools.partial(self.interfaceTask,view_smooth, "smooth")
+        Smooth=self.createAction("Smooth",curried, icon=self.icon_task,  tip=menuTips['Smooth'])
 
         curried = functools.partial(self.interfaceTask,view_snapper, "snapper")
         Snapper=self.createAction("Snapper",curried, icon=self.icon_task,  tip=menuTips['Snapper'])
@@ -496,7 +521,7 @@ class MainWindow(QMainWindow):
         curried = functools.partial(self.fileOpenDocument,"HELP",p+"/patch"+".dc1")
         Patch=self.createAction("Patch",slot=curried,  tip=menuTips['Patch'], icon=self.icon_help)
         self.addActions (editMenu, (  Clip, Combin, Copy,  Decim, Diminish,  EditSet,  Extend,  Insert,  
-                                    Mean,  MinBox,  Mnmx, Regrid,  Snapper, Transform, Transpose, Velsmo, None, Pyblot, 
+                                    Mean,  MinBox,  Mnmx, Regrid,  Smooth, Snapper, Transform, Transpose, Velsmo, None, Pyblot, 
                                     None, conDit, conRem,  findGauss,  MFilter, Patch))
         
 #DISPLAY MENU
@@ -592,7 +617,7 @@ class MainWindow(QMainWindow):
                                                GaussCube,  RotMod ))
         
         self.taskMenuActions={ "clip":Clip, "combin":Combin, "copy":Copy,  "decim":Decim, "diminish":Diminish,  "editset":EditSet,  "extend":Extend,  "insert":Insert,  
-                                    "mean":Mean,  "minbox":MinBox, "mnmx":Mnmx,  "regrid":Regrid,  "snapper":Snapper, "transform":Transform, "transpose":Transpose, "velsmo":Velsmo, 
+                                    "mean":Mean,  "minbox":MinBox, "mnmx":Mnmx,  "regrid":Regrid,  "smooth":Smooth,"snapper":Snapper, "transform":Transform, "transpose":Transpose, "velsmo":Velsmo, 
                                     "pyblot":Pyblot, "condit":conDit, "conrem":conRem,  "findgauss":findGauss,  "mfilter":MFilter, "patch":Patch, "maps":Maps, "skycalq":SkyCalq,  
                                     "sliceview":Sliceview, "inspector":Inspector, "render":Render, "vtkvolume":VTKVolume, "allskyplot":AllSkyPlot, "cplot":CPlot, 
                                     "reproj":Reproj, "reprojfits":ReprojFits, "WCSFlux":WCSFlux,  "ellint":EllInt, "galmod":GalMod, "moments":Moments, 
@@ -625,6 +650,8 @@ class MainWindow(QMainWindow):
         self.connect(self.workspaceBrowser, SIGNAL("contextMenu"), self.showContextMenu)
         self.connect(self.documents, SIGNAL("tabCloseRequested(int)"), self.closeTab)
         self.connect(self.infoTask, SIGNAL("openHelpFile"), lambda file: self.fileOpenDocument("HELP", file))
+        self.connect(self.infoRecipes, SIGNAL("openRecipeFile"), lambda file: self.fileOpenDocument("RECIPE", file))
+        
         self.connect(self.workflow,SIGNAL("updateWorkflow"), lambda: self.session.updateWorkflowText(self.workflow.getWorkflowText()))
         self.connect(self, SIGNAL("imageloadfits"),  self.openFitsFromSamp)
         self.connect(self, SIGNAL("loadvotable"), self.openVotableFromSamp)
@@ -632,9 +659,12 @@ class MainWindow(QMainWindow):
 
 #SETTINGS + WINDOW APPERANCE
         settings = QSettings()
-        size = settings.value("MainWindow/Size",
-                              QVariant(QSize(600, 500))).toSize()
-        self.resize(size)
+        #size = settings.value("MainWindow/Size",QVariant(QSize(600, 500))).toSize()
+        #self.resize(size)
+        #self.adjustSize() 
+        self.setWindowState(Qt.WindowMaximized)
+        self.workArea.setStretchFactor(0, 1)
+
         position = settings.value("MainWindow/Position",
                                   QVariant(QPoint(0, 0))).toPoint()
         self.move(position)
@@ -722,7 +752,7 @@ class MainWindow(QMainWindow):
         self.fileMenuActions[9].setEnabled(False) #Option save as fits
         self.fileMenuActions[0].setEnabled(False) #Option close
         self.fileMenuActions[2].setEnabled(False) #Option close all
-       
+        
         if(index>-1):
             self.workspaceBrowser.selectFile(self.allDocuments[index].getDocname())
             type=self.allDocuments[index].getType()
@@ -730,6 +760,9 @@ class MainWindow(QMainWindow):
             self.fileMenuActions[6].setEnabled(True) #Option save as
             self.fileMenuActions[0].setEnabled(True) #Option close
             self.fileMenuActions[2].setEnabled(True) #Option close all
+            self.fileMenuActions[11].setEnabled(True) #Option delete from disk
+            self.fileMenuActions[12].setEnabled(True) #Option remove from session
+           
             
             if (type== "SET") :
                 self.fileMenuActions[5].setEnabled(False) 
@@ -753,6 +786,8 @@ class MainWindow(QMainWindow):
                 self.fileMenuActions[5].setEnabled(False) #Option save
                 self.fileMenuActions[6].setEnabled(False) #Option save as
                 self.fileMenuActions[7].setEnabled(True) #Option save as votable
+                self.fileMenuActions[11].setEnabled(False) #Option delete from disk
+                self.fileMenuActions[12].setEnabled(False) #Option remove from session
             elif(type=="TABLE"):
                 self.fileMenuActions[7].setEnabled(True) #Option save as votable
                
@@ -764,6 +799,7 @@ class MainWindow(QMainWindow):
                 self.fileMenuActions[6].setEnabled(False)
             elif (type=="PYTEMP") or (type=="COLATEMP"):
                 self.fileMenuActions[5].setEnabled(False) #Option save
+                self.fileMenuActions[11].setEnabled(False) #Option delete from disk
                     
     def documentsSelected(self,  filename):
         for index,  doc in enumerate(self.allDocuments):
@@ -998,6 +1034,7 @@ class MainWindow(QMainWindow):
             self.showDocument(unicode(templatePath), unicode(templateName), type )
             
     def fileOpenDocument(self, type, helpfile=None, filename=None):
+        
         methods={
          "SET":self.openSet, 
          "TABLE": self.openTable, 
@@ -1006,7 +1043,8 @@ class MainWindow(QMainWindow):
          "PYFILE":self.openPyfile, 
          "TEXT":self.openText, 
          "COLA":self.openCola, 
-         "HELP":self.openHelp
+         "HELP":self.openHelp, 
+         "RECIPE":self.openRecipe
                  }
         if helpfile !=None:
             fName=helpfile
@@ -1039,6 +1077,7 @@ class MainWindow(QMainWindow):
         else:
             #The document is not open and it is not in the session
             try:
+                
                 output=methods[type](fName)
             except IOError as e:
                 QMessageBox.warning(self, "Open File Failed", unicode(e))
@@ -1058,7 +1097,10 @@ class MainWindow(QMainWindow):
                 type=output
                 
             #Adding the file to the session and to the workspaceBrowser
-            shortname=os.path.basename(fName)
+            if type=="RECIPE":
+                shortname=fName.split("/")[-1]
+            else:
+                shortname=os.path.basename(fName)
             if type=="SET" :
                 #Adding the log to the wokflow
                 self.workflow.appendWorkflowText(output)
@@ -1075,10 +1117,10 @@ class MainWindow(QMainWindow):
             self.session.updateWorkflowText(self.workflow.getWorkflowText())
             #Adding the doc to the tab
             self.showDocument(fName, shortname, type )
-            if type!="HELP":
+            if type!="HELP" and type!="RECIPE":
                 #Adding the file to recent opened
                 self.addRecentDocuments(fName, type)
-
+       
         #Emit open Document SIGNAL
         self.emit(SIGNAL("open"+type))
     
@@ -1131,8 +1173,7 @@ class MainWindow(QMainWindow):
             self.closeTab(index)
 
     def deleteFileFromDisk(self, fName=None, type=None):
-        fName=unicode(fName)
-        type=unicode(type)
+        
         if fName==None:
             i = self.documents.currentIndex()
             if (i>-1):
@@ -1142,7 +1183,8 @@ class MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Delete file failed", QString("No File selected"))
                 return
-              
+        fName=unicode(fName)
+        type=unicode(type)
         reply=QMessageBox.question(self,  
                                                         "Delete file",  
                                                         "Are you sure you want delete this file?",  
@@ -1231,35 +1273,42 @@ class MainWindow(QMainWindow):
            
         if reply==QMessageBox.No:
             return 
-            
-        #To do if it is necessary: If the option file>removeFileFromSession has been selected, 
-        #the fName will not be None, so we have to get the current doc
+        
+        if fName==None:
+            i = self.documents.currentIndex()
+            if (i>-1):
+                doc=self.allDocuments[i]
+                fName=doc.getDocname()
+                type=doc.getType()
+            else:
+                QMessageBox.warning(self, "Remove file from session failed", QString("No File selected"))
+                return
+                
         fName=unicode(fName)
         type=unicode(type)
-        if fName!=None:
-            
-            indexOpen=self.isDocumentOpen(fName)
-            if indexOpen>=0:
-                if self.okToCloseDoc(indexOpen):
-                    if type == "SET": #The object set has to be closed.
-                        log=self.allWidgets[fName].closeSet()
-                        self.workflow.appendWorkflowText(log)
-                    doc=self.allDocuments.pop(indexOpen)
-                    self.documents.removeTab(indexOpen)
-                    del self.allWidgets[fName]
-                else:
-                    return
-            if type=="SET":
-                self.workspaceBrowser.prunSet(fName)
-                #Updated workflow log
-                self.session.updateWorkflowText(self.workflow.getWorkflowText())
-                self.session.prunSet(fName)
-                self.session.remove(fName, type)
+        
+        indexOpen=self.isDocumentOpen(fName)
+        if indexOpen>=0:
+            if self.okToCloseDoc(indexOpen):
+                if type == "SET": #The object set has to be closed.
+                    log=self.allWidgets[fName].closeSet()
+                    self.workflow.appendWorkflowText(log)
+                doc=self.allDocuments.pop(indexOpen)
+                self.documents.removeTab(indexOpen)
+                #del self.allWidgets[fName]
             else:
-                self.workspaceBrowser.delFile(type, fName)
-                #Updated workflow log
-                self.session.updateWorkflowText(self.workflow.getWorkflowText())
-                self.session.remove(fName, type)
+                return
+        if type=="SET":
+            self.workspaceBrowser.prunSet(fName)
+            #Updated workflow log
+            self.session.updateWorkflowText(self.workflow.getWorkflowText())
+            self.session.prunSet(fName)
+            self.session.remove(fName, type)
+        else:
+            self.workspaceBrowser.delFile(type, fName)
+            #Updated workflow log
+            self.session.updateWorkflowText(self.workflow.getWorkflowText())
+            self.session.remove(fName, type)
             
     def removeFileAndChildren(self, fName):
         #The fName always is a SET
@@ -1885,17 +1934,36 @@ class MainWindow(QMainWindow):
         self.connect(self.allWidgets[fName], SIGNAL("launchTask"), curried)
         
     def openHelp(self, fName):
+        
+        
         fName=unicode(fName)
         shortname=os.path.basename(fName)
         #Creating the new table view
         self.allWidgets[fName]=view_helpFile()
+        
         try:
             error_msj=self.allWidgets[fName].loadHelpFile(fName)
         except IOError as e:
             del self.allWidgets[fName]
+            print error
             raise e
             return
-        self.connect(self.allWidgets[fName], SIGNAL("launchTask"), self.launchTask)
+        if not "html" in fName:
+            self.connect(self.allWidgets[fName], SIGNAL("launchTask"), self.launchTask)
+        
+        return error_msj
+        
+    def openRecipe(self, fName):
+        fName=unicode(fName)
+        shortname=os.path.basename(fName)
+        #Creating the new table view
+        self.allWidgets[fName]=view_recipeFile()
+        try:
+            error_msj=self.allWidgets[fName].loadRecipeFile(fName)
+        except IOError as e:
+            del self.allWidgets[fName]
+            raise e
+            return
         
         return error_msj
         
@@ -2124,9 +2192,9 @@ class MainWindow(QMainWindow):
                 curried=functools.partial(self.removeFileFromSession, filename, type)
                 removeFileFromSessionAction=self.createAction("&Remove from Session", curried,  tip=menuTips['remove'])
                 if type=="SET":
-#                    curried=functools.partial(self.removeFileAndChildren, filename)
-#                    removeFileAndChildrenAction=self.createAction("Remove Set and outputs", curried,tip=menuTips['remove_fileAndChildren'] )
-#                    contextMenu.addAction(removeFileAndChildrenAction)
+                    curried=functools.partial(self.removeFileAndChildren, filename)
+                    removeFileAndChildrenAction=self.createAction("Remove Set and outputs", curried,tip=menuTips['remove_fileAndChildren'] )
+                    contextMenu.addAction(removeFileAndChildrenAction)
                     
                     curried=functools.partial(self.createFitsForSamp, filename)
                     sendtosamp=self.createAction("Send associated fits to SAMP", curried,tip="" )
@@ -2213,6 +2281,8 @@ class MainWindow(QMainWindow):
         self.connect(viewDlg, SIGNAL("newSet"), self.newSet)
         self.connect(viewDlg, SIGNAL("newTable"), self.newTable)
         self.connect(viewDlg, SIGNAL("openHelpFile"), lambda file: self.fileOpenDocument("HELP", file))
+        self.connect(viewDlg, SIGNAL("openRecipeFile"), lambda file: self.fileOpenDocument("RECIPE", file))
+         
         self.connect(viewDlg, SIGNAL("concatenatedTask"), self.interfaceTask)
         curried = functools.partial(self.enableTaskMenuAction,taskmenu)
         self.connect(viewDlg, SIGNAL("finished(int)"), curried)
@@ -2231,6 +2301,10 @@ class MainWindow(QMainWindow):
 
     def emit_sampcoord (self, private_key, sender_id, mtype, params, extra):
         self.emit(SIGNAL("sampcoord"), params['ra'], params['dec'])
+        
+    
+    def emit_rowList (self, private_key, sender_id, mtype, params, extra):
+        self.emit(SIGNAL("rowList"), params['table-id'], params['row-list'])
     
     def emit_imageloadfits(self, private_key, sender_id, mtype, params, extra):
         #When a imageloadfits messages is received, the RFITS task dialog is opened
@@ -2254,21 +2328,20 @@ class MainWindow(QMainWindow):
         except:
             pass
         else:
-            self.emit(SIGNAL("loadvotable"), filename)
+            self.emit(SIGNAL("loadvotable"), filename, params['table-id'])
             
     
     def emit_loadvotable_call(self, private_key, sender_id, msg_id, mtype, params, extra):
-        
         try:
             (filename, headers)=urllib.urlretrieve(params['url'])
         except:
             self.sampClient.ereply(msg_id, sampy.SAMP_STATUS_OK, result = "File not found")
         else:
-            self.emit(SIGNAL("loadvotable"), filename)          
+            self.emit(SIGNAL("loadvotable"), filename, params['table-id'])          
             self.sampClient.ereply(msg_id, sampy.SAMP_STATUS_OK, result = "")
                 
             
-    def openVotableFromSamp(self, fName):
+    def openVotableFromSamp(self, fName, table_id=None):
         try:
             output=self.openTable(fName)
         except IOError as e:
@@ -2280,6 +2353,7 @@ class MainWindow(QMainWindow):
         if output=="": #The user has cancelled the operation
                 return
         else:
+            self.votables_id[table_id]=fName
             type=output
             
        #Adding the file to the session and to the workspaceBrowser
@@ -2405,7 +2479,7 @@ You can install it executing: pip install sampy\nVisit http://www.astropy.org/ f
                     import PIL
                     from PIL.ImageQt import ImageQt
                 except:
-                    QMessageBox.warning(None,"PIL library is not installed", "PIL module is needed by GUIpsy program.\n\n\You can install it executing: pip install PIL\nVisit http://www.pythonware.com/products/pil/ for further details")
+                    QMessageBox.warning(None,"PIL library is not installed", "PIL module is needed by GUIpsy program.\n\nYou can install it executing: pip install PIL\nVisit http://www.pythonware.com/products/pil/ for further details")
                 else:
                     global networkx
                     global sampy

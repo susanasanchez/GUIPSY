@@ -37,6 +37,9 @@ class workspaceBrowser(QWidget,Ui_workspaceBrowser):
         self.ICON_HELP = QIcon()
         self.ICON_HELP.addPixmap(QPixmap(":/help.png"), QIcon.Normal, QIcon.Off)
         
+        self.ICON_RECIPE = QIcon()
+        self.ICON_RECIPE.addPixmap(QPixmap(":/help.png"), QIcon.Normal, QIcon.Off)
+        
         self.ICON_COLA = QIcon()
         self.ICON_COLA.addPixmap(QPixmap(":/cola.png"), QIcon.Normal, QIcon.Off)
         
@@ -152,6 +155,16 @@ class workspaceBrowser(QWidget,Ui_workspaceBrowser):
             item.setText(1, filename)
             item.setText(2, "HELP")
             item.setIcon(0, self.ICON_HELP)
+            if not exist:
+                item.setFlags(Qt.NoItemFlags)
+        
+        if type=="RECIPE":
+            self.itemHelp.setHidden(False)
+            item=QTreeWidgetItem(self.itemHelp)
+            item.setText(0, shortname)
+            item.setText(1, filename)
+            item.setText(2, "HELP")
+            item.setIcon(0, self.ICON_RECIPE)
             if not exist:
                 item.setFlags(Qt.NoItemFlags)
 

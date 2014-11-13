@@ -51,5 +51,13 @@
 <file >resources/python_templates/xeq.py</file>
 <file >resources/cola_templates/cola_demo.col</file>
 <file >resources/cola_templates/gplot_recipes.col</file>
+<file >resources/recipes/recipe2.html</file>
+<file >resources/recipes/recipe2.txt</file>
+<file >resources/recipes/rotcur.html</file>
+<file >resources/recipes/rotcur.txt</file>
+<file >resources/recipes/rotcur_files/</file>
+<file >resources/params/usecase1.param</file>
+<file >resources/params/usecase2.param</file>
+
 </qresource>
 </RCC>

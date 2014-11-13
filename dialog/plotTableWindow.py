@@ -199,7 +199,7 @@ class plotTableWindow(QMainWindow,Ui_plotTableWindow):
             xdata = thisline.get_xdata()
             ydata = thisline.get_ydata()
             label = thisline.get_label()
-            print "label", label
+           
             
             x = event.mouseevent.xdata
             y = event.mouseevent.ydata

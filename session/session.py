@@ -51,7 +51,8 @@ class session(object):
          "TEXT":[], 
          "COLA":[], 
          "COLATEMP":[], 
-         "HELP":[]
+         "HELP":[], 
+         "RECIPE":[]
          } 
          
         if networkx.__version__[0]=='0':

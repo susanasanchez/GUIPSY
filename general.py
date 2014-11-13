@@ -51,6 +51,7 @@ menuTips={
         "rename" :"Change the name of the file", 
         'remove_fileAndChildren':"Remove the file and all output (its descendants)", 
         "remove":"Remove the file from the current session", 
+        "deletefromdisk":"Delete the file from disk", 
         "quit":"Close the application", 
         
 
@@ -126,7 +127,7 @@ menuTips={
       }
 ICONSLICENSE="http://openiconlibrary.sourceforge.net/LICENSES.html"
 PYTHONCREDIT="http://www.python.org"
-GUIPSY_VERSION="Version 0.1 - Abril 2013"
+GUIPSY_VERSION="Version 0.1 - November 2014"
 AUTHOR="Susana Sanchez sse@iaa.es"
 INSTITUTION= "Instituto Astrofisica Andalucia, CSIC, Spain\n\
 Kapteyn Astronomical Institute,\n\
@@ -172,7 +173,7 @@ TASKS_CLASS={#Fclass, Fsubdim
              "INSPECTOR":(1, 2), 
              "MEAN":(2, 0), 
              "MINBOX":(1, 0), 
-             "MNMX":(-1, -1),# whole set 
+             "MNMX":(1, 0),
              #"REGRID":(1, 0), 
              "REGRID":(-1, -1),
              "SNAPPER":(1, 2), 
@@ -198,12 +199,15 @@ TASKS_CLASS={#Fclass, Fsubdim
              "PYBLOT":(-1, -1), # PYBLOT does not have classdim or class.
              "ROTMAS":(-1, -1),  # ROTMAS does not have classdim or class.
              "XGAUFIT":(-1, -1),  # XGAUFIT does not have classdim or class.
-             "XGAUPROF":(-1, -1) # XGAUPROF does not have classdim or class.
+             "XGAUPROF":(-1, -1),  # XGAUPROF does not have classdim or class.
+             "SMOOTH":(1, 0)
              }
 
 
 DIRPYTHONTEMPLATE=":resources/python_templates/"
 DIRCOLATEMPLATE=":resources/cola_templates/"
+DIRRECIPES=":resources/recipes/"
+DIRPARAMS=":resources/params/"
 class counter ( object ):
     def __init__ ( self , ini =0 , *a ,** k ):
         super ( counter , self ). __init__ (* a ,** k )

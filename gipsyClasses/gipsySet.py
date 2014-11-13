@@ -108,7 +108,9 @@ class gipsySet(object):
         self.tables=tablist
         #Choosing a good variable name for the workflow log
         c=self.cnt()
-        self.varname=os.path.basename(self.setname)+unicode(c)
+        #The variable name should not contain -
+        self.varname=os.path.basename(self.setname).replace("-", "_")+unicode(c)
+        #self.varname=os.path.basename(self.setname)+unicode(c)
 
         
         output = output+"%s = gipsy.Set(\"%s\", create=False, write=True, gethdu=None, getalt=None)"%(self.varname,  self.setname)+"\n"
@@ -390,23 +392,26 @@ class gipsySet(object):
         
         return None
     
-    def getDistanceToCenter(self, ra, dec):
+    def getDistanceToCenter(self, ra, dec, centrex, centrey):
         """In case the set is a image (2D) returns the distance of the point to the center
         
         **Returns:** 
             value (double)
             
         """
-        
-        shape=self.__S.image.shape
-        if len(shape)==2:
-            g = self.__S.togrid([ra, dec])
-            x=g[0]
-            y=g[1]
-            value=math.sqrt((x**2)+(y**2))
-            return value
-        
-        return None
+        #The following lines convert the ra dec in grid coordinates, and calculate the distance of the point to the center of the grid
+#        shape=self.__S.image.shape
+#        if len(shape)==2:
+#            g = self.__S.togrid([ra, dec])
+#            x=g[0]
+#            y=g[1]
+#            value=math.sqrt((x**2)+(y**2))
+#            return value
+
+        #Since both points are in physical coordinates (degrees)
+        value=math.sqrt(((ra-centrex)**2)+((dec-centrey)**2))
+        #It is needed to convert the result to arcsec which are the units for RADII, ELLINT,RESWRI,GALMOD,VELFI
+        return value*60*60
 
     def updateHeaderKey(self, key, val):
         """Update a header item

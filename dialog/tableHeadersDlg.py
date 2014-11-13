@@ -8,4 +8,4 @@ class tableHeadersDlg(QDialog,Ui_tableHeadersDlg):
         super(tableHeadersDlg, self).__init__(parent)
         self.setupUi(self)
         self.plainTextEdit.setPlainText(text)
-       
+        self.plainTextEdit.setReadOnly(True)

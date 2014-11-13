@@ -328,12 +328,14 @@ class gipsyTask(QObject):
             return
         else:
             notifykey=ID_POLL.pop()
-        self.log="gipsy.xeq(\"%s\",\"%s\")\n"%(taskcommand, notifykey)
+        #self.log="gipsy.xeq(\"%s\",\"%s\")\n"%(taskcommand, notifykey)
+        self.log="gipsy.xeq(\"%s\")\n"%(taskcommand)
         dcb=[]
         
         try:
             gipsy.xeq(taskcommand, notifykey)                         # start task
             gipsy.KeyCallback(self.finished, notifykey, task=taskcommand, notifykey=notifykey, others=dcb)  # register callback
+            #gipsy.KeyCallback(self.finished, notifykey=notifykey, task=taskcommand, others=dcb)  # register callback
             dcb.append(gipsy.KeyCallback(self.taskrequest, 'K_'+notifykey,task=self.task, notifykey=notifykey))
             dcb.append(gipsy.KeyCallback(self.show_status, 'S_'+notifykey ,  notifykey=notifykey))
             

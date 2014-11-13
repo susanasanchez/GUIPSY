@@ -3,9 +3,14 @@ import os
 import functools
 import time
 import re
+import math
+import glob
+
 
 #Import samp module
 import sampy
+from astropy import coordinates as coord
+from astropy import units as astrounit
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -33,6 +38,7 @@ from Ui_reswri import *
 from Ui_rotcur import *
 from Ui_shuffle import *
 from Ui_slice import *
+from Ui_smooth import *
 from Ui_snapper import *
 from Ui_transform import *
 from Ui_transpose import *
@@ -81,15 +87,26 @@ def saveTaskValues(taskcommand, filename=None):
             for line in lines:
                 f.write(line+"\n")
 
-def getTaskValues(taskname, filename=None):
-    if filename==None:
+def getTaskValues(taskname, filename=None,  paramTemplate=None):
+    if paramTemplate!=None:
+        #Param from resource file
+        lines=[]
+        file=QFile(paramTemplate)
+        file.open(QFile.ReadOnly)
+        while (not file.atEnd()):
+            lines.append (str(QString(file.readLine())))
+        file.close()
+    elif filename==None:
         if os.path.isfile(TASKFILES+taskname+".param"):
            filename=TASKFILES+taskname+".param"
+           with open(filename, "r") as f:
+            lines=f.readlines()
         else:
             return None
-
-    with open(filename, "r") as f:
-        lines=f.readlines()
+    else:
+        with open(filename, "r") as f:
+            lines=f.readlines()
+    
     output={}
     for line in lines:
         #key, value=line.split("=")
@@ -758,12 +775,12 @@ class view_clip(view_task):
         self.clearExtraLayout()
         setname=unicode(self.outsetNameLine.text())
         outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
-        #Delete the internal tables of the outset
-        try:
-            output=clearSetTables(outsetPath)
-            log=log+output
-        except gipsyException as g:
-           QMessageBox.warning(self, "Gipsy Exception", unicode(g))
+#        #Delete the internal tables of the outset
+#        try:
+#            output=clearSetTables(outsetPath)
+#            log=log+output
+#        except gipsyException as g:
+#           QMessageBox.warning(self, "Gipsy Exception", unicode(g))
         
        
         self.emit(SIGNAL("taskExecuted"), log)
@@ -2002,6 +2019,7 @@ class view_mnmx(view_task):
         self.clearExtraLayout()
         self.showResults()
         outsetPath=unicode(self.insetLabel.toolTip())
+        
         self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
         
         
@@ -2017,7 +2035,7 @@ class view_mnmx(view_task):
                 return
            
             inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
-            self.taskcommand='MNMX INSET=%s'%(inset)
+            self.taskcommand='MNMX INSET=%s TOFILE=Y'%(inset)
 
             self.clearError()
             self.showStatus("Running")
@@ -2025,26 +2043,34 @@ class view_mnmx(view_task):
     
 
     def showResults(self):
-        #Clear previous results
-        self.mnmxFrame.resultLabel.setText("")
-        #Read the data from the table
-        inset=gipsySet()
-        inset.loadSetRO(self.insetPath)
-        try:
-            datamin=inset.getHeaderValue("DATAMIN")
-        except:
-            datamin=""
-        try:
-            datamax=inset.getHeaderValue("DATAMAX")
-        except:
-            datamax=""
-        try:
-            nblank=inset.getHeaderValue("NBLANK")
-        except:
-            nblank=""
-        #del inset
-        inset.closeSet()
-        self.mnmxFrame.resultLabel.setText("DATAMIN: %s, DATAMAX:%s, NBLANK: %s"%(datamin, datamax, nblank))
+        self.mnmxFrame.resultText.setText("")
+        with open("./_mnmxtmp_", "r") as f:
+            output=f.read()
+        os.remove("./_mnmxtmp_")
+        self.mnmxFrame.resultText.setText(output)
+            
+        
+#    def showResults(self):
+#        #Clear previous results
+#        self.mnmxFrame.resultLabel.setText("")
+#        #Read the data from the table
+#        inset=gipsySet()
+#        inset.loadSetRO(self.insetPath)
+#        try:
+#            datamin=inset.getHeaderValue("DATAMIN")
+#        except:
+#            datamin=""
+#        try:
+#            datamax=inset.getHeaderValue("DATAMAX")
+#        except:
+#            datamax=""
+#        try:
+#            nblank=inset.getHeaderValue("NBLANK")
+#        except:
+#            nblank=""
+#        #del inset
+#        inset.closeSet()
+#        self.mnmxFrame.resultLabel.setText("DATAMIN: %s, DATAMAX:%s, NBLANK: %s"%(datamin, datamax, nblank))
 
 class view_regrid(view_task):
     def __init__(self,parent, filename, defaultPath="./"):
@@ -2366,10 +2392,20 @@ class view_transform(view_task):
         if values !=None:
 
             if values.has_key("POS"):
-                if len(values["POS"].split()) ==2:
-                    x, y=values["POS"].split()
-                    self.transformFrame.xposLine.setText(x)
-                    self.transformFrame.yposLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["POS"]))
+                
+                if len(list_centre)==4:
+                    self.transformFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.transformFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["POS"]))
+                    if len (list_centre)==4:
+                        self.transformFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.transformFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["POS"].split())==2:
+                        x, y=values["POS"].split()
+                        self.transformFrame.xcentreLine.setText(x)
+                        self.transformFrame.ycentreLine.setText(y)
             if values.has_key("OPERATION"):
                 op=values["OPERATION"]
                 try:
@@ -2939,56 +2975,14 @@ class view_reswri(view_task):
         self.outsetBrowserDlg=setbrowser(self.parent, self.hiSetPath, "", "", *TASKS_CLASS["RESWRI"])
         self.connect(self.reswriFrame.HISetButton,  SIGNAL("clicked()"),  self.outsetBrowser)
         self.connect(self.reswriFrame.HIBoxButton,  SIGNAL("clicked()"),  self.outsetBrowser)
-        self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
+        #self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
 
          
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
 
 
-    def receive_coord (self, ra, dec):
-        if self.reswriFrame.checkSampCentre.isChecked():
-            self.reswriFrame.xcentreLine.setText(ra)
-            self.reswriFrame.xcentreLine.setCursorPosition(0)
-            self.reswriFrame.ycentreLine.setText(dec)
-            self.reswriFrame.ycentreLine.setCursorPosition(0)
-        
-        if self.insetPath!=None and self.insetPath!="":
-            tmpset=gipsySet()
-            tmpset.loadSetRO(self.insetPath)
-            value=tmpset.getImageValue(ra, dec)
-            dist=tmpset.getDistanceToCenter(ra, dec)
-            tmpset.closeSet()
-            if value==None:
-                value=""
-            else:
-                value=unicode(value)
-            if dist==None:
-                dist=""
-            else:
-                try:
-                    dist=unicode(int(dist))
-                except:
-                    dist=unicode("NON-INT")
-            
-            if self.reswriFrame.checkSampVsys.isChecked():
-                self.reswriFrame.vsysLine.setText(value)
-            if self.reswriFrame.checkSampVrot.isChecked():
-                cursor=self.reswriFrame.vrotLine.cursorPosition()
-                text=self.reswriFrame.vrotLine.text()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+value+" "+text[cursor:]
-                else:
-                    textNew=text+" "+value
-                self.reswriFrame.vrotLine.setText(textNew)
-            if self.reswriFrame.checkSampRadii.isChecked():
-                text=self.reswriFrame.radiiLine.text()
-                cursor=self.reswriFrame.radiiLine.cursorPosition()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+dist+" "+text[cursor:]
-                else:
-                    textNew=text+" "+dist
-                self.reswriFrame.radiiLine.setText(textNew)
+    
             
             
     def loadTables(self):
@@ -3093,10 +3087,20 @@ class view_reswri(view_task):
             if values.has_key("INCL"):
                 self.reswriFrame.inclLine.setText(values["INCL"])
             if values.has_key("CENTRE"):
-                if len(values["CENTRE"].split())==2:
-                    x, y=values["CENTRE"].split()
-                    self.reswriFrame.xcentreLine.setText(x)
-                    self.reswriFrame.ycentreLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["CENTRE"]))
+                
+                if len(list_centre)==4:
+                    self.reswriFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.reswriFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["CENTRE"]))
+                    if len (list_centre)==4:
+                        self.reswriFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.reswriFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["CENTRE"].split())==2:
+                        x, y=values["CENTRE"].split()
+                        self.reswriFrame.xcentreLine.setText(x)
+                        self.reswriFrame.ycentreLine.setText(y)
             if values.has_key("FREEANGLE"):
                 self.reswriFrame.freeangleLine.setText(values["FREEANGLE"])
             if values.has_key("SIDE"):
@@ -3377,8 +3381,8 @@ class view_rotcur(view_task):
         self.rotcurFrame.inclButton.setDefault(False)
         self.rotcurFrame.saveParamsButton.setAutoDefault(False)
         self.rotcurFrame.saveParamsButton.setDefault(False)
-        self.rotcurFrame.loadParamsButton.setAutoDefault(False)
-        self.rotcurFrame.loadParamsButton.setDefault(False)
+        #self.rotcurFrame.loadParamsButton.setAutoDefault(False)
+        #self.rotcurFrame.loadParamsButton.setDefault(False)
         
         self.showRelatedData()
         self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
@@ -3398,41 +3402,88 @@ class view_rotcur(view_task):
         curried=functools.partial(self.showTableBrowser, self.rotcurFrame.inclLine)
         self.connect(self.rotcurFrame.inclButton,  SIGNAL("clicked()"), curried)
         
+        #LOAD USE CASE PARAMS
+        self.rotcurFrame.loadParamsList.addItem(QString(""),)
+        self.rotcurFrame.loadParamsList.addItem(QString("Load from file"))
+
+        paramsDir=QDir(DIRPARAMS)
+        paramsList = paramsDir.entryInfoList()
+        for param in paramsList:
+            paramPath=param.filePath()
+            name=paramPath.split("/")[-1]
+            self.rotcurFrame.loadParamsList.addItem(QString(name.split(".")[0]), paramPath)
+            
+#        p=os.environ.get("gip_tsk")
+#        self.rotcurFrame.loadParamsList.addItem(QString(""),)
+#        self.rotcurFrame.loadParamsList.addItem(QString("Load from file"))
+#        for file in glob.glob( p+"/recipes/param/*.param"):
+#            basename=os.path.basename(file)
+#            name=basename.split(".")[0]
+#            self.rotcurFrame.loadParamsList.addItem(QString(name), p+"/recipes/param/"+basename)
         
         self.connect(self.rotcurFrame.saveParamsButton, SIGNAL("clicked()"), self.saveParams)
-        self.connect(self.rotcurFrame.loadParamsButton, SIGNAL("clicked()"), self.loadParams)
+        #self.connect(self.rotcurFrame.loadParamsButton, SIGNAL("clicked()"), self.loadParams)
+        self.connect(self.rotcurFrame.loadParamsList, SIGNAL("currentIndexChanged(int)"), self.loadParams)
         
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
         self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
+        self.connect(self.parent, SIGNAL("rowList"), self.recieve_rowList)
         
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
         
     
+    def recieve_rowList (self, table_id, rowList):
+        
+        if not table_id in self.parent.votables_id.keys(): #the votable has not be sent previously
+            return
+            
+        if len(rowList)>0 and (self.rotcurFrame.checkSampVsys.isChecked() or self.rotcurFrame.checkSampCentre.isChecked()):
+            table_fName=self.parent.votables_id[table_id]
+            row=rowList[0]
+            
+            if unicode(table_fName) in self.parent.allWidgets.keys():
+                
+                #fieldRA=self.parent.allWidgets[table_fName].modelData.votable.get_fields_by_utype('pos_eq_ra')
+                #ra=self.parent.allWidgets[table_fName].modelData.votable.array[fieldRA.ID][row]
+                try:
+                    ra=self.parent.allWidgets[table_fName].modelData.votable.array['RA'][int(row)]
+                    de=self.parent.allWidgets[table_fName].modelData.votable.array['DE'][int(row)]
+                    velocity=self.parent.allWidgets[table_fName].modelData.votable.array['Velocity'][int(row)]
+                except:
+                    pass
+                else:
+                    print "RESULT",  velocity,  str(ra),  str(de)
+                    if type(velocity) != numpy.ma.core.MaskedConstant and self.rotcurFrame.checkSampVsys.isChecked():
+                        self.rotcurFrame.vsysLine.setText(str(velocity))
+                    if self.rotcurFrame.checkSampCentre.isChecked() and type(ra) != numpy.ma.core.MaskedConstant and type(de) != numpy.ma.core.MaskedConstant:
+                        c=coord.ICRSCoordinates(ra+' '+de, unit=(astrounit.hour, astrounit.degree))
+                        self.rotcurFrame.xcentreLine.setText(str(c.ra.deg))
+                        self.rotcurFrame.xcentreLine.setCursorPosition(0)
+                        self.rotcurFrame.ycentreLine.setText(str(c.dec.deg))
+                        self.rotcurFrame.ycentreLine.setCursorPosition(0)
+        
+        
     def receive_coord (self, ra, dec):
+        
         if self.rotcurFrame.checkSampCentre.isChecked():
-            self.rotcurFrame.xcentreLine.setText(ra)
+            #The VO tools emit the coordinates in ra and dec in degrees. These are physical coordintes, so we have to write them in GIPSY format, adding a 'U' 
+            self.rotcurFrame.xcentreLine.setText("U "+ra)
             self.rotcurFrame.xcentreLine.setCursorPosition(0)
-            self.rotcurFrame.ycentreLine.setText(dec)
+            self.rotcurFrame.ycentreLine.setText("U "+dec)
             self.rotcurFrame.ycentreLine.setCursorPosition(0)
         
         if self.insetPath!=None and self.insetPath!="":
             tmpset=gipsySet()
             tmpset.loadSetRO(self.insetPath)
             value=tmpset.getImageValue(ra, dec)
-            dist=tmpset.getDistanceToCenter(ra, dec)
-            tmpset.closeSet()
+            
+            
             if value==None:
                 value=""
             else:
                 value=unicode(value)
-            if dist==None:
-                dist=""
-            else:
-                try:
-                    dist=unicode(int(dist))
-                except:
-                    dist=unicode("NON-INT")
+            
             
             if self.rotcurFrame.checkSampVsys.isChecked():
                 self.rotcurFrame.vsysLine.setText(value)
@@ -3445,13 +3496,47 @@ class view_rotcur(view_task):
                     textNew=text+" "+value
                 self.rotcurFrame.vrotLine.setText(textNew)
             if self.rotcurFrame.checkSampRadii.isChecked():
-                text=self.rotcurFrame.radiiLine.text()
-                cursor=self.rotcurFrame.radiiLine.cursorPosition()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+dist+" "+text[cursor:]
+                #To calculate the radii is needed the center in physical coords
+                pattern=re.compile("U|u\s*\d*\.\d*")
+                xline=str(self.rotcurFrame.xcentreLine.text())
+                yline=str(self.rotcurFrame.ycentreLine.text())
+                if pattern.match(xline) and pattern.match(yline):
+                    try:
+                        centreX=float(xline.upper().replace('U', ''))
+                        centreY=float(yline.upper().replace('U', ''))
+                    except:
+                         QMessageBox.warning(self, "Float values", "The CENTRE can not be converted to float")
+                    else:
+                        try:
+                            ra=float(ra)
+                            dec=float(dec)
+                        except:
+                            QMessageBox.warning(self, "Float values", "The ra and dec received from SAMP can not be converted to float")
+                        else:
+
+                            #dist=tmpset.getDistanceToCenter(ra, dec, centreX,  centreY)
+                            #Formula JAIME PEREA
+                            #cos(thetha) = sin(d1)*sin(d2)+cos(d1)*cos(d2)*cos(a1-a2)
+
+                            ra1_rad= math.radians(centreX)
+                            dec1_rad= math.radians(centreY)
+                            ra2_rad= math.radians(ra)
+                            dec2_rad= math.radians(dec)
+                            thetha= math.acos(math.sin(dec1_rad)*math.sin(dec2_rad)+math.cos(dec1_rad)*math.cos(dec2_rad)*math.cos(ra1_rad-ra2_rad))
+                            dist=math.degrees(thetha)
+                            
+                            text=self.rotcurFrame.radiiLine.text()
+                            cursor=self.rotcurFrame.radiiLine.cursorPosition()
+                            if cursor<len(str(text)):
+                                textNew=text[:cursor]+" "+str(dist)+" "+text[cursor:]
+                            else:
+                                textNew=text+" "+str(dist)
+                            self.rotcurFrame.radiiLine.setText(textNew)
                 else:
-                    textNew=text+" "+dist
-                self.rotcurFrame.radiiLine.setText(textNew)
+                    QMessageBox.warning(self, "Centre not provided", "It has been received a coordinate for SAMP. For calculating the RADII, the CENTRE should be provided. Please provide the CENTRE value in PHYSICAL units without postfix (U number U number) ")
+
+                    
+                tmpset.closeSet()
                 
                 
             
@@ -3462,7 +3547,7 @@ class view_rotcur(view_task):
     def loadTables(self):
         self.view_tables={}
         for doc in self.parent.allDocuments:
-            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE"):
+            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE" or doc.getType()=="VOTABLE"):
                 self.view_tables[doc.getDocname()]=self.parent.allWidgets[doc.getDocname()]
                 
     def showTableBrowser(self, line):
@@ -3483,16 +3568,23 @@ class view_rotcur(view_task):
         taskcommand=self.buildCommand()
         saveTaskValues(taskcommand, fName)
         
-    def loadParams(self, defaultFile=False):
-        if not defaultFile:
+    def loadParams(self, index=-1,  defaultFile=False):
+        
+        filename=None
+        templateParam=None
+        if index==1:
             dir = os.path.dirname(".")
             fName = unicode(QFileDialog.getOpenFileName(self,
                                 "Choose File", dir,FORMATS["PARAM"]))
             if (fName==""):
                 return
             filename=fName
-        else:
-            filename=None
+        elif index>1:
+            templateParam=self.rotcurFrame.loadParamsList.itemData(index).toString()
+            print "TEMPLATEPARAM",  templateParam
+            
+                
+        
         
         #Defaults params
         self.rotcurFrame.bunitLine.setText("KM/S")
@@ -3500,7 +3592,7 @@ class view_rotcur(view_task):
         self.rotcurFrame.freeangleLine.setText("0.0")
         self.rotcurFrame.fittoleranceLine.setText("0.001")     
         
-        values=getTaskValues("rotcur", filename)
+        values=getTaskValues("rotcur", filename, templateParam)
         
         if values !=None:
             self.clearParams()
@@ -3522,10 +3614,21 @@ class view_rotcur(view_task):
             if values.has_key("INCL"):
                 self.rotcurFrame.inclLine.setText(values["INCL"])
             if values.has_key("CENTRE"):
-                if len(values["CENTRE"].split())==2:
-                    x, y=values["CENTRE"].split()
-                    self.rotcurFrame.xcentreLine.setText(x)
-                    self.rotcurFrame.ycentreLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["CENTRE"]))
+                
+                if len(list_centre)==4:
+                    self.rotcurFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.rotcurFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["CENTRE"]))
+                    if len (list_centre)==4:
+                        self.rotcurFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.rotcurFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["CENTRE"].split())==2:
+                        x, y=values["CENTRE"].split()
+                        self.rotcurFrame.xcentreLine.setText(x)
+                        self.rotcurFrame.ycentreLine.setText(y)
+                                
             if values.has_key("FREEANGLE"):
                 self.rotcurFrame.freeangleLine.setText(values["FREEANGLE"])
            
@@ -3831,56 +3934,13 @@ class view_velfi(view_task):
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
         
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
-        self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
+        #self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
         
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
 
         
-    def receive_coord (self, ra, dec):
-        
-        if self.velfiFrame.checkSampCentre.isChecked():
-            self.velfiFrame.xcentreLine.setText(ra)
-            self.velfiFrame.xcentreLine.setCursorPosition(0)
-            self.velfiFrame.ycentreLine.setText(dec)
-            self.velfiFrame.ycentreLine.setCursorPosition(0)
-        
-        if self.insetPath!=None and self.insetPath!="":
-            tmpset=gipsySet()
-            tmpset.loadSetRO(self.insetPath)
-            value=tmpset.getImageValue(ra, dec)
-            dist=tmpset.getDistanceToCenter(ra, dec)
-            tmpset.closeSet()
-            if value==None:
-                value=""
-            else:
-                value=unicode(value)
-            if dist==None:
-                dist=""
-            else:
-                try:
-                    dist=unicode(int(dist))
-                except:
-                    dist=unicode("NON-INT")
-            
-            if self.velfiFrame.checkSampVsys.isChecked():
-                self.velfiFrame.vsysLine.setText(value)
-            if self.velfiFrame.checkSampVrot.isChecked():
-                cursor=self.velfiFrame.vrotLine.cursorPosition()
-                text=self.velfiFrame.vrotLine.text()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+value+" "+text[cursor:]
-                else:
-                    textNew=text+" "+value
-                self.velfiFrame.vrotLine.setText(textNew)
-            if self.velfiFrame.checkSampRadii.isChecked():
-                text=self.velfiFrame.radiiLine.text()
-                cursor=self.velfiFrame.radiiLine.cursorPosition()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+dist+" "+text[cursor:]
-                else:
-                    textNew=text+" "+dist
-                self.velfiFrame.radiiLine.setText(textNew)
+    
                 
             
     def showRelatedData(self):
@@ -3953,10 +4013,20 @@ class view_velfi(view_task):
             if values.has_key("INCL"):
                 self.velfiFrame.inclLine.setText(values["INCL"])
             if values.has_key("POS"):
-                if len(values["POS"].split())==2:
-                    x, y=values["POS"].split()
-                    self.velfiFrame.xcentreLine.setText(x)
-                    self.velfiFrame.ycentreLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["POS"]))
+                
+                if len(list_centre)==4:
+                    self.velfiFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.velfiFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["POS"]))
+                    if len (list_centre)==4:
+                        self.velfiFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.velfiFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["POS"].split())==2:
+                        x, y=values["POS"].split()
+                        self.velfiFrame.xcentreLine.setText(x)
+                        self.velfiFrame.ycentreLine.setText(y)
                
     def clearParams(self):
         self.velfiFrame.radiiLine.setText("")
@@ -4122,15 +4192,15 @@ class view_moments(view_task):
         self.errorMsg.setText("")
     
     def finished(self, log):
-        self.emit(SIGNAL("taskExecuted"), log)
-        saveTaskValues(self.taskcommand)
-        self.clearExtraLayout()
+#        self.emit(SIGNAL("taskExecuted"), log)
+#        saveTaskValues(self.taskcommand)
+#        self.clearExtraLayout()
         
         #In order to get a 2D image, it is neccesary to diminish the 3d dim.
         dt1=gipsyDirectTask()
         outset=self.outsetPath.replace("toDim", "")
         task="DIMINISH INSET=%s P 0 BOX= OUTSET=%s"%(self.outsetPath, outset)
-        
+        log=log+"\ngipsy.xeq(\""+task+"\")"
         dt1.sendTask(task)
         #Wait until the outset will be created. This should be done using the KeyCallback and
         #with a flag in the finished method, but after serveral attempts this did not work
@@ -4149,6 +4219,7 @@ class view_moments(view_task):
             good2=False
             dt2=gipsyDirectTask()   
             task="DELETE INSET=%s; OK=Y"%(self.outsetPath)
+            log=log+"\ngipsy.xeq(\""+task+"\")"
             dt2.sendTask(task)
             startTime = time.time()
             while True:
@@ -4160,12 +4231,18 @@ class view_moments(view_task):
                     break
             
             if good2:
+                self.emit(SIGNAL("taskExecuted"), log)
+                saveTaskValues(self.taskcommand)
+                self.clearExtraLayout()
+                
                 self.outsetPath=outset
                 self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), self.outsetPath)
             else:
                 self.showStatus("Unable to delete the temporary set %s"%self.outsetPath)
         else:
             self.showStatus("Unable to diminish the the set %s.Please, diminish it manually"%outset)
+        
+       
         
     def runtask(self,button):
 
@@ -4270,41 +4347,10 @@ class view_ellint(view_task):
         
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
-        self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
+        #self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
          
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
-
-    def receive_coord (self, ra, dec):
-        if self.ellintFrame.checkSampCentre.isChecked():
-            self.ellintFrame.xcentreLine.setText(ra)
-            self.ellintFrame.xcentreLine.setCursorPosition(0)
-            self.ellintFrame.ycentreLine.setText(dec)
-            self.ellintFrame.ycentreLine.setCursorPosition(0)
-        
-        if self.insetPath!=None and self.insetPath!="":
-            tmpset=gipsySet()
-            tmpset.loadSetRO(self.insetPath)
-            dist=tmpset.getDistanceToCenter(ra, dec)
-            tmpset.closeSet()
-            if dist==None:
-                dist=""
-            else:
-                try:
-                    dist=unicode(int(dist))
-                except:
-                    dist=unicode("NON-INT")
-            
-            if self.ellintFrame.checkSampRadii.isChecked():
-                text=self.ellintFrame.radiiLine.text()
-                cursor=self.ellintFrame.radiiLine.cursorPosition()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+dist+" "+text[cursor:]
-                else:
-                    textNew=text+" "+dist
-                self.ellintFrame.radiiLine.setText(textNew)
-       
-            
             
     def showRelatedData(self):
         
@@ -4390,6 +4436,7 @@ class view_ellint(view_task):
         
     def loadParams(self, defaultFile=False):
         if not defaultFile:
+            
             dir = os.path.dirname(".")
             fName = unicode(QFileDialog.getOpenFileName(self,
                                 "Choose File", dir,FORMATS["PARAM"]))
@@ -4419,10 +4466,20 @@ class view_ellint(view_task):
             if values.has_key("INCL"):
                 self.ellintFrame.inclLine.setText(values["INCL"])
             if values.has_key("POS"):
-                if len(values["POS"].split())==2:
-                    x, y=values["POS"].split()
-                    self.ellintFrame.xcentreLine.setText(x)
-                    self.ellintFrame.ycentreLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["POS"]))
+                
+                if len(list_centre)==4:
+                    self.ellintFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.ellintFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["POS"]))
+                    if len (list_centre)==4:
+                        self.ellintFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.ellintFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["POS"].split())==2:
+                        x, y=values["POS"].split()
+                        self.ellintFrame.xcentreLine.setText(x)
+                        self.ellintFrame.ycentreLine.setText(y)
             if values.has_key("SEGMENTS"):
                 segments=values["SEGMENTS"].split(",")
                 self.ellintFrame.segmentList.clear()
@@ -4672,54 +4729,12 @@ class view_galmod(view_task):
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
         
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
-        self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
+        #self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
         
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
 
-    def receive_coord (self, ra, dec):
-        if self.galmodFrame.checkSampCentre.isChecked():
-            self.galmodFrame.xcentreLine.setText(ra)
-            self.galmodFrame.xcentreLine.setCursorPosition(0)
-            self.galmodFrame.ycentreLine.setText(dec)
-            self.galmodFrame.ycentreLine.setCursorPosition(0)
-        
-        if self.insetPath!=None and self.insetPath!="":
-            tmpset=gipsySet()
-            tmpset.loadSetRO(self.insetPath)
-            value=tmpset.getImageValue(ra, dec)
-            dist=tmpset.getDistanceToCenter(ra, dec)
-            tmpset.closeSet()
-            if value==None:
-                value=""
-            else:
-                value=unicode(value)
-            if dist==None:
-                dist=""
-            else:
-                try:
-                    dist=unicode(int(dist))
-                except:
-                    dist=unicode("NON-INT")
-            
-            if self.galmodFrame.checkSampVsys.isChecked():
-                self.galmodFrame.vsysLine.setText(value)
-            if self.galmodFrame.checkSampVrot.isChecked():
-                cursor=self.galmodFrame.vrotLine.cursorPosition()
-                text=self.galmodFrame.vrotLine.text()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+value+" "+text[cursor:]
-                else:
-                    textNew=text+" "+value
-                self.galmodFrame.vrotLine.setText(textNew)
-            if self.galmodFrame.checkSampRadii.isChecked():
-                text=self.galmodFrame.radiiLine.text()
-                cursor=self.galmodFrame.radiiLine.cursorPosition()
-                if cursor<len(str(text)):
-                    textNew=text[:cursor]+" "+dist+" "+text[cursor:]
-                else:
-                    textNew=text+" "+dist
-                self.galmodFrame.radiiLine.setText(textNew)
+    
         
     def loadTables(self):
         self.view_tables={}
@@ -4780,10 +4795,20 @@ class view_galmod(view_task):
             if values.has_key("DRVAL3"):
                 self.galmodFrame.drvalLine.setText(values["DRVAL3"])
             if values.has_key("POS"):
-                if len(values["POS"].split())==2:
-                    x, y=values["POS"].split()
-                    self.galmodFrame.xcentreLine.setText(x)
-                    self.galmodFrame.ycentreLine.setText(y)
+                list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["POS"]))
+                
+                if len(list_centre)==4:
+                    self.galmodFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.galmodFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                else:
+                    list_centre=filter(None, re.split("(\*|U|G|S)", values["POS"]))
+                    if len (list_centre)==4:
+                        self.galmodFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.galmodFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    elif len(values["POS"].split())==2:
+                        x, y=values["POS"].split()
+                        self.galmodFrame.xcentreLine.setText(x)
+                        self.galmodFrame.ycentreLine.setText(y)
             if values.has_key("EMPTY"):
                 if values["EMPTY"]=="Y":
                     self.galmodFrame.emptyCheck.setCheckState(Qt.Checked)
@@ -5660,3 +5685,105 @@ class view_shuffle(view_task):
             self.showStatus("Running")
             saveTaskValues(self.taskcommand)
             self.gt.launchTask(self.taskcommand, self)
+
+
+class view_smooth(view_task):
+    def __init__(self,parent, filename,  defaultPath="./"):
+        super(view_smooth, self).__init__(parent,  filename, "smooth", *TASKS_CLASS["SMOOTH"], defaultPath=defaultPath)    
+        super(view_smooth, self).setAttribute(Qt.WA_DeleteOnClose)    
+        self.keys=["INSET=", "BOX=", "OUTSET=", "AUTO=","OLDBEAM=", "NEWBEAM=", "OLDPOSANG=", "NEWPOSANG=", "DECIM=","OKAY="] #List of the keys/parameters of task, nowadays
+        self.log=""
+        self.gt=gipsyTask()
+       
+        #AddigipsyExceptionng the clip frame
+        frame = QtGui.QFrame()
+        self.smoothFrame = Ui_smooth()
+        self.smoothFrame.setupUi(frame)
+        self.horizontalLayout.addWidget(frame)
+        
+        self.setWindowTitle("SMOOTH")
+
+        self.connect(self.replaceButton,  SIGNAL("clicked()"), self.replaceSet)
+        self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
+        
+        
+       #Load the last values
+        values=getTaskValues("smooth")
+        if values !=None:
+            if values.has_key("OLDBEAM"):
+                self.smoothFrame.oldbeamEdit.setText(values["OLDBEAM"])
+            if values.has_key("NEWBEAM"):
+                self.smoothFrame.newbeamEdit.setText(values["NEWBEAM"])
+            if values.has_key("OLDPOSANG"):
+                self.smoothFrame.oldposangEdit.setText(values["NEWPOSANG"])
+            if values.has_key("NEWPOSANG"):
+                self.smoothFrame.newposangEdit.setText(values["OLDPOSANG"])
+            if values.has_key("SCALE"):
+                self.smoothFrame.scaleEdit.setText(values["SCALE"])
+            if values.has_key("DECIM"):
+                self.smoothFrame.decimEdit.setText(values["DECIM"])
+
+
+    def highlightError(self, status):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 0,0))
+        if "directory" in status:
+            self.outsetPathLabel.setPalette(p)
+            self.outsetNameLine.setPalette(p)
+       
+    
+    def clearError(self):
+        p=QPalette()
+        p.setColor(QPalette.Base, QColor(255, 255,255))
+        p.setColor(QPalette.WindowText, QColor(64, 64,64))
+        
+        self.outsetPathLabel.setPalette(p)
+        self.outsetNameLine.setPalette(p)
+       
+        self.insetLabel.setPalette(p)
+        self.boxLabel.setPalette(p)
+        
+        self.status.setText("")
+        self.errorMsg.setText("")
+    
+    def finished(self, log):
+        saveTaskValues(self.taskcommand)
+        self.clearExtraLayout()
+        setname=unicode(self.outsetNameLine.text())
+        outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+        
+        self.emit(SIGNAL("taskExecuted"), log)
+        self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
+        
+    def runtask(self,button):
+
+        role=self.buttonBox.buttonRole(button)
+
+        if (role==QDialogButtonBox.ApplyRole):
+            if self.insetPath == None:
+                self.showStatus("Give set (,subsets)")
+                return
+            if self.checkOutset():
+                oldbeam=unicode(self.smoothFrame.oldbeamEdit.text())
+                newbeam=unicode(self.smoothFrame.newbeamEdit.text())
+                oldposang=unicode(self.smoothFrame.oldposangEdit.text())
+                newposang=unicode(self.smoothFrame.newposangEdit.text())
+                scale=unicode(self.smoothFrame.scaleEdit.text())
+                decim=unicode(self.smoothFrame.decimEdit.text())
+                
+                setname=unicode(self.outsetNameLine.text())
+                if setname == "":
+                    p=QPalette()
+                    p.setColor(QPalette.Base, QColor(255, 0,0))
+                    self.outsetPathLabel.setPalette(p)
+                    self.outsetNameLine.setPalette(p)
+                    return
+                outsetPath=unicode(self.outsetPathLabel.toolTip())+"/"+setname
+                inset=unicode(self.insetLabel.toolTip())+" "+" ".join(unicode(self.insetLabel.text()).split()[1:])
+                box=unicode(self.boxLabel.text())
+                
+                self.taskcommand='SMOOTH INSET=%s BOX=%s OUTSET=%s AUTO=N  OLDBEAM=%s NEWBEAM=%s OLDPOSANG=%s NEWPOSANG=%s DECIM=%s SCALE=%s OKAY=Y'%(inset, box, outsetPath,oldbeam, newbeam, oldposang, newposang, scale, decim)
+                
+                self.clearError()
+                self.showStatus("Running")
+                self.gt.launchTask(self.taskcommand, self)
