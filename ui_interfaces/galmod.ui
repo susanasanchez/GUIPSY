@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>628</width>
-    <height>529</height>
+    <width>684</width>
+    <height>543</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,29 +20,8 @@
    <enum>QFrame::Raised</enum>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>CENTRE</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>VSYS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>RADII</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1" colspan="5">
-    <widget class="QLineEdit" name="radiiLine"/>
+   <item row="6" column="1" colspan="5">
+    <widget class="QLineEdit" name="densLine"/>
    </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_4">
@@ -51,62 +30,61 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1" colspan="5">
-    <widget class="QLineEdit" name="vrotLine"/>
-   </item>
-   <item row="4" column="6">
-    <widget class="QPushButton" name="vrotButton">
+   <item row="0" column="4">
+    <widget class="QCheckBox" name="checkSampCentre">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
+     </property>
      <property name="text">
-      <string/>
+      <string>SAMP</string>
      </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/table.png</normaloff>:/table.png</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_5">
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_7">
      <property name="text">
-      <string>VDISP</string>
+      <string>Z0</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="1" colspan="5">
-    <widget class="QLineEdit" name="vdispLine"/>
-   </item>
-   <item row="5" column="6">
-    <widget class="QPushButton" name="vdispButton">
+   <item row="3" column="7">
+    <widget class="QCheckBox" name="checkSampRadii">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
+     </property>
      <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/table.png</normaloff>:/table.png</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
+      <string>SAMP</string>
      </property>
     </widget>
    </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_6">
+   <item row="9" column="0">
+    <widget class="QLabel" name="label_9">
      <property name="text">
-      <string>DENS</string>
+      <string>PA</string>
      </property>
     </widget>
    </item>
-   <item row="6" column="1" colspan="5">
-    <widget class="QLineEdit" name="densLine"/>
+   <item row="4" column="7">
+    <widget class="QCheckBox" name="checkSampVrot">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
+     </property>
+     <property name="text">
+      <string>SAMP</string>
+     </property>
+    </widget>
    </item>
    <item row="6" column="6">
     <widget class="QPushButton" name="densButton">
@@ -125,15 +103,89 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="label_7">
+   <item row="8" column="6">
+    <widget class="QPushButton" name="inclButton">
      <property name="text">
-      <string>Z0</string>
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
      </property>
     </widget>
    </item>
-   <item row="7" column="1" colspan="5">
-    <widget class="QLineEdit" name="zoLine"/>
+   <item row="8" column="1" colspan="5">
+    <widget class="QLineEdit" name="inclLine"/>
+   </item>
+   <item row="13" column="0">
+    <widget class="QLabel" name="label_14">
+     <property name="text">
+      <string>ISEED</string>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="1">
+    <widget class="QLineEdit" name="iseedLine"/>
+   </item>
+   <item row="2" column="1">
+    <widget class="QLineEdit" name="drvalLine"/>
+   </item>
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>CENTRE</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="xcentreLine"/>
+   </item>
+   <item row="3" column="6">
+    <widget class="QPushButton" name="radiiButton">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_16">
+     <property name="text">
+      <string>DRVAL3</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>VDISP</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>CDENS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1" colspan="5">
+    <widget class="QLineEdit" name="vrotLine"/>
    </item>
    <item row="7" column="6">
     <widget class="QPushButton" name="zoButton">
@@ -152,18 +204,28 @@
      </property>
     </widget>
    </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="label_8">
+   <item row="5" column="1" colspan="5">
+    <widget class="QLineEdit" name="vdispLine"/>
+   </item>
+   <item row="1" column="3">
+    <widget class="QCheckBox" name="emptyCheck">
      <property name="text">
-      <string>INCL</string>
+      <string>EMPTY</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="8" column="1" colspan="5">
-    <widget class="QLineEdit" name="inclLine"/>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>RADII</string>
+     </property>
+    </widget>
    </item>
-   <item row="8" column="6">
-    <widget class="QPushButton" name="inclButton">
+   <item row="5" column="6">
+    <widget class="QPushButton" name="vdispButton">
      <property name="text">
       <string/>
      </property>
@@ -176,77 +238,19 @@
        <width>20</width>
        <height>20</height>
       </size>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
-    <widget class="QLabel" name="label_9">
-     <property name="text">
-      <string>PA</string>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="1" colspan="5">
-    <widget class="QLineEdit" name="paLine"/>
-   </item>
-   <item row="9" column="6">
-    <widget class="QPushButton" name="paButton">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/table.png</normaloff>:/table.png</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="0">
-    <widget class="QLabel" name="label_10">
-     <property name="text">
-      <string>CDENS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="1">
-    <widget class="QLineEdit" name="cdensLine"/>
-   </item>
-   <item row="10" column="3">
-    <widget class="QLabel" name="label_11">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>10^20 atoms/cm^2</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="4">
-    <widget class="QLabel" name="label_12">
-     <property name="text">
-      <string>NV</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
    <item row="10" column="5">
     <widget class="QLineEdit" name="nvLine"/>
    </item>
-   <item row="11" column="3">
-    <widget class="QLabel" name="label_13">
-     <property name="text">
-      <string>Layer Type</string>
-     </property>
-    </widget>
+   <item row="3" column="1" colspan="5">
+    <widget class="QLineEdit" name="radiiLine"/>
    </item>
-   <item row="11" column="4" colspan="2">
+   <item row="0" column="3">
+    <widget class="QLineEdit" name="ycentreLine"/>
+   </item>
+   <item row="11" column="5">
     <widget class="QComboBox" name="layerBox">
      <item>
       <property name="text">
@@ -275,18 +279,18 @@
      </item>
     </widget>
    </item>
-   <item row="13" column="0">
-    <widget class="QLabel" name="label_14">
+   <item row="12" column="1">
+    <widget class="QRadioButton" name="cmode1Radio">
      <property name="text">
-      <string>ISEED</string>
+      <string>CMODE 1</string>
      </property>
+     <attribute name="buttonGroup">
+      <string notr="true">buttonGroup1</string>
+     </attribute>
     </widget>
    </item>
-   <item row="13" column="1">
-    <widget class="QLineEdit" name="iseedLine"/>
-   </item>
-   <item row="3" column="6">
-    <widget class="QPushButton" name="radiiButton">
+   <item row="9" column="6">
+    <widget class="QPushButton" name="paButton">
      <property name="text">
       <string/>
      </property>
@@ -302,19 +306,48 @@
      </property>
     </widget>
    </item>
-   <item row="14" column="0">
-    <widget class="QPushButton" name="saveParamsButton">
+   <item row="7" column="1" colspan="5">
+    <widget class="QLineEdit" name="zoLine"/>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_8">
      <property name="text">
-      <string>SAVE PARMAS</string>
+      <string>INCL</string>
      </property>
     </widget>
    </item>
-   <item row="14" column="1">
-    <widget class="QPushButton" name="loadParamsButton">
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>LOAD PARAMS</string>
+      <string>DENS</string>
      </property>
     </widget>
+   </item>
+   <item row="10" column="3">
+    <widget class="QLabel" name="label_11">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>10^20 atoms/cm^2</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="4">
+    <widget class="QLabel" name="label_12">
+     <property name="text">
+      <string>NV</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="1">
+    <widget class="QLineEdit" name="cdensLine"/>
+   </item>
+   <item row="9" column="1" colspan="5">
+    <widget class="QLineEdit" name="paLine"/>
    </item>
    <item row="11" column="1">
     <widget class="QRadioButton" name="cmode0Radio">
@@ -325,59 +358,52 @@
       <bool>true</bool>
      </property>
      <attribute name="buttonGroup">
-      <string>buttonGroup1</string>
+      <string notr="true">buttonGroup1</string>
      </attribute>
     </widget>
    </item>
-   <item row="12" column="1">
-    <widget class="QRadioButton" name="cmode1Radio">
+   <item row="11" column="4">
+    <widget class="QLabel" name="label_13">
      <property name="text">
-      <string>CMODE 1</string>
+      <string>Layer Type</string>
      </property>
-     <attribute name="buttonGroup">
-      <string>buttonGroup1</string>
-     </attribute>
     </widget>
    </item>
-   <item row="0" column="1">
-    <widget class="QFrame" name="frame">
-     <property name="frameShape">
-      <enum>QFrame::NoFrame</enum>
+   <item row="1" column="4">
+    <widget class="QCheckBox" name="checkSampVsys">
+     <property name="enabled">
+      <bool>false</bool>
      </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
      </property>
-     <property name="lineWidth">
-      <number>0</number>
+     <property name="text">
+      <string>SAMP</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="margin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QLineEdit" name="xcentreLine">
-        <property name="maximumSize">
-         <size>
-          <width>70</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="ycentreLine">
-        <property name="maximumSize">
-         <size>
-          <width>70</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>VSYS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="6">
+    <widget class="QPushButton" name="vrotButton">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
     </widget>
    </item>
    <item row="1" column="1" colspan="2">
@@ -427,83 +453,83 @@
      </layout>
     </widget>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_16">
-     <property name="text">
-      <string>DRVAL3</string>
+   <item row="14" column="1" colspan="3">
+    <widget class="QFrame" name="frame">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QPushButton" name="loadParamsButton">
+        <property name="text">
+         <string>Load values</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="saveParamsButton">
+        <property name="text">
+         <string>Save values</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="2" column="1" colspan="2">
-    <widget class="QLineEdit" name="drvalLine"/>
-   </item>
-   <item row="1" column="3">
-    <widget class="QCheckBox" name="emptyCheck">
+   <item row="14" column="6" colspan="2">
+    <widget class="QPushButton" name="getRotcurColumnsButton">
      <property name="text">
-      <string>EMPTY</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="3">
-    <widget class="QCheckBox" name="checkSampCentre">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
-     </property>
-     <property name="text">
-      <string>SAMP</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="4">
-    <widget class="QCheckBox" name="checkSampVsys">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
-     </property>
-     <property name="text">
-      <string>SAMP</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="7">
-    <widget class="QCheckBox" name="checkSampRadii">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
-     </property>
-     <property name="text">
-      <string>SAMP</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="7">
-    <widget class="QCheckBox" name="checkSampVrot">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
-     </property>
-     <property name="text">
-      <string>SAMP</string>
+      <string>Load rotcur set table</string>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>xcentreLine</tabstop>
+  <tabstop>ycentreLine</tabstop>
+  <tabstop>checkSampCentre</tabstop>
+  <tabstop>vsysLine</tabstop>
+  <tabstop>emptyCheck</tabstop>
+  <tabstop>checkSampVsys</tabstop>
+  <tabstop>drvalLine</tabstop>
+  <tabstop>radiiLine</tabstop>
+  <tabstop>radiiButton</tabstop>
+  <tabstop>checkSampRadii</tabstop>
+  <tabstop>vrotLine</tabstop>
+  <tabstop>vrotButton</tabstop>
+  <tabstop>checkSampVrot</tabstop>
+  <tabstop>vdispLine</tabstop>
+  <tabstop>vdispButton</tabstop>
+  <tabstop>densLine</tabstop>
+  <tabstop>densButton</tabstop>
+  <tabstop>zoLine</tabstop>
+  <tabstop>zoButton</tabstop>
+  <tabstop>inclLine</tabstop>
+  <tabstop>inclButton</tabstop>
+  <tabstop>paLine</tabstop>
+  <tabstop>paButton</tabstop>
+  <tabstop>cdensLine</tabstop>
+  <tabstop>nvLine</tabstop>
+  <tabstop>cmode0Radio</tabstop>
+  <tabstop>layerBox</tabstop>
+  <tabstop>cmode1Radio</tabstop>
+  <tabstop>iseedLine</tabstop>
+  <tabstop>loadParamsButton</tabstop>
+  <tabstop>saveParamsButton</tabstop>
+ </tabstops>
  <resources>
   <include location="../resources.qrc"/>
  </resources>

@@ -51,13 +51,24 @@
 <file >resources/python_templates/xeq.py</file>
 <file >resources/cola_templates/cola_demo.col</file>
 <file >resources/cola_templates/gplot_recipes.col</file>
-<file >resources/recipes/recipe2.html</file>
-<file >resources/recipes/recipe2.txt</file>
-<file >resources/recipes/rotcur.html</file>
-<file >resources/recipes/rotcur.txt</file>
-<file >resources/recipes/rotcur_files/</file>
-<file >resources/params/usecase1.param</file>
-<file >resources/params/usecase2.param</file>
+<file >resources/recipes/template1.txt</file>
+<file >resources/recipes/template1.param</file>
+<file >resources/recipes/template2.txt</file>
+<file >resources/recipes/template2.param</file>
+<file >resources/recipes/template3.txt</file>
+<file >resources/recipes/template3.param</file>
+<file >resources/recipes/template4.txt</file>
+<file >resources/recipes/template4.param</file>
+<file >resources/recipes/template5.txt</file>
+<file >resources/recipes/template5.param</file>
+<file >resources/recipes/template6.txt</file>
+<file >resources/recipes/template6.param</file>
+<file >resources/recipes/template7.txt</file>
+<file >resources/recipes/template7.param</file>
+<file >resources/howtos/howto1.txt</file>
+<file >resources/howtos/howto1.html</file>
+<file >resources/howtos/1004HI.jpg</file>
+
 
 </qresource>
 </RCC>

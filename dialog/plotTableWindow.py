@@ -150,6 +150,8 @@ class plotTableWindow(QMainWindow,Ui_plotTableWindow):
         #Connection "save to table" button
         self.connect(self.saveButton, SIGNAL("clicked()"), self.updateTables)
         
+        self.connect(self.plotList, SIGNAL("itemClicked(QListWidgetItem*)"), self.plot)
+        
         self.positionCombo.setCurrentIndex(1) #Best
         self.textSizeSpin.setValue(12)
         self.ncolSpin.setValue(1)
@@ -253,6 +255,7 @@ class plotTableWindow(QMainWindow,Ui_plotTableWindow):
             plabel=unicode(self.plotLabel.text())
             self.plotLabel.setText("")
             self.plotList.addItem(plabel)
+            
             xcol=self.XAxis.itemData(self.XAxis.currentIndex()).toInt()[0]
             ycol=self.YAxis.itemData(self.YAxis.currentIndex()).toInt()[0]
             
@@ -277,6 +280,11 @@ class plotTableWindow(QMainWindow,Ui_plotTableWindow):
                 
             newplot=plot(plabel, xaxis, yaxis, table, xcol, ycol, xerror, yerror)
             self.plots[plabel]=newplot
+            
+            items=self.plotList.findItems(plabel, Qt.MatchExactly)
+            self.plotList.setCurrentItem(items[0])
+           
+            self.plot()
             
             
         else:
@@ -320,64 +328,81 @@ class plotTableWindow(QMainWindow,Ui_plotTableWindow):
         
 
     def plot(self):
-        self.axes.clear()
-
-        for key, value in self.plots.iteritems():
-            x=value.xAxis
-            y=value.yAxis
-            l=unicode(value.label)
-            style=value.style
-            color=value.color
-            xerror=value.xError
-            yerror=value.yError
-            #After replot, the original data are recovered
-            self.plots[l].currentX=x
-            self.plots[l].currentY=y
-            if xerror!=None or yerror!=None:
-                line=self.axes.errorbar(x, y,  xerr=xerror, yerr=yerror, fmt=None, label=l, color='b', ecolor='r')
-            #else:
+        
+        
+        if(len(self.plotList.selectedItems())==1):
+            plot_selected=self.plotList.selectedItems()[0]
+            
+            if(plot_selected!=None):
+                plabel=str(plot_selected.text())
+        
+                self.axes.clear()
+                x=self.plots[plabel].xAxis
+                y=self.plots[plabel].yAxis
+                style=self.plots[plabel].style
+                color=self.plots[plabel].color
+                xerror=self.plots[plabel].xError
+                yerror=self.plots[plabel].yError
+                #After replot, the original data are recovered
+                self.plots[plabel].currentX=x
+                self.plots[plabel].currentY=y
                 
-            line=self.axes.plot(x, y,marker='o', linestyle='none',  label=l, picker=5)[0]
-            
-            if(style!=None):
-                line.set_linestyle(STYLE[unicode(style)])
-            if(color!=None):
-                line.set_color(COLOR[unicode(color)])
-        
-        #Build the legend
-        if self.legendFrame.isEnabled():
-            pos=None
-            if self.xposSpin.isEnabled():
-                xpos=self.xposSpin.value()
-                ypos=self.yposSpin.value()
-                pos=(xpos,  ypos)
-            else:
-                pos=unicode(self.positionCombo.currentText())
-            
-            title=self.titleLine.text()
-            ncol=self.ncolSpin.value()
-            textsize=self.textSizeSpin.value()
-            if self.fancyBox.checkState() == Qt.Unchecked:
-                fancy=False
-            else:
-                fancy=True
-            
-            if self.shadowBox.checkState() == Qt.Unchecked:
-                shadow=False
-            else:
-                shadow=True
-            
-            self.axes.legend(loc=pos, title=title,  ncol=ncol,fancybox=fancy , shadow=shadow,  prop={'size':textsize} )
-            
-        #Zoom out a bit to make bigger the plot screen (white part), in order the user can add points at the end or beginning of the plot
-        xlim=self.axes.get_xlim()
-        ylim=self.axes.get_ylim()
-        offsetX=(xlim[1]-xlim[0])/10
-        offsetY=(ylim[1]-ylim[0])/10
-        self.axes.set_xlim(xlim[0]-offsetX, xlim[1]+offsetX)
-        self.axes.set_ylim(ylim[0]-offsetY, ylim[1]+offsetY)
-        
-        self.canvas.draw()
+        #        for key, value in self.plots.iteritems():
+        #            x=value.xAxis
+        #            y=value.yAxis
+        #            l=unicode(value.label)
+        #            style=value.style
+        #            color=value.color
+        #            xerror=value.xError
+        #            yerror=value.yError
+        #            #After replot, the original data are recovered
+        #            self.plots[l].currentX=x
+        #            self.plots[l].currentY=y
+                if xerror!=None or yerror!=None:
+                    line=self.axes.errorbar(x, y,  xerr=xerror, yerr=yerror, fmt=None, label=plabel, color='b', ecolor='r')
+                #else:
+                    
+                line=self.axes.plot(x, y,marker='o', linestyle='none',  label=plabel, picker=5)[0]
+                    
+                if(style!=None):
+                    line.set_linestyle(STYLE[unicode(style)])
+                if(color!=None):
+                    line.set_color(COLOR[unicode(color)])
+                
+                #Build the legend
+                if self.legendFrame.isEnabled():
+                    pos=None
+                    if self.xposSpin.isEnabled():
+                        xpos=self.xposSpin.value()
+                        ypos=self.yposSpin.value()
+                        pos=(xpos,  ypos)
+                    else:
+                        pos=unicode(self.positionCombo.currentText())
+                    
+                    title=self.titleLine.text()
+                    ncol=self.ncolSpin.value()
+                    textsize=self.textSizeSpin.value()
+                    if self.fancyBox.checkState() == Qt.Unchecked:
+                        fancy=False
+                    else:
+                        fancy=True
+                    
+                    if self.shadowBox.checkState() == Qt.Unchecked:
+                        shadow=False
+                    else:
+                        shadow=True
+                    
+                    self.axes.legend(loc=pos, title=title,  ncol=ncol,fancybox=fancy , shadow=shadow,  prop={'size':textsize} )
+                    
+                #Zoom out a bit to make bigger the plot screen (white part), in order the user can add points at the end or beginning of the plot
+                xlim=self.axes.get_xlim()
+                ylim=self.axes.get_ylim()
+                offsetX=(xlim[1]-xlim[0])/10
+                offsetY=(ylim[1]-ylim[0])/10
+                self.axes.set_xlim(xlim[0]-offsetX, xlim[1]+offsetX)
+                self.axes.set_ylim(ylim[0]-offsetY, ylim[1]+offsetY)
+                
+                self.canvas.draw()
 
     def updateTableList(self):
         print "updatetablelist"

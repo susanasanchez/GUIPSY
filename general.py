@@ -208,6 +208,7 @@ DIRPYTHONTEMPLATE=":resources/python_templates/"
 DIRCOLATEMPLATE=":resources/cola_templates/"
 DIRRECIPES=":resources/recipes/"
 DIRPARAMS=":resources/params/"
+DIRHOWTOS=":resources/howtos/"
 class counter ( object ):
     def __init__ ( self , ini =0 , *a ,** k ):
         super ( counter , self ). __init__ (* a ,** k )

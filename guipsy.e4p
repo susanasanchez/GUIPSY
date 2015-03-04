@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project guipsy -->
-<!-- Saved: 2014-10-30, 09:17:31 -->
+<!-- Saved: 2014-11-14, 11:22:45 -->
 <!-- Copyright (C) 2014 ,  -->
 <Project version="4.6">
   <Language></Language>
@@ -91,6 +91,7 @@
     <Source>gipsyClasses/Ui_mnmx.py</Source>
     <Source>help/view_recipeFile.py</Source>
     <Source>help/Ui_recipeFile.py</Source>
+    <Source>gipsyClasses/Ui_smooth.py</Source>
   </Sources>
   <Forms>
     <Form>ui_interfaces/clip.ui</Form>

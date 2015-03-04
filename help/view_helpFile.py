@@ -42,20 +42,22 @@ class view_helpFile(QWidget,Ui_helpFile):
     def loadHelpFile(self, filename):
         
         self.filename=filename
-        self.taskname=os.path.basename(filename).split(".")[0]
+        self.taskname=None
+        if os.path.exists(filename): #In this case the help file is a gipsy task documentation file
+            self.taskname=os.path.basename(filename).split(".")[0]
        
-        #reading the html file asociated to the task/recipe
+        #reading the html file asociated 
         f=QFile(filename)
         if (f.open(QIODevice.ReadOnly)):
             text=f.read(f.size())
-            #self.textBrowser.insertHtml("<A name=\"section1\"></a><pre>"+text+"</pre><a href=\"http://www.iaa.es\">www.iaa.es</a><A href=\"#section1\">Introduction</A>")
-            self.textBrowser.insertHtml("<pre>"+text+"</pre>")
-        #self.textBrowser.setText(text)
+            if os.path.exists(filename): #In this case the help file is a gipsy task documentation file
+                self.textBrowser.insertHtml("<pre>"+text+"</pre>")
+            else:
+                self.textBrowser.insertHtml(text)
         else:
             text="Unable to read help file"
             self.textBrowser.setText(text)
         f.close()
-        #self.textBrowser.setSource(QUrl.fromLocalFile(filename))
         cursor=self.textBrowser.textCursor()
         cursor.setPosition(0)
         self.textBrowser.setTextCursor(cursor)

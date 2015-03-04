@@ -436,7 +436,7 @@ class view_task(QDialog, Ui_viewtask):
             self.fhd.exec_()
 
 class view_rfits(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         
         super(view_rfits, self).__init__(parent, filename, "rfits",  defaultPath=defaultPath)    
         super(view_rfits, self).setAttribute(Qt.WA_DeleteOnClose)    
@@ -617,7 +617,7 @@ class view_rfits(view_task):
                 
                 
 class view_wfits(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_wfits, self).__init__(parent, filename, "wfits", defaultPath=defaultPath)    
         super(view_wfits, self).setAttribute(Qt.WA_DeleteOnClose)    
         self.keys=["INSET=",  "BOX=",  "BITPIX=",  "OKAY=","FITSFILE="] #List of the keys/parameters of task, nowadays
@@ -690,7 +690,7 @@ class view_wfits(view_task):
             
             
 class view_clip(view_task):
-    def __init__(self,parent, filename,  defaultPath="./"):
+    def __init__(self,parent, filename,  defaultPath="./" , templatepath=None):
         super(view_clip, self).__init__(parent,  filename, "clip", *TASKS_CLASS["CLIP"], defaultPath=defaultPath)    
         super(view_clip, self).setAttribute(Qt.WA_DeleteOnClose)    
         self.keys=["INSET=", "BOX=", "OUTSET=", "RANGE=", "CVAL=", "BVAL=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -840,7 +840,7 @@ class view_clip(view_task):
             self.clipFrame.valueOutside.setEnabled(True)
             
 class view_combin(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_combin, self).__init__(parent,  filename, "combin",  *TASKS_CLASS["COMBIN"], defaultPath=defaultPath)
         
         self.parent=parent
@@ -1116,7 +1116,7 @@ class view_combin(view_task):
 
 
 class view_copy(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_copy, self).__init__(parent,filename,"copy",  *TASKS_CLASS["COPY"], defaultPath=defaultPath)
         super(view_copy, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=", "OUTSET=", "MAKEBLANK=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -1209,7 +1209,7 @@ class view_copy(view_task):
 
 
 class view_diminish(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_diminish, self).__init__(parent,filename,"diminish", *TASKS_CLASS["DIMINISH"], defaultPath=defaultPath)
         super(view_diminish, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=", "OUTSET=", "MAKEBLANK=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -1288,7 +1288,7 @@ class view_diminish(view_task):
 
 
 class view_decim(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_decim, self).__init__(parent, filename,"decim",   *TASKS_CLASS["DECIM"], defaultPath=defaultPath)
         #self.inset and self.insetPath are handled by parent class, view_task
         super(view_decim, self).setAttribute(Qt.WA_DeleteOnClose)
@@ -1449,7 +1449,7 @@ class view_decim(view_task):
 
 
 class view_editset(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_editset, self).__init__(parent,  filename,  "editset", *TASKS_CLASS["EDITSET"], defaultPath=defaultPath)
         super(view_editset, self).setAttribute(Qt.WA_DeleteOnClose)    
         
@@ -1528,7 +1528,7 @@ class view_editset(view_task):
 
 
 class view_extend(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_extend, self).__init__(parent,filename, "extend",    *TASKS_CLASS["EXTEND"], defaultPath=defaultPath)
         super(view_extend, self).setAttribute(Qt.WA_DeleteOnClose)
         self.n_axes=0
@@ -1729,7 +1729,7 @@ class view_extend(view_task):
             self.extendFrame.crotaLine.setEnabled(False)
             
 class view_meanSum(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_meanSum, self).__init__(parent, filename, "mean",   *TASKS_CLASS["MEAN"], defaultPath=defaultPath)
         super(view_meanSum, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS=", "CUT=",  "OKAY="] #List of the keys/parameters of task, nowadays
@@ -1814,7 +1814,7 @@ class view_meanSum(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 class view_minbox(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_minbox, self).__init__(parent, filename,"minbox",    *TASKS_CLASS["MINBOX"], defaultPath=defaultPath)
         super(view_minbox, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=", "OUTSET=", "MINBOX=","MARGIN=", "SQUARE=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -1973,7 +1973,7 @@ class view_minbox(view_task):
             
 
 class view_mnmx(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_mnmx, self).__init__(parent, filename,"mnmx",    *TASKS_CLASS["MNMX"], defaultPath=defaultPath)
         super(view_mnmx, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX="] #List of the keys/parameters of task, nowadays
@@ -2020,7 +2020,7 @@ class view_mnmx(view_task):
         self.showResults()
         outsetPath=unicode(self.insetLabel.toolTip())
         
-        self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
+        #self.emit(SIGNAL("newSet"),unicode(self.insetLabel.toolTip()), outsetPath)
         
         
         
@@ -2073,7 +2073,7 @@ class view_mnmx(view_task):
 #        self.mnmxFrame.resultLabel.setText("DATAMIN: %s, DATAMAX:%s, NBLANK: %s"%(datamin, datamax, nblank))
 
 class view_regrid(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_regrid, self).__init__(parent, filename , "regrid",  *TASKS_CLASS["REGRID"], defaultPath=defaultPath)
         super(view_regrid, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=","AXNAME=", "CDELT=", "IPOL=","WIDTH=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -2234,7 +2234,7 @@ class view_regrid(view_task):
             self.regridFrame.widthLine.setEnabled(False)
 
 class view_snapper(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_snapper, self).__init__(parent, filename, "snapper",   *TASKS_CLASS["SNAPPER"], defaultPath=defaultPath)
         super(view_snapper, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=","REPSIZE=", "OLDVAL=", "NEWVAL=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -2365,7 +2365,7 @@ class view_snapper(view_task):
 
 
 class view_transform(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_transform, self).__init__(parent,filename,  "transform", *TASKS_CLASS["TRANSFORM"], defaultPath=defaultPath)
         super(view_transform, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=","POS=", "OKAY=","OPERATION=", "TRANSLXY=","ANGLE=","SCALEXY=", "XSHEAR=", "YSHEAR=","OUTSET="] #List of the keys/parameters of task, nowadays
@@ -2395,17 +2395,17 @@ class view_transform(view_task):
                 list_centre=filter(None, re.split("(\*1950|\*\d\d\d\d\.\d\d)", values["POS"]))
                 
                 if len(list_centre)==4:
-                    self.transformFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
-                    self.transformFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                    self.transformFrame.xposLine.setText(list_centre[0]+" "+list_centre[1])
+                    self.transformFrame.yposLine.setText(list_centre[2]+" "+list_centre[3])
                 else:
                     list_centre=filter(None, re.split("(\*|U|G|S)", values["POS"]))
                     if len (list_centre)==4:
-                        self.transformFrame.xcentreLine.setText(list_centre[0]+" "+list_centre[1])
-                        self.transformFrame.ycentreLine.setText(list_centre[2]+" "+list_centre[3])
+                        self.transformFrame.xposLine.setText(list_centre[0]+" "+list_centre[1])
+                        self.transformFrame.yposLine.setText(list_centre[2]+" "+list_centre[3])
                     elif len(values["POS"].split())==2:
                         x, y=values["POS"].split()
-                        self.transformFrame.xcentreLine.setText(x)
-                        self.transformFrame.ycentreLine.setText(y)
+                        self.transformFrame.xposLine.setText(x)
+                        self.transformFrame.yposLine.setText(y)
             if values.has_key("OPERATION"):
                 op=values["OPERATION"]
                 try:
@@ -2591,7 +2591,7 @@ class view_transform(view_task):
             self.transformFrame.yshearLine.setEnabled(True)
 
 class view_transpose(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_transpose, self).__init__(parent, filename, "transpose",  *TASKS_CLASS["TRANSPOSE"], defaultPath=defaultPath)
         super(view_transpose, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=","AXPERM=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -2717,7 +2717,7 @@ class view_transpose(view_task):
             self.transposeFrame.axesList.setCurrentRow(nextIndex)
 
 class view_velsmo(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_velsmo, self).__init__(parent, filename, "velsmo", *TASKS_CLASS["VELSMO"], defaultPath=defaultPath)
         super(view_velsmo, self).setAttribute(Qt.WA_DeleteOnClose)
         self.keys=["INSET=", "BOX=", "OUTSET=", "WEIGHTS=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -2787,7 +2787,7 @@ class view_velsmo(view_task):
 
 
 class view_insert(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_insert, self).__init__(parent, filename, "insert",   *TASKS_CLASS["INSERT"], defaultPath=defaultPath)
         #self.inset and self.insetPath are handled by parent class, view_task
         super(view_insert, self).setAttribute(Qt.WA_DeleteOnClose)
@@ -2893,7 +2893,7 @@ class view_insert(view_task):
 
 
 class view_reswri(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_reswri, self).__init__(parent,  filename,"reswri",  *TASKS_CLASS["RESWRI"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "BOX=", "OUTSET=","INSET2=","BUNIT=",  "RADII=",  "WIDTHS=",  "VSYS=",  "VROT=",  \
@@ -3341,7 +3341,7 @@ class view_reswri(view_task):
 
 
 class view_rotcur(view_task):        
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_rotcur, self).__init__(parent,  filename,  "rotcur", *TASKS_CLASS["ROTCUR"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "BOX=", "BUNIT=",  "RADII=",  "WIDTHS=",  "VSYS=",  "VROT=",  \
@@ -3381,13 +3381,14 @@ class view_rotcur(view_task):
         self.rotcurFrame.inclButton.setDefault(False)
         self.rotcurFrame.saveParamsButton.setAutoDefault(False)
         self.rotcurFrame.saveParamsButton.setDefault(False)
-        #self.rotcurFrame.loadParamsButton.setAutoDefault(False)
-        #self.rotcurFrame.loadParamsButton.setDefault(False)
+        self.rotcurFrame.loadParamsButton.setAutoDefault(False)
+        self.rotcurFrame.loadParamsButton.setDefault(False)
         
         self.showRelatedData()
         self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
        
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
+        
         
         curried=functools.partial(self.showTableBrowser, self.rotcurFrame.radiiLine)
         self.connect(self.rotcurFrame.radiiButton,  SIGNAL("clicked()"), curried)
@@ -3402,35 +3403,19 @@ class view_rotcur(view_task):
         curried=functools.partial(self.showTableBrowser, self.rotcurFrame.inclLine)
         self.connect(self.rotcurFrame.inclButton,  SIGNAL("clicked()"), curried)
         
-        #LOAD USE CASE PARAMS
-        self.rotcurFrame.loadParamsList.addItem(QString(""),)
-        self.rotcurFrame.loadParamsList.addItem(QString("Load from file"))
-
-        paramsDir=QDir(DIRPARAMS)
-        paramsList = paramsDir.entryInfoList()
-        for param in paramsList:
-            paramPath=param.filePath()
-            name=paramPath.split("/")[-1]
-            self.rotcurFrame.loadParamsList.addItem(QString(name.split(".")[0]), paramPath)
-            
-#        p=os.environ.get("gip_tsk")
-#        self.rotcurFrame.loadParamsList.addItem(QString(""),)
-#        self.rotcurFrame.loadParamsList.addItem(QString("Load from file"))
-#        for file in glob.glob( p+"/recipes/param/*.param"):
-#            basename=os.path.basename(file)
-#            name=basename.split(".")[0]
-#            self.rotcurFrame.loadParamsList.addItem(QString(name), p+"/recipes/param/"+basename)
+        
+        
         
         self.connect(self.rotcurFrame.saveParamsButton, SIGNAL("clicked()"), self.saveParams)
-        #self.connect(self.rotcurFrame.loadParamsButton, SIGNAL("clicked()"), self.loadParams)
-        self.connect(self.rotcurFrame.loadParamsList, SIGNAL("currentIndexChanged(int)"), self.loadParams)
+        self.connect(self.rotcurFrame.loadParamsButton, SIGNAL("clicked()"), self.loadParams)
         
+        self.connect(self.parent.infoRecipes, SIGNAL("loadTemplate"), self.loadTemplate)
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
         self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
         self.connect(self.parent, SIGNAL("rowList"), self.recieve_rowList)
         
         #LOAD LAST VALUES
-        self.loadParams(defaultFile=True)
+        self.loadParams(True, templatepath)
         
     
     def recieve_rowList (self, table_id, rowList):
@@ -3553,7 +3538,7 @@ class view_rotcur(view_task):
     def showTableBrowser(self, line):
         Dlg=tablebrowser(self.view_tables)
         if Dlg.exec_():
-            data=Dlg.column
+            data=[x for x in Dlg.column if x != "nan"]
             if data !=None:
                 if len(data)>0:
                     text=" ".join(data)
@@ -3567,23 +3552,27 @@ class view_rotcur(view_task):
             return
         taskcommand=self.buildCommand()
         saveTaskValues(taskcommand, fName)
+      
+    
+    def loadTemplate(self, task,  templatepath):
+        if task=="rotcur":
+            self.loadParams(False, templatepath)
         
-    def loadParams(self, index=-1,  defaultFile=False):
-        
-        filename=None
-        templateParam=None
-        if index==1:
-            dir = os.path.dirname(".")
-            fName = unicode(QFileDialog.getOpenFileName(self,
-                                "Choose File", dir,FORMATS["PARAM"]))
-            if (fName==""):
-                return
-            filename=fName
-        elif index>1:
-            templateParam=self.rotcurFrame.loadParamsList.itemData(index).toString()
-            print "TEMPLATEPARAM",  templateParam
+    def loadParams(self,  defaultFile=False, templatepath=None):
+        if templatepath !=None:
+            values=getTaskValues("rotcur", None, templatepath)
             
-                
+        else:
+            if not defaultFile:
+                dir = os.path.dirname(".")
+                fName = unicode(QFileDialog.getOpenFileName(self,
+                                    "Choose File", dir,FORMATS["PARAM"]))
+                if (fName==""):
+                    return
+                filename=fName
+            else:
+                filename=None
+            values=getTaskValues("rotcur", filename)
         
         
         #Defaults params
@@ -3592,10 +3581,11 @@ class view_rotcur(view_task):
         self.rotcurFrame.freeangleLine.setText("0.0")
         self.rotcurFrame.fittoleranceLine.setText("0.001")     
         
-        values=getTaskValues("rotcur", filename, templateParam)
+        
         
         if values !=None:
-            self.clearParams()
+            if templatepath==None:
+                self.clearParams()
             if values.has_key("BUNIT"):
                 self.rotcurFrame.bunitLine.setText(values["BUNIT"])
                 
@@ -3865,7 +3855,7 @@ class view_rotcur(view_task):
 
 
 class view_velfi(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_velfi, self).__init__(parent, filename, "velfi",  *TASKS_CLASS["VELFI"], defaultPath=defaultPath)
         
         self.keys=["INSET=",  "OUTSET=",  "RADII=",  "VSYS=",  "VROT=",  "VRAD=", \
@@ -4130,7 +4120,7 @@ class view_velfi(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 class view_moments(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_moments, self).__init__(parent,  filename, "moments", *TASKS_CLASS["MOMENTS"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "BOX=", "OUTSET=", "RANGE=", "OPTION=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -4280,7 +4270,7 @@ class view_moments(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 class view_ellint(view_task):
-    def __init__(self, parent, filename, defaultPath="./"):
+    def __init__(self, parent, filename, defaultPath="./", templatepath=None):
         super(view_ellint, self).__init__(parent,  filename,"ellint",   *TASKS_CLASS["ELLINT"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "OPTION=", "MASS=", "DISTANCE=",  "RADII=",  "WIDTH=",   \
@@ -4319,6 +4309,8 @@ class view_ellint(view_task):
         self.ellintFrame.saveParamsButton.setDefault(False)
         self.ellintFrame.loadParamsButton.setAutoDefault(False)
         self.ellintFrame.loadParamsButton.setDefault(False)
+        self.ellintFrame.getRotcurColumnsButton.setAutoDefault(False)
+        self.ellintFrame.getRotcurColumnsButton.setDefault(False)
         
 #        self.ellintFrame.xrangeLine.setEnabled(True)
 #        self.ellintFrame.yrangeLine.setEnabled(True)
@@ -4339,6 +4331,8 @@ class view_ellint(view_task):
         curried=functools.partial(self.showTableBrowser, self.ellintFrame.inclLine)
         self.connect(self.ellintFrame.inclButton,  SIGNAL("clicked()"), curried)
         
+        self.connect(self.ellintFrame.getRotcurColumnsButton,  SIGNAL("clicked()"),self.getRotcurColumns)
+        
         self.connect(self.ellintFrame.optionBox,  SIGNAL("currentIndexChanged(int)"), self.enableParameters)
         self.connect(self.ellintFrame.segmentList, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.addSegment)
         
@@ -4348,7 +4342,7 @@ class view_ellint(view_task):
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
         #self.connect (self.parent, SIGNAL("sampcoord"), self.receive_coord)
-         
+    
         #LOAD LAST VALUES
         self.loadParams(defaultFile=True)
             
@@ -4412,16 +4406,48 @@ class view_ellint(view_task):
     def loadTables(self):
         self.view_tables={}
         for doc in self.parent.allDocuments:
-            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE"):
+            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE" or doc.getType()=="VOTABLE"):
                 self.view_tables[doc.getDocname()]=self.parent.allWidgets[doc.getDocname()]
+    
+    def getRotcurColumns(self):
+        #Get the opened tables
+        self.loadTables()
+        Dlg=tablebrowser(self.view_tables,  getRotcurColumns=True)
+        if Dlg.exec_():
+            if Dlg.rotcurColumns!=None:
+                try:
+                    posx=reduce(lambda x, y: float(x) + float(y),Dlg.rotcurColumns["XPOS"] ) / len(Dlg.rotcurColumns["XPOS"])
+                    self.ellintFrame.xcentreLine.setText(str(posx))
+                    posy=reduce(lambda x, y: float(x) + float(y),Dlg.rotcurColumns["YPOS"] ) / len(Dlg.rotcurColumns["YPOS"])
+                    self.ellintFrame.ycentreLine.setText(str(posy))
+                    
+                except:
+                    None
+                
+                returnedColumns=Dlg.rotcurColumns.keys()
+                
+                if "RADII"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["RADII"]).lower().replace("nan", "")
+                    self.ellintFrame.radiiLine.setText(text)
+                if "PA"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["PA"]).lower().replace("nan", "")
+                    self.ellintFrame.paLine.setText(text)
+                
+                if "INCL"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["INCL"]).lower().replace("nan", "")
+                    self.ellintFrame.inclLine.setText(text)
+                if "WIDTHS"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["WIDTHS"]).lower().replace("nan", "")
+                    self.ellintFrame.widthLine.setText(text)
                 
     def showTableBrowser(self, line):
+        self.loadTables()
         Dlg=tablebrowser(self.view_tables)
         if Dlg.exec_():
             data=Dlg.column
             if data !=None:
                 if len(data)>0:
-                    text=" ".join(data)
+                    text=" ".join(data).lower().replace("nan", "")
                     line.setText(text)
             
 
@@ -4660,7 +4686,7 @@ class view_ellint(view_task):
 
 class view_galmod(view_task):
    
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_galmod, self).__init__(parent, filename,"galmod",    *TASKS_CLASS["GALMOD"], defaultPath=defaultPath)
         self.parent=parent
         
@@ -4671,8 +4697,7 @@ class view_galmod(view_task):
         
 
         #self.parent.sampClient.bindReceiveNotification("coord.pointAt.sky",self.test_receive_notification)
-        #Get the opened tables
-        self.loadTables()
+        
         
         #Adding the clip frame
         frame = QtGui.QFrame()
@@ -4705,6 +4730,9 @@ class view_galmod(view_task):
         self.galmodFrame.saveParamsButton.setDefault(False)
         self.galmodFrame.loadParamsButton.setAutoDefault(False)
         self.galmodFrame.loadParamsButton.setDefault(False)
+        self.galmodFrame.getRotcurColumnsButton.setAutoDefault(False)
+        self.galmodFrame.getRotcurColumnsButton.setDefault(False)
+        
         
         self.connect(self.buttonBox, SIGNAL("clicked(QAbstractButton *)"), self.runtask)
         
@@ -4723,9 +4751,9 @@ class view_galmod(view_task):
         curried=functools.partial(self.showTableBrowser, self.galmodFrame.inclLine)
         self.connect(self.galmodFrame.inclButton,  SIGNAL("clicked()"), curried)
         
-        
         self.connect(self.galmodFrame.saveParamsButton, SIGNAL("clicked()"), self.saveParams)
         self.connect(self.galmodFrame.loadParamsButton, SIGNAL("clicked()"), self.loadParams)
+        self.connect(self.galmodFrame.getRotcurColumnsButton, SIGNAL("clicked()"), self.getRotcurColumns)
         self.connect(self, SIGNAL("insetChanged()"), self.showRelatedData)
         
         self.connect(self.parent, SIGNAL("openTable"), self.loadTables)
@@ -4735,20 +4763,60 @@ class view_galmod(view_task):
         self.loadParams(defaultFile=True)
 
     
-        
+     
     def loadTables(self):
         self.view_tables={}
         for doc in self.parent.allDocuments:
-            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE"):
+            if(doc.getType()=="TABLE" or doc.getType()=="SETTABLE" or doc.getType()=="VOTABLE"):
                 self.view_tables[doc.getDocname()]=self.parent.allWidgets[doc.getDocname()]
+    
+    def getRotcurColumns(self):
+        #Get the opened tables
+        self.loadTables()
+        Dlg=tablebrowser(self.view_tables,  getRotcurColumns=True)
+        if Dlg.exec_():
+            if Dlg.rotcurColumns!=None:
+                returnedColumns=Dlg.rotcurColumns.keys()
+                try:
+                    if "XPOS"  in returnedColumns:
+                        posx=reduce(lambda x, y: float(x) + float(y),Dlg.rotcurColumns["XPOS"] ) / len(Dlg.rotcurColumns["XPOS"])
+                        self.galmodFrame.xcentreLine.setText(str(posx))
+                    if "YPOS"  in returnedColumns:
+                        posy=reduce(lambda x, y: float(x) + float(y),Dlg.rotcurColumns["YPOS"] ) / len(Dlg.rotcurColumns["YPOS"])
+                        self.galmodFrame.ycentreLine.setText(str(posy))
+                    if "VSYS"  in returnedColumns:
+                        vsys=reduce(lambda x, y: float(x) + float(y),Dlg.rotcurColumns["VSYS"] ) / len(Dlg.rotcurColumns["VSYS"])
+                        self.galmodFrame.vsysLine.setText(str(vsys))
+                except:
+                    None
                 
+                
+                
+                if "RADII"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["RADII"]).lower().replace("nan", "")
+                    self.galmodFrame.radiiLine.setText(text)
+                
+                if "VROT"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["VROT"]).lower().replace("nan", "")
+                    self.galmodFrame.vrotLine.setText(text)
+                if "PA"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["PA"]).lower().replace("nan", "")
+                    self.galmodFrame.paLine.setText(text)
+                if "INCL"  in returnedColumns:
+                    text=" ".join(Dlg.rotcurColumns["INCL"]).lower().replace("nan", "")
+                    self.galmodFrame.inclLine.setText(text)
+            
+                
+       
     def showTableBrowser(self, line):
+        #Get the opened tables
+        self.loadTables()
         Dlg=tablebrowser(self.view_tables)
         if Dlg.exec_():
             data=Dlg.column
             if data !=None:
                 if len(data)>0:
-                    text=" ".join(data)
+                    text=" ".join(data).lower().replace("nan", "")
                     line.setText(text)
                     
     def saveParams(self):
@@ -4967,7 +5035,7 @@ class view_galmod(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 class view_potential(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_potential, self).__init__(parent, filename,  "potential", *TASKS_CLASS["POTENTIAL"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "BOX1=", "BOX2=","OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -5046,7 +5114,7 @@ class view_potential(view_task):
                 self.gt.launchTask(self.taskcommand, self)
 
 class view_pplot(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_pplot, self).__init__(parent,  filename, "pplot", *TASKS_CLASS["PPLOT"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "PROFINT=", "PROFILE=", "FILENAME=","GRDEVICE=", "CHARHEIGHT=", "XRANGE=", \
@@ -5160,7 +5228,7 @@ class view_pplot(view_task):
 
 
 class view_profil(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_profil, self).__init__(parent,  filename,"profil",   *TASKS_CLASS["PROFIL"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "BOX=", "SETX=","BOXX=","OUTSET=", "WLTYPE=", "LC=","MASK=","THRESHOLD=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -5355,7 +5423,7 @@ class view_profil(view_task):
 
 
 class view_slice(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_slice, self).__init__(parent,  filename,"slice",  *TASKS_CLASS["PPLOT"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "POSITION=", "ANGLE=", "GRIDOUT=", "POINTS=", "SLICES=", "SPACE=", "OUTSET="\
@@ -5511,7 +5579,7 @@ class view_slice(view_task):
 
 
 class view_shuffle(view_task):
-    def __init__(self,parent, filename, defaultPath="./"):
+    def __init__(self,parent, filename, defaultPath="./", templatepath=None):
         super(view_shuffle, self).__init__(parent,filename, "shuffle",   *TASKS_CLASS["SHUFFLE"], defaultPath=defaultPath)
         
         self.keys=["INSET=", "CSET=", "NMAX=", "CDELT=", "OUTSET=", "OKAY="] #List of the keys/parameters of task, nowadays
@@ -5688,7 +5756,7 @@ class view_shuffle(view_task):
 
 
 class view_smooth(view_task):
-    def __init__(self,parent, filename,  defaultPath="./"):
+    def __init__(self,parent, filename,  defaultPath="./", templatepath=None):
         super(view_smooth, self).__init__(parent,  filename, "smooth", *TASKS_CLASS["SMOOTH"], defaultPath=defaultPath)    
         super(view_smooth, self).setAttribute(Qt.WA_DeleteOnClose)    
         self.keys=["INSET=", "BOX=", "OUTSET=", "AUTO=","OLDBEAM=", "NEWBEAM=", "OLDPOSANG=", "NEWPOSANG=", "DECIM=","OKAY="] #List of the keys/parameters of task, nowadays

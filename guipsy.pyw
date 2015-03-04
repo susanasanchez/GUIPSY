@@ -32,7 +32,7 @@ from images.view_image import *
 from help.view_help import *
 #
 #from help.view_recipes import *
-from help.view_recipeFile import *
+#from help.view_recipeFile import *
 #
 from help.view_helpFile import *
 from launch.view_cola import *
@@ -171,9 +171,8 @@ class MainWindow(QMainWindow):
         #Variable to keep the session information
         c=self.cnt()
         self.session=session(c)
-       
+    
         self.LASTPATH=os.getcwd()
-        
         
 #UI ATRIBUTES
   #browser area
@@ -200,7 +199,10 @@ class MainWindow(QMainWindow):
         self.info.addTab(self.infoTask, "Tasks")
         self.infoRecipes=view_recipes()
         self.infoRecipes.loadRecipes()
-        self.info.addTab(self.infoRecipes,  "Recipes")
+        self.info.addTab(self.infoRecipes,  "Templates")
+        self.infoHowtos=view_howtos()
+        self.infoHowtos.loadHowtos()
+        self.info.addTab(self.infoHowtos,  "HOW-TOs")
    # documents area and workflow area
         self.documents = QTabWidget()
         self.documents.setTabsClosable(True)
@@ -650,7 +652,7 @@ class MainWindow(QMainWindow):
         self.connect(self.workspaceBrowser, SIGNAL("contextMenu"), self.showContextMenu)
         self.connect(self.documents, SIGNAL("tabCloseRequested(int)"), self.closeTab)
         self.connect(self.infoTask, SIGNAL("openHelpFile"), lambda file: self.fileOpenDocument("HELP", file))
-        self.connect(self.infoRecipes, SIGNAL("openRecipeFile"), lambda file: self.fileOpenDocument("RECIPE", file))
+        self.connect(self.infoHowtos, SIGNAL("openHelpFile"), lambda file: self.fileOpenDocument("HELP", file))
         
         self.connect(self.workflow,SIGNAL("updateWorkflow"), lambda: self.session.updateWorkflowText(self.workflow.getWorkflowText()))
         self.connect(self, SIGNAL("imageloadfits"),  self.openFitsFromSamp)
@@ -1046,12 +1048,13 @@ class MainWindow(QMainWindow):
          "HELP":self.openHelp, 
          "RECIPE":self.openRecipe
                  }
+        
+        print helpfile
         if helpfile !=None:
             fName=helpfile
         elif filename !=None:
             fName=filename
         else:
-            #dir = os.path.dirname(".")
             dir=self.LASTPATH
             fName = unicode(QFileDialog.getOpenFileName(self, "Choose %s File"%type, dir,FORMATS[type]))
             if (fName==""):
@@ -1059,7 +1062,7 @@ class MainWindow(QMainWindow):
             fName=unicode(fName) 
             self.LASTPATH=os.path.dirname(fName)
        
-            
+       
         if type=="SET":
             (name,ext)=os.path.splitext(fName)
             fName=name
@@ -1097,7 +1100,7 @@ class MainWindow(QMainWindow):
                 type=output
                 
             #Adding the file to the session and to the workspaceBrowser
-            if type=="RECIPE":
+            if type=="RECIPE" or type=="HELP":
                 shortname=fName.split("/")[-1]
             else:
                 shortname=os.path.basename(fName)
@@ -1937,8 +1940,9 @@ class MainWindow(QMainWindow):
         
         
         fName=unicode(fName)
-        shortname=os.path.basename(fName)
+        #shortname=os.path.basename(fName)
         #Creating the new table view
+        
         self.allWidgets[fName]=view_helpFile()
         
         try:
@@ -2265,9 +2269,9 @@ class MainWindow(QMainWindow):
                 self.connect(action, SIGNAL("triggered()"), curried)
                 self.openRecentFiles.addAction(action)            
 
-
     
-    def interfaceTask(self, view, taskmenu=None,  input=None):
+    
+    def interfaceTask(self, view, taskmenu=None,  input=None, templatepath=None):
         
         #input=None
         if input==None and view!=view_rfits:
@@ -2276,13 +2280,12 @@ class MainWindow(QMainWindow):
                 if(self.allDocuments[i].getType()=="SET"):
                     input=self.allDocuments[i].getDocname()
        
-        viewDlg=view(self, input,  self.LASTPATH)
+        viewDlg=view(self, input,  self.LASTPATH, templatepath)
         self.connect(viewDlg, SIGNAL("taskExecuted"), self.taskExecuted)
         self.connect(viewDlg, SIGNAL("newSet"), self.newSet)
         self.connect(viewDlg, SIGNAL("newTable"), self.newTable)
         self.connect(viewDlg, SIGNAL("openHelpFile"), lambda file: self.fileOpenDocument("HELP", file))
-        self.connect(viewDlg, SIGNAL("openRecipeFile"), lambda file: self.fileOpenDocument("RECIPE", file))
-         
+       
         self.connect(viewDlg, SIGNAL("concatenatedTask"), self.interfaceTask)
         curried = functools.partial(self.enableTaskMenuAction,taskmenu)
         self.connect(viewDlg, SIGNAL("finished(int)"), curried)
@@ -2296,6 +2299,7 @@ class MainWindow(QMainWindow):
             self.taskMenuActions[taskmenu].setEnabled(False)
 
     def enableTaskMenuAction(self,  taskmenu):
+       
         if taskmenu!=None:
             self.taskMenuActions[taskmenu].setEnabled(True)
 

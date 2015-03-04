@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>719</width>
-    <height>450</height>
+    <width>700</width>
+    <height>572</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,23 +20,6 @@
    <enum>QFrame::Raised</enum>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>CENTRE</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>RADII</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1" colspan="4">
-    <widget class="QLineEdit" name="radiiLine"/>
-   </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_9">
      <property name="text">
@@ -44,67 +27,37 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1" colspan="4">
-    <widget class="QLineEdit" name="widthLine"/>
-   </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_10">
+   <item row="8" column="0">
+    <widget class="QLabel" name="massLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
-      <string>PA</string>
+      <string>MASS</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="1" colspan="4">
-    <widget class="QLineEdit" name="paLine"/>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_11">
-     <property name="text">
-      <string>INCL</string>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="xcentreLine">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
      </property>
     </widget>
-   </item>
-   <item row="6" column="1" colspan="4">
-    <widget class="QLineEdit" name="inclLine"/>
    </item>
    <item row="10" column="1">
-    <widget class="QPushButton" name="loadParamsButton">
-     <property name="text">
-      <string>LOAD PARAMS</string>
+    <widget class="QLineEdit" name="distanceLine">
+     <property name="enabled">
+      <bool>false</bool>
      </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>RANGE</string>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
      </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_5">
-     <property name="text">
-      <string>OPTION</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1" colspan="2">
-    <widget class="QComboBox" name="optionBox">
-     <item>
-      <property name="text">
-       <string>Stats</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Surface brightness</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Mass surface density</string>
-      </property>
-     </item>
     </widget>
    </item>
    <item row="2" column="3">
@@ -128,6 +81,212 @@
      </item>
     </widget>
    </item>
+   <item row="8" column="4">
+    <widget class="QLineEdit" name="xsubpixLine">
+     <property name="maximumSize">
+      <size>
+       <width>75</width>
+       <height>16777215</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>SEGMENTS</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_10">
+     <property name="text">
+      <string>PA</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1" colspan="4">
+    <widget class="QLineEdit" name="radiiLine"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>RADII</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1" colspan="4">
+    <widget class="QLineEdit" name="paLine"/>
+   </item>
+   <item row="1" column="3">
+    <widget class="QLabel" name="rangeLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="5">
+    <widget class="QPushButton" name="radiiButton">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>OPTION</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1" colspan="4">
+    <widget class="QLineEdit" name="widthLine"/>
+   </item>
+   <item row="3" column="6">
+    <widget class="QCheckBox" name="checkSampRadii">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
+     </property>
+     <property name="text">
+      <string>SAMP</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1" colspan="2">
+    <widget class="QComboBox" name="optionBox">
+     <item>
+      <property name="text">
+       <string>Stats</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Surface brightness</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Mass surface density</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="10" column="0">
+    <widget class="QLabel" name="distanceLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>DISTANCE</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="5">
+    <widget class="QLineEdit" name="ysubpixLine">
+     <property name="maximumSize">
+      <size>
+       <width>75</width>
+       <height>16777215</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>RANGE</string>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="2">
+    <widget class="QLabel" name="mpcLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Mpc</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="QCheckBox" name="checkSampCentre">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QCheckBox { color: green }</string>
+     </property>
+     <property name="text">
+      <string>SAMP</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2">
+    <widget class="QLabel" name="moLabel">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Mo</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1" colspan="4">
+    <widget class="QLineEdit" name="inclLine"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_11">
+     <property name="text">
+      <string>INCL</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="5">
+    <widget class="QPushButton" name="paButton">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../resources.qrc">
+       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>20</width>
+       <height>20</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QLineEdit" name="ycentreLine">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+    </widget>
+   </item>
    <item row="4" column="5">
     <widget class="QPushButton" name="widthButton">
      <property name="text">
@@ -145,19 +304,32 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="5">
-    <widget class="QPushButton" name="paButton">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_4">
      <property name="text">
-      <string/>
+      <string>CENTRE</string>
      </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/table.png</normaloff>:/table.png</iconset>
+    </widget>
+   </item>
+   <item row="10" column="3">
+    <widget class="QCheckBox" name="overlapCheck">
+     <property name="text">
+      <string>OVERLAP</string>
      </property>
-     <property name="iconSize">
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="QLineEdit" name="massLine">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="maximumSize">
       <size>
-       <width>20</width>
-       <height>20</height>
+       <width>16777215</width>
+       <height>16777215</height>
       </size>
      </property>
     </widget>
@@ -179,167 +351,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="5">
-    <widget class="QPushButton" name="radiiButton">
-     <property name="text">
-      <string/>
-     </property>
-     <property name="icon">
-      <iconset resource="../resources.qrc">
-       <normaloff>:/table.png</normaloff>:/table.png</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>20</width>
-       <height>20</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>SEGMENTS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="massLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>MASS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QLineEdit" name="massLine">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>100</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="0">
-    <widget class="QLabel" name="distanceLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>DISTANCE</string>
-     </property>
-    </widget>
-   </item>
-   <item row="10" column="0">
-    <widget class="QPushButton" name="saveParamsButton">
-     <property name="text">
-      <string>SAVE PARAMS</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="2">
-    <widget class="QLabel" name="moLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>Mo</string>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="1">
-    <widget class="QLineEdit" name="distanceLine">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>100</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="2">
-    <widget class="QLabel" name="mpcLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>Mpc</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="3">
-    <widget class="QLabel" name="label_15">
-     <property name="text">
-      <string>SUBPIX</string>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="4">
-    <widget class="QLineEdit" name="xsubpixLine">
-     <property name="maximumSize">
-      <size>
-       <width>75</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="5">
-    <widget class="QLineEdit" name="ysubpixLine">
-     <property name="maximumSize">
-      <size>
-       <width>75</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="3">
-    <widget class="QCheckBox" name="overlapCheck">
-     <property name="text">
-      <string>OVERLAP</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1" colspan="4">
-    <widget class="QListWidget" name="segmentList">
-     <item>
-      <property name="text">
-       <string>0 360</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="flags">
-       <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="1" column="3">
-    <widget class="QLabel" name="rangeLabel">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QLineEdit" name="xrangeLine">
      <property name="enabled">
@@ -351,26 +362,6 @@
        <height>0</height>
       </size>
      </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QLineEdit" name="xcentreLine">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
-    <widget class="QLineEdit" name="ycentreLine">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
@@ -398,33 +389,76 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="3">
-    <widget class="QCheckBox" name="checkSampCentre">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
-     </property>
+   <item row="8" column="3">
+    <widget class="QLabel" name="label_15">
      <property name="text">
-      <string>SAMP</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
+      <string>SUBPIX</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="6">
-    <widget class="QCheckBox" name="checkSampRadii">
-     <property name="enabled">
-      <bool>false</bool>
+   <item row="11" column="1" colspan="2">
+    <widget class="QFrame" name="frame">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="styleSheet">
-      <string notr="true">QCheckBox { color: green }</string>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="loadParamsButton">
+        <property name="text">
+         <string>Load values</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="saveParamsButton">
+        <property name="text">
+         <string>Save values</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="11" column="5" colspan="2">
+    <widget class="QPushButton" name="getRotcurColumnsButton">
      <property name="text">
-      <string>SAMP</string>
+      <string>Load rotcur set table</string>
      </property>
+    </widget>
+   </item>
+   <item row="7" column="1" colspan="4">
+    <widget class="QListWidget" name="segmentList">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>0 360</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+      </property>
+     </item>
     </widget>
    </item>
   </layout>

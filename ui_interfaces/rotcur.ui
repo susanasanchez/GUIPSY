@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>725</width>
-    <height>573</height>
+    <height>475</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,68 +35,22 @@
       <property name="margin">
        <number>0</number>
       </property>
-      <item row="4" column="8">
-       <widget class="QCheckBox" name="checkSampVrot">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="toolTip">
-         <string/>
-        </property>
-        <property name="whatsThis">
-         <string/>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QCheckBox { color: green }</string>
-        </property>
+      <item row="10" column="3">
+       <widget class="QLabel" name="label_13">
         <property name="text">
-         <string>SAMP</string>
+         <string>DEG</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_3">
+      <item row="4" column="7">
+       <widget class="QCheckBox" name="vrotCheck">
         <property name="text">
-         <string>BUNIT</string>
+         <string>Fixed</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QLineEdit" name="bunitLine">
-        <property name="maximumSize">
-         <size>
-          <width>70</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>CENTRE</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>VSYS</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>RADII</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="2" colspan="3">
-       <widget class="QLineEdit" name="radiiLine"/>
-      </item>
-      <item row="3" column="6">
-       <widget class="QPushButton" name="radiiButton">
+      <item row="9" column="6">
+       <widget class="QPushButton" name="inclButton">
         <property name="text">
          <string/>
         </property>
@@ -112,18 +66,45 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label">
+      <item row="9" column="0">
+       <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>WIDTHS</string>
+         <string>INCL</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="2" colspan="3">
-       <widget class="QLineEdit" name="widthsLine"/>
+      <item row="10" column="6">
+       <widget class="QLineEdit" name="fittoleranceLine"/>
       </item>
-      <item row="5" column="6">
-       <widget class="QPushButton" name="widthsButton">
+      <item row="4" column="6">
+       <widget class="QPushButton" name="vrotButton">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources.qrc">
+          <normaloff>:/table.png</normaloff>:/table.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="2" colspan="3">
+       <widget class="QLineEdit" name="vexpLine"/>
+      </item>
+      <item row="8" column="7">
+       <widget class="QCheckBox" name="paCheck">
+        <property name="text">
+         <string>Fixed</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="6">
+       <widget class="QPushButton" name="vexpButton">
         <property name="text">
          <string/>
         </property>
@@ -146,50 +127,6 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>VEXP</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="2" colspan="3">
-       <widget class="QLineEdit" name="vexpLine"/>
-      </item>
-      <item row="7" column="6">
-       <widget class="QPushButton" name="vexpButton">
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources.qrc">
-          <normaloff>:/table.png</normaloff>:/table.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>20</width>
-          <height>20</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="7">
-       <widget class="QCheckBox" name="vexpCheck">
-        <property name="text">
-         <string>Fixed</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>PA</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="2" colspan="3">
-       <widget class="QLineEdit" name="paLine"/>
-      </item>
       <item row="8" column="6">
        <widget class="QPushButton" name="paButton">
         <property name="text">
@@ -207,25 +144,76 @@
         </property>
        </widget>
       </item>
-      <item row="8" column="7">
-       <widget class="QCheckBox" name="paCheck">
+      <item row="3" column="2" colspan="3">
+       <widget class="QLineEdit" name="radiiLine"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>VSYS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="2" colspan="3">
+       <widget class="QLineEdit" name="paLine"/>
+      </item>
+      <item row="7" column="7">
+       <widget class="QCheckBox" name="vexpCheck">
         <property name="text">
          <string>Fixed</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="0">
-       <widget class="QLabel" name="label_11">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>INCL</string>
+         <string>BUNIT</string>
         </property>
        </widget>
       </item>
-      <item row="9" column="2" colspan="3">
-       <widget class="QLineEdit" name="inclLine"/>
+      <item row="7" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>VEXP</string>
+        </property>
+       </widget>
       </item>
-      <item row="9" column="6">
-       <widget class="QPushButton" name="inclButton">
+      <item row="5" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>WIDTHS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>CENTRE</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="4">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>FIT TOLERANCE</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2" colspan="3">
+       <widget class="QLineEdit" name="widthsLine"/>
+      </item>
+      <item row="2" column="7">
+       <widget class="QCheckBox" name="vsysCheck">
+        <property name="text">
+         <string>Fixed</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4" colspan="3">
+       <widget class="QLineEdit" name="ycentreLine"/>
+      </item>
+      <item row="5" column="6">
+       <widget class="QPushButton" name="widthsButton">
         <property name="text">
          <string/>
         </property>
@@ -241,46 +229,15 @@
         </property>
        </widget>
       </item>
-      <item row="9" column="7">
-       <widget class="QCheckBox" name="inclCheck">
+      <item row="0" column="4" colspan="2" alignment="Qt::AlignRight">
+       <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>Fixed</string>
+         <string>SIDE</string>
         </property>
        </widget>
       </item>
-      <item row="10" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>FREEANGLE</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="2">
-       <widget class="QLineEdit" name="freeangleLine"/>
-      </item>
-      <item row="10" column="3">
-       <widget class="QLabel" name="label_13">
-        <property name="text">
-         <string>DEG</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="4">
-       <widget class="QLabel" name="label_14">
-        <property name="text">
-         <string>FIT TOLERANCE</string>
-        </property>
-       </widget>
-      </item>
-      <item row="10" column="6">
-       <widget class="QLineEdit" name="fittoleranceLine"/>
-      </item>
-      <item row="12" column="0">
-       <widget class="QPushButton" name="saveParamsButton">
-        <property name="text">
-         <string>Save values</string>
-        </property>
-       </widget>
+      <item row="1" column="2" colspan="2">
+       <widget class="QLineEdit" name="xcentreLine"/>
       </item>
       <item row="11" column="2">
        <widget class="QComboBox" name="weightBox">
@@ -301,18 +258,25 @@
         </item>
        </widget>
       </item>
-      <item row="4" column="2" colspan="3">
-       <widget class="QLineEdit" name="vrotLine"/>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_2">
+      <item row="9" column="7">
+       <widget class="QCheckBox" name="inclCheck">
         <property name="text">
-         <string>VROT</string>
+         <string>Fixed</string>
         </property>
        </widget>
       </item>
-      <item row="4" column="6">
-       <widget class="QPushButton" name="vrotButton">
+      <item row="10" column="2">
+       <widget class="QLineEdit" name="freeangleLine"/>
+      </item>
+      <item row="1" column="7">
+       <widget class="QCheckBox" name="centreCheck">
+        <property name="text">
+         <string>Fixed</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="6">
+       <widget class="QPushButton" name="radiiButton">
         <property name="text">
          <string/>
         </property>
@@ -328,27 +292,16 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="7">
-       <widget class="QCheckBox" name="vrotCheck">
-        <property name="text">
-         <string>Fixed</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="2">
-       <widget class="QLabel" name="label_16">
-        <property name="text">
-         <string>Load values:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="12" column="3">
-       <widget class="QComboBox" name="loadParamsList"/>
-      </item>
-      <item row="3" column="8">
-       <widget class="QCheckBox" name="checkSampRadii">
+      <item row="4" column="8">
+       <widget class="QCheckBox" name="checkSampVrot">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string/>
         </property>
         <property name="styleSheet">
          <string notr="true">QCheckBox { color: green }</string>
@@ -390,17 +343,29 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="7">
-       <widget class="QCheckBox" name="vsysCheck">
+      <item row="10" column="0">
+       <widget class="QLabel" name="label_12">
         <property name="text">
-         <string>Fixed</string>
+         <string>FREEANGLE</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="7">
-       <widget class="QCheckBox" name="centreCheck">
+      <item row="4" column="2" colspan="3">
+       <widget class="QLineEdit" name="vrotLine"/>
+      </item>
+      <item row="9" column="2" colspan="3">
+       <widget class="QLineEdit" name="inclLine"/>
+      </item>
+      <item row="3" column="8">
+       <widget class="QCheckBox" name="checkSampRadii">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QCheckBox { color: green }</string>
+        </property>
         <property name="text">
-         <string>Fixed</string>
+         <string>SAMP</string>
         </property>
        </widget>
       </item>
@@ -414,11 +379,26 @@
       <item row="2" column="2" colspan="3">
        <widget class="QLineEdit" name="vsysLine"/>
       </item>
-      <item row="1" column="2" colspan="2">
-       <widget class="QLineEdit" name="xcentreLine"/>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>RADII</string>
+        </property>
+       </widget>
       </item>
-      <item row="1" column="4" colspan="3">
-       <widget class="QLineEdit" name="ycentreLine"/>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>VROT</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>PA</string>
+        </property>
+       </widget>
       </item>
       <item row="0" column="6">
        <widget class="QComboBox" name="sideBox">
@@ -439,18 +419,97 @@
         </item>
        </widget>
       </item>
-      <item row="0" column="4" colspan="2" alignment="Qt::AlignRight">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>SIDE</string>
+      <item row="0" column="2">
+       <widget class="QLineEdit" name="bunitLine">
+        <property name="maximumSize">
+         <size>
+          <width>70</width>
+          <height>16777215</height>
+         </size>
         </property>
        </widget>
+      </item>
+      <item row="12" column="2" colspan="3">
+       <widget class="QFrame" name="frame">
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="saveParamsButton">
+           <property name="text">
+            <string>Save values</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="loadParamsButton">
+           <property name="text">
+            <string>Load Values</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="13" column="0">
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </widget>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>bunitLine</tabstop>
+  <tabstop>sideBox</tabstop>
+  <tabstop>xcentreLine</tabstop>
+  <tabstop>ycentreLine</tabstop>
+  <tabstop>centreCheck</tabstop>
+  <tabstop>checkSampCentre</tabstop>
+  <tabstop>vsysLine</tabstop>
+  <tabstop>vsysCheck</tabstop>
+  <tabstop>checkSampVsys</tabstop>
+  <tabstop>radiiLine</tabstop>
+  <tabstop>radiiButton</tabstop>
+  <tabstop>checkSampRadii</tabstop>
+  <tabstop>vrotLine</tabstop>
+  <tabstop>vrotButton</tabstop>
+  <tabstop>vrotCheck</tabstop>
+  <tabstop>checkSampVrot</tabstop>
+  <tabstop>widthsLine</tabstop>
+  <tabstop>widthsButton</tabstop>
+  <tabstop>vexpLine</tabstop>
+  <tabstop>vexpButton</tabstop>
+  <tabstop>vexpCheck</tabstop>
+  <tabstop>paLine</tabstop>
+  <tabstop>paButton</tabstop>
+  <tabstop>paCheck</tabstop>
+  <tabstop>inclLine</tabstop>
+  <tabstop>inclButton</tabstop>
+  <tabstop>inclCheck</tabstop>
+  <tabstop>freeangleLine</tabstop>
+  <tabstop>fittoleranceLine</tabstop>
+  <tabstop>weightBox</tabstop>
+  <tabstop>saveParamsButton</tabstop>
+  <tabstop>loadParamsButton</tabstop>
+ </tabstops>
  <resources>
   <include location="../resources.qrc"/>
  </resources>

@@ -111,14 +111,12 @@ class view_recipes(view_help):
     def __init__(self):
         
         super(view_recipes, self).__init__()
-        self.label.hide()
+        self.label.setText("Double click to transfer the template options to the task dialog")
         self.lineEdit.hide()
-        
         
 
     def loadRecipes(self):
-    #DATA elements:
-    #Read the files with the info about the task  (.dc1 files)
+
         itemsHelp={}
         recipesDir=QDir(DIRRECIPES)
         filter=QStringList (QString("*.txt"))
@@ -132,7 +130,7 @@ class view_recipes(view_help):
             smartHelp = QString(file.readAll())
             file.close()
             name=smartHelp.split('\n')[0]
-            pathhtml=str(pathtxt.replace("txt", "html"))
+            pathhtml=str(pathtxt.replace("txt", "param"))
 
             t=itemHelp(name,smartHelp,pathhtml )
             itemsHelp[id(t)] = t
@@ -150,24 +148,70 @@ class view_recipes(view_help):
                      self.text_changed)
         self.connect(self.listWidget,
                 SIGNAL("itemDoubleClicked(QListWidgetItem *)"),
-                self.openHelpFile)
+                self.openTaskInterface)
 
-    def openHelpFile(self,  item):
+    def openTaskInterface(self,  item):
         identity_item=item.data(Qt.UserRole).toLongLong()[0]
         t=self.helpArea.getItemHelp(identity_item)
-        self.emit(SIGNAL("openRecipeFile"), t.filepath)
         
-        
-        
-        
+        self.emit(SIGNAL("loadTemplate"), "rotcur",  t.filepath)        
         
 
+
+class view_howtos(view_help):
+    """This class implements the third tab of the right panel of the principal window of GUIpsy. It shows the list of howto. It inherits from view_help class.
+        """
+        
+    def __init__(self):
+        
+        super(view_howtos, self).__init__()
+        self.label.setText("Double click to open a detailed description:")
+        self.lineEdit.hide()
+        
+
+    def loadHowtos(self):
+
+        itemsHelp={}
+        howtoDir=QDir(DIRHOWTOS)
+        filter=QStringList (QString("*.txt"))
+        howtoDir.setNameFilters(filter)
+        howtoList = howtoDir.entryInfoList()
+        
+        for howto in howtoList:
+            pathtxt=howto.filePath()
+            file=QFile(pathtxt)
+            file.open(QFile.ReadOnly)
+            smartHelp = QString(file.readAll())
+            file.close()
+            name=smartHelp.split('\n')[0]
+            pathhtml=str(pathtxt.replace("txt", "html"))
+
+            t=itemHelp(name,smartHelp,pathhtml )
+            itemsHelp[id(t)] = t
+
+        self.helpArea=helpContainer(itemsHelp)
+
+#BUILDING THE  HELP AREA
+        
+        self.populateList()
+
+        self.connect(self.listWidget,
+                SIGNAL("itemSelectionChanged()"),
+                self.itemSelected)
+        self.connect(self.lineEdit, SIGNAL("textChanged(QString)"),
+                     self.text_changed)
+        self.connect(self.listWidget,
+                SIGNAL("itemDoubleClicked(QListWidgetItem *)"),
+                self.openHelpFile)
+        
+        
+        
 
 class itemHelp(object):
     """An itemHelp is an object which contains three attributes: 
-        - the name of the task, 
-        - a brief summary of the purpose of the task (smartHelp) and 
-        - the path of the file with the whole documentation of the task. 
+        - the name/title which will appear on the list. (e.g the task name)
+        - a brief text which will appear on the bottom of the tab frame (e.g the purpose of the task (smartHelp) )
+        - the path of the file with a detailed description (e.g the whole documentation of the task. )
     """
     def __init__(self,name, smartHelp, filepath):
         self.name=name
